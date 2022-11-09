@@ -1,0 +1,11 @@
+BasedOnStyle: LLVM
+ColumnLimit: 100
+IndentWidth: 2
+ContinuationIndentWidth: 2
+PointerAlignment: Left
+AlignAfterOpenBracket: DontAlign
+BinPackArguments: false
+BinPackParameters: false
+AlignEscapedNewlines: Left
+IndentPPDirectives: AfterHash
+AllowShortFunctionsOnASingleLine: Empty
