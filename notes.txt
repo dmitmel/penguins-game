@@ -1,0 +1,50 @@
+
+struct Player{
+  int id;
+  char* name;
+  int points;
+}
+
+struct GameState{
+  int playerCount;
+  int boardX;
+  int boardY;
+
+  int currentPlayer;
+  int board [][];
+  Player players [];
+}
+
+currentPlayer = (currentPlayer+1)%playerCount
+
+
+[0, , , ]
+0 - water tile
+1/2/3 - number of fish
+[, , , ]
+-1/ -2/ -3 - penguin of a player number x
+[, , , ]
+
+
+// In the loop of each turn:
+int penguinX
+int penguinY
+
+int targetX
+int targetY
+
+// How to figure out if the game is deadlocked?
+// Iterate the whole board -> for each penguin see if it can be moved - naive, can be optimized later
+
+General parts to do at the start:
+
+Validation of input arguments
+(D) Generating a random board
+(J) Printing the board
+Input validation based on game state
+  Checking player input
+  Checking if correct player input is legal in the game
+Resolving a move, changing the game state
+Evaluating if no move is valid
+Priting the results
+
