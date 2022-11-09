@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(penguins C)
-add_executable(penguins src/main.c src/io.c)
+add_executable(penguins
+  src/main.c
+  src/io.c
+  src/board.c
+  src/utils.c
+)
 target_include_directories(penguins PUBLIC include)
