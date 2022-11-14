@@ -40,9 +40,10 @@ int main(int argc, char* argv[]) {
   int current_player = 1;
   while (1) {
     int x, y;
-    printf("Player %d's turn.\n", current_player);
+    display_new_turn_message(current_player);
     // TODO: validate inputs
     get_penguin_coordinates(&x, &y, current_player);
+    //todo: update game logic
     board[y][x] = -current_player;
     print_board(board, board_height, board_width);
     current_player = (current_player % player_count) + 1;

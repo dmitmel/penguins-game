@@ -17,7 +17,7 @@ void print_board(int** board, int ySize, int xSize) {
   }
 }
 
-void get_board_dimensions(int* width, int* height){
+void get_board_dimensions(int* width, int* height) {
   printf("Please specify width and height of the board\n");
   printf("Eg.:' 10 5 -> width=10, height=5\n");
   scanf("%d %d", width, height);
@@ -38,7 +38,11 @@ void get_player_name(int player_number, char* name) {
   scanf("%s", name);
 }
 
-void get_penguin_coordinates(int *x, int *y, int player_number){
+void get_penguin_coordinates(int* x, int* y, int player_number) {
   printf("Player %d, please input x and y coordinates to place the penguin:\n", player_number);
   scanf("%d %d", x, y);
+}
+
+void display_new_turn_message(int player_number) {  
+  printf("\nPlayer %d's turn.\n", player_number);
 }

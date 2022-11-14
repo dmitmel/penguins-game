@@ -11,3 +11,5 @@ void get_penguin_count(int* count);
 void get_player_name(int player_number, char* name);
 
 void get_penguin_coordinates(int *x, int *y, int player_number);
+
+void display_new_turn_message(int player_number);
