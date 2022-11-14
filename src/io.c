@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-void printBoard(int** board, int ySize, int xSize) {
+void print_board(int** board, int ySize, int xSize) {
   for (int y = 0; y < ySize; y++) {
     printf("| ");
     for (int x = 0; x < xSize; x++) {
@@ -24,11 +24,21 @@ void get_board_dimensions(int* width, int* height){
 }
 
 void get_players_count(int* count) {
-  printf("Please input number of players\n");
+  printf("Please input number of players:\n");
   scanf("%d", count);
 }
 
-void get_player_name(int id, char* name) {
-  printf("Player %d, please input name\n", id);
+void get_penguin_count(int* count) {
+  printf("Please input number of penguins per player:\n");
+  scanf("%d", count);
+}
+
+void get_player_name(int player_number, char* name) {
+  printf("Player %d, please input name:\n", player_number);
   scanf("%s", name);
+}
+
+void get_penguin_coordinates(int *x, int *y, int player_number){
+  printf("Player %d, please input x and y coordinates to place the penguin:\n", player_number);
+  scanf("%d %d", x, y);
 }
