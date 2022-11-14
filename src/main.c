@@ -7,8 +7,10 @@
 int main(int argc, char* argv[]) {
   random_init();
 
-  int board_width = 20;
-  int board_height = 20;
+  int board_width;
+  int board_height;
+  get_board_dimensions(&board_width, &board_height);
+  
   int** board = init_board(board_width, board_height);
   generate_random_board(board_width, board_height, board);
 
