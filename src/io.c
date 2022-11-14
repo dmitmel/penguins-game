@@ -22,3 +22,13 @@ void get_board_dimensions(int* width, int* height){
   printf("Eg.:' 10 5 -> width=10, height=5\n");
   scanf("%d %d", width, height);
 }
+
+void get_players_count(int* count) {
+  printf("Please input number of players\n");
+  scanf("%d", count);
+}
+
+void get_player_name(int id, char* name) {
+  printf("Player %d, please input name\n", id);
+  scanf("%s", name);
+}
