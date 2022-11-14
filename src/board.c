@@ -2,19 +2,32 @@
 #include "utils.h"
 #include <stdlib.h>
 
-int** init_board(int width, int height) {
+Board init_board(int width, int height) {
   int** grid = calloc(height, sizeof(int*));
   for (int i = 0; i < height; i++) {
-    int* row = calloc(height, sizeof(int));
+    int* row = calloc(width, sizeof(int));
     grid[i] = row;
   }
-  return grid;
+  Board board = {
+    .width = width,
+    .height = height,
+    .grid = grid,
+  };
+  return board;
 }
 
-void generate_random_board(int width, int height, int** grid) {
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      grid[y][x] = random_range(0, 3);
+void free_board(Board* board) {
+  for (int i = 0; i < board->height; i++) {
+    int* row = board->grid[i];
+    free(row);
+  }
+  free(board->grid);
+}
+
+void generate_random_board(Board* board) {
+  for (int y = 0; y < board->height; y++) {
+    for (int x = 0; x < board->width; x++) {
+      board->grid[y][x] = random_range(0, 3);
     }
   }
 }

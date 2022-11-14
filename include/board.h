@@ -1,5 +1,13 @@
 #pragma once
 
-int** init_board(int width, int height);
+typedef struct Board {
+  int width;
+  int height;
+  int** grid;
+} Board;
 
-void generate_random_board(int width, int height, int** grid);
+Board init_board(int width, int height);
+
+void free_board(Board* board);
+
+void generate_random_board(Board* board);

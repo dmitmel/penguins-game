@@ -1,10 +1,11 @@
+#include "io.h"
 #include <stdio.h>
 
-void print_board(int** board, int ySize, int xSize) {
-  for (int y = 0; y < ySize; y++) {
+void print_board(Board* board) {
+  for (int y = 0; y < board->height; y++) {
     printf("| ");
-    for (int x = 0; x < xSize; x++) {
-      int val = board[y][x];
+    for (int x = 0; x < board->width; x++) {
+      int val = board->grid[y][x];
       if (val == 0) {
         printf("-  ");
       } else if (val < 0) {
@@ -43,6 +44,6 @@ void get_penguin_coordinates(int* x, int* y, int player_number) {
   scanf("%d %d", x, y);
 }
 
-void display_new_turn_message(int player_number) {  
+void display_new_turn_message(int player_number) {
   printf("\nPlayer %d's turn.\n", player_number);
 }

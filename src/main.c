@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < player_count; i++) {
     player_data[i].id = i;
     player_data[i].points = 0;
-    get_player_name(i+1, player_data[i].name);
+    get_player_name(i + 1, player_data[i].name);
   }
 
   int penguin_count;
@@ -30,22 +30,22 @@ int main(int argc, char* argv[]) {
   int board_height;
   get_board_dimensions(&board_width, &board_height);
 
-  int** board = init_board(board_width, board_height);
-  generate_random_board(board_width, board_height, board);
+  Board board = init_board(board_width, board_height);
+  generate_random_board(&board);
 
-  print_board(board, board_height, board_width);
+  print_board(&board);
 
   // placeholder, actual logic should for the placement loop should go here, ctrl+z to exit for now
-  //TODO: logic for iterating through the players and penguins in the placement phase
+  // TODO: logic for iterating through the players and penguins in the placement phase
   int current_player = 1;
   while (1) {
     int x, y;
     display_new_turn_message(current_player);
     // TODO: validate inputs
     get_penguin_coordinates(&x, &y, current_player);
-    //todo: update game logic
-    board[y][x] = -current_player;
-    print_board(board, board_height, board_width);
+    // todo: update game logic
+    board.grid[y][x] = -current_player;
+    print_board(&board);
     current_player = (current_player % player_count) + 1;
   }
 
