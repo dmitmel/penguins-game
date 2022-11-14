@@ -43,9 +43,9 @@ int main(int argc, char* argv[]) {
     printf("Player %d's turn.\n", current_player);
     // TODO: validate inputs
     get_penguin_coordinates(&x, &y, current_player);
-    board[y][x] = (-current_player);
+    board[y][x] = -current_player;
     print_board(board, board_height, board_width);
-    current_player = (current_player) % player_count + 1;
+    current_player = (current_player % player_count) + 1;
   }
 
   return 0;
