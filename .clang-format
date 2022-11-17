@@ -1,11 +1,14 @@
 BasedOnStyle: LLVM
-ColumnLimit: 100
+ColumnLimit: 99
 IndentWidth: 2
 ContinuationIndentWidth: 2
+ConstructorInitializerIndentWidth: 0
 PointerAlignment: Left
-AlignAfterOpenBracket: DontAlign
+AlignAfterOpenBracket: BlockIndent
 BinPackArguments: false
 BinPackParameters: false
+BreakConstructorInitializers: BeforeComma
+PackConstructorInitializers: NextLine
 AlignEscapedNewlines: Left
 IndentPPDirectives: AfterHash
 AllowShortFunctionsOnASingleLine: Empty
