@@ -1,26 +1,23 @@
-#include "board.h"
-#include "io.h"
-#include "utils.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct player {
-  int id;
-  char name[16];
-  int points;
-} player;
+#include "board.h"
+#include "gamestate.h"
+#include "io.h"
+#include "stdbool.h"
+#include "utils.h"
 
 int main(int argc, char* argv[]) {
   random_init();
 
   int player_count;
   get_players_count(&player_count);
-  player* player_data = malloc(player_count * sizeof(*player_data));
+  Player* player_data = malloc(player_count * sizeof(*player_data));
   for (int i = 0; i < player_count; i++) {
-    player_data[i].id = i;
+    player_data[i].id = i + 1;
     player_data[i].points = 0;
-    get_player_name(i + 1, player_data[i].name);
+    get_player_name(player_data[i].id, player_data[i].name);
   }
 
   int penguin_count;
@@ -33,20 +30,37 @@ int main(int argc, char* argv[]) {
   Board board = init_board(board_width, board_height);
   generate_random_board(&board);
 
-  print_board(&board);
+  // in-memory players are 0-indexed, but for the board and for the players they are 1-indexed
+  // when you want to save a user penguin on the board or call a UI method that shows player index,
+  // use "player_data[current_player].id" instead of "current_player+1"
+  int current_player = 0;
 
-  // placeholder, actual logic should for the placement loop should go here, ctrl+z to exit for now
-  // TODO: logic for iterating through the players and penguins in the placement phase
-  int current_player = 1;
+  update_game_state_display(&board, player_data, player_count); // bad for gui
+  // placeholder, actual logic for determining the ending of the placement loop should go here
+  // ctrl+c to exit for now
   while (1) {
     int x, y;
-    display_new_turn_message(current_player);
+    display_new_turn_message(player_data[current_player].id);
     // TODO: validate inputs
-    get_penguin_coordinates(&x, &y, current_player);
-    // todo: update game logic
-    board.grid[y][x] = -current_player;
-    print_board(&board);
-    current_player = (current_player % player_count) + 1;
+    while (true) {
+      // update_game_state_display(&board, player_data, player_count);
+      get_penguin_coordinates(&x, &y, player_data[current_player].id);
+      if (board.grid[y][x] == 0) {
+        update_game_state_display(&board, player_data, player_count); // bad for gui
+
+        display_error_message(
+          "This tile is empty, you can't put a penguin on an empty(water) tile");
+      } else if (board.grid[y][x] < 0) {
+        update_game_state_display(&board, player_data, player_count); // bad for gui
+
+        display_error_message("This tile is already occupied by a penguin");
+      } else {
+        board.grid[y][x] = -player_data[current_player].id;
+        break;
+      }
+    }
+    update_game_state_display(&board, player_data, player_count);
+    current_player = (current_player + 1) % player_count;
   }
 
   return 0;
