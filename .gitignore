@@ -1,2 +1,5 @@
-/build
-/compile_commands.json
+build/
+compile_commands.json
+.cache/clangd/
+# This one is created by Qt Creator:
+CMakeLists.txt.user
