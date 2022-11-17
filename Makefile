@@ -1,5 +1,7 @@
 # A wrapper around CMake, based on <https://github.com/neovim/neovim/blob/v0.8.1/Makefile>
 
+-include local.mk
+
 CMAKE ?= cmake
 CMAKE_BUILD_TYPE ?= Debug
 CMAKE_FLAGS := -D CMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -G 'Unix Makefiles'
