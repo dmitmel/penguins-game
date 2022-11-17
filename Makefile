@@ -6,15 +6,19 @@ CMAKE_FLAGS := -D CMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -G 'Unix Makefiles'
 CMAKE_EXTRA_FLAGS ?=
 BUILD_DIR ?= build
 
-all: build
+all: $(BUILD_DIR)/.ran-cmake
+	$(MAKE) -C $(BUILD_DIR)
 
 build: $(BUILD_DIR)/.ran-cmake
-	$(MAKE) -C $(BUILD_DIR)
+	$(MAKE) -C $(BUILD_DIR) penguins
+
+build-gui: $(BUILD_DIR)/.ran-cmake
+	$(MAKE) -C $(BUILD_DIR) penguins-gui
 
 run: build
 	$(BUILD_DIR)/penguins
 
-run-gui: build
+run-gui: build-gui
 	$(BUILD_DIR)/penguins-gui
 
 clean:
@@ -24,7 +28,7 @@ distclean:
 	rm -rf $(BUILD_DIR)
 
 cmake:
-	touch CMakeLists.txt
+	rm -f $(BUILD_DIR)/.ran-cmake
 	$(MAKE) $(BUILD_DIR)/.ran-cmake
 
 $(BUILD_DIR)/.ran-cmake:
@@ -32,4 +36,4 @@ $(BUILD_DIR)/.ran-cmake:
 	cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $$OLDPWD
 	touch $@
 
-.PHONY: all build run run-gui clean distclean cmake
+.PHONY: all build build-gui run run-gui clean distclean cmake
