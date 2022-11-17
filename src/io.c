@@ -55,21 +55,27 @@ void display_error_message(char* message) {
   printf("\n%s\n", message);
 }
 
+void print_player_stats(Player players[], int count) {
+  printf("id\t| name\t| score\n");
+  for (int i = 0; i < count; i++) {
+    printf("%d\t| %s\t| %d\n", players[i].id, players[i].name, players[i].points);
+  }
+}
+
 void update_game_state_display(Board* board, Player players[], int player_count) {
   system("clear");
   print_player_stats(players, player_count);
   print_board(board);
 }
 
-/* PRIVATE METHODS BELOW */
-
-void print_player_stats(Player players[], int count) {
-  printf("id\t|\tname\t|\tscore\n");
-  for (int i = 0; i < count; i++) {
-    printf("%d\t|\t%s\t|\t%d\n", players[i].id, players[i].name, players[i].points);
-  }
-}
-
 void clear_screen() {
   system("clear");
+}
+
+void print_end_placement_phase(Board* board, Player players[], int player_count){
+  clear_screen();
+  printf("No more penguins can be placed, placement phase ended!\n");
+  print_board(board);
+  printf("\n");
+  print_player_stats(players, player_count);
 }

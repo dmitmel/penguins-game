@@ -1,3 +1,4 @@
+#include "stdbool.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,7 +6,6 @@
 #include "board.h"
 #include "gamestate.h"
 #include "io.h"
-#include "stdbool.h"
 #include "utils.h"
 
 int main(int argc, char* argv[]) {
@@ -38,12 +38,15 @@ int main(int argc, char* argv[]) {
   update_game_state_display(&board, player_data, player_count); // bad for gui
   // placeholder, actual logic for determining the ending of the placement loop should go here
   // ctrl+c to exit for now
-  while (1) {
+  int penguins_to_place = player_count * penguin_count;
+  while (penguins_to_place > 0) {
+    if (!placeable_spot_exists(&board)) {
+      display_error_message("No more penguins are placeable!");
+      break;
+    }
     int x, y;
     display_new_turn_message(player_data[current_player].id);
-    // TODO: validate inputs
     while (true) {
-      // update_game_state_display(&board, player_data, player_count);
       get_penguin_coordinates(&x, &y, player_data[current_player].id);
       if (board.grid[y][x] == 0) {
         update_game_state_display(&board, player_data, player_count); // bad for gui
@@ -57,12 +60,14 @@ int main(int argc, char* argv[]) {
       } else {
         player_data[current_player].points += board.grid[y][x];
         board.grid[y][x] = -player_data[current_player].id;
+        penguins_to_place--;
         break;
       }
     }
     update_game_state_display(&board, player_data, player_count);
     current_player = (current_player + 1) % player_count;
   }
+  print_end_placement_phase(&board, player_data, player_count);
 
   return 0;
 }

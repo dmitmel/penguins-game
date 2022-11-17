@@ -20,3 +20,5 @@ void display_new_turn_message(int player_number);
 void display_error_message(char* message);
 
 void update_game_state_display(Board* board, Player players[], int player_count);
+
+void print_end_placement_phase(Board* board, Player players[], int player_count);

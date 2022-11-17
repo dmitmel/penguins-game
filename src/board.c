@@ -1,6 +1,8 @@
+#include "stdbool.h"
+#include <stdlib.h>
+
 #include "board.h"
 #include "utils.h"
-#include <stdlib.h>
 
 Board init_board(int width, int height) {
   int** grid = calloc(height, sizeof(int*));
@@ -30,4 +32,15 @@ void generate_random_board(Board* board) {
       board->grid[y][x] = random_range(0, 3);
     }
   }
+}
+
+bool placeable_spot_exists(Board* board) {
+  for (int y = 0; y < board->height; y++) {
+    for (int x = 0; x < board->width; x++) {
+      if (board->grid[y][x] > 0) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
