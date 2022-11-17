@@ -55,6 +55,7 @@ int main(int argc, char* argv[]) {
 
         display_error_message("This tile is already occupied by a penguin");
       } else {
+        player_data[current_player].points += board.grid[y][x];
         board.grid[y][x] = -player_data[current_player].id;
         break;
       }
