@@ -1,18 +1,17 @@
 cmake_minimum_required(VERSION 3.0)
+project(penguins C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-project(penguins C CXX)
 
 add_library(penguins-lib
   src/io.c
   src/board.c
-  src/utils.c
 )
 target_include_directories(penguins-lib PUBLIC include)
 
 add_executable(penguins
   src/main.c
+  src/random.c
 )
 target_link_libraries(penguins PUBLIC penguins-lib)
 
@@ -21,6 +20,7 @@ if(wxWidgets_FOUND)
   # include(${wxWidgets_USE_FILE})
   add_executable(penguins-gui
     src/gui/main.cc
+    src/gui/better_random.cc
   )
   target_link_libraries(penguins-gui PUBLIC penguins-lib)
 

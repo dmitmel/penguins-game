@@ -10,7 +10,7 @@
 #include <wx/sizer.h>
 
 extern "C" {
-#include "utils.h"
+#include "random.h"
 }
 
 wxIMPLEMENT_APP(PenguinsApp);

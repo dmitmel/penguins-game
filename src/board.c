@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "board.h"
-#include "utils.h"
+#include "random.h"
 
 Board init_board(int width, int height) {
   int** grid = calloc(height, sizeof(int*));
