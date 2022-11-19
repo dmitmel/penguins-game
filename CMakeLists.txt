@@ -24,7 +24,7 @@ if(wxWidgets_FOUND)
   )
   target_link_libraries(penguins-gui PUBLIC penguins-lib)
 
-  target_include_directories(penguins-gui PUBLIC ${wxWidgets_INCLUDE_DIRS} SYSTEM)
+  target_include_directories(penguins-gui SYSTEM PUBLIC ${wxWidgets_INCLUDE_DIRS})
   target_link_directories(penguins-gui PRIVATE ${wxWidgets_LIBRARY_DIRS})
   target_link_libraries(penguins-gui PRIVATE ${wxWidgets_LIBRARIES})
   target_compile_definitions(penguins-gui PRIVATE ${wxWidgets_DEFINITIONS} ${wxWidgets_DEFINITIONS_DEBUG})
