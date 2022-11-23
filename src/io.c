@@ -5,7 +5,22 @@
 #include "gamestate.h"
 
 void print_board(Board* board) {
+  printf("   ");
+  for (int x = 0; x < board->width; x++) {
+    if (x % 5 == 0) {
+      printf("%3d", x);
+    } else {
+      printf("   ");
+    }
+  }
+  printf("\n");
+
   for (int y = 0; y < board->height; y++) {
+    if (y % 5 == 0) {
+      printf("%3d", y);
+    } else {
+      printf("   ");
+    }
     printf("| ");
     for (int x = 0; x < board->width; x++) {
       int val = board->grid[y][x];
@@ -72,7 +87,7 @@ void clear_screen() {
   system("clear");
 }
 
-void print_end_placement_phase(Board* board, Player players[], int player_count){
+void print_end_placement_phase(Board* board, Player players[], int player_count) {
   clear_screen();
   printf("No more penguins can be placed, placement phase ended!\n");
   print_board(board);

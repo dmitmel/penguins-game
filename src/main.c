@@ -32,13 +32,12 @@ int main(int argc, char* argv[]) {
 
   // in-memory players are 0-indexed, but for the board and for the players they are 1-indexed
   // when you want to save a user penguin on the board or call a UI method that shows player index,
-  // use "player_data[current_player].id" instead of "current_player+1"
+  // use "player_data[current_player].id" instead of "current_player+1" for clarity
   int current_player = 0;
-
-  update_game_state_display(&board, player_data, player_count); // bad for gui
-  // placeholder, actual logic for determining the ending of the placement loop should go here
-  // ctrl+c to exit for now
   int penguins_to_place = player_count * penguin_count;
+
+  update_game_state_display(&board, player_data, player_count);
+
   while (penguins_to_place > 0) {
     if (!placeable_spot_exists(&board)) {
       display_error_message("No more penguins are placeable!");
