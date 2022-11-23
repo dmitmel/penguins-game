@@ -6,7 +6,7 @@
 #include "board.h"
 #include "gamestate.h"
 #include "io.h"
-#include "utils.h"
+#include "random.h"
 
 int main(int argc, char* argv[]) {
   random_init();
