@@ -9,6 +9,7 @@ BinPackArguments: false
 BinPackParameters: false
 BreakConstructorInitializers: BeforeComma
 PackConstructorInitializers: NextLine
+Cpp11BracedListStyle: false
 AlignEscapedNewlines: Left
 IndentPPDirectives: AfterHash
 AllowShortFunctionsOnASingleLine: Empty

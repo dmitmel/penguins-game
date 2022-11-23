@@ -1,7 +1,13 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project(penguins C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(penguins-lib
   src/io.c
@@ -9,11 +15,17 @@ add_library(penguins-lib
 )
 target_include_directories(penguins-lib PUBLIC include)
 
+add_library(munit munit/munit.c)
+target_include_directories(munit PUBLIC munit)
+
 add_executable(penguins
   src/main.c
   src/random.c
 )
 target_link_libraries(penguins PUBLIC penguins-lib)
+
+add_executable(penguins-tests src/tests.c)
+target_link_libraries(penguins-tests PUBLIC munit)
 
 find_package(wxWidgets COMPONENTS core base)
 if(wxWidgets_FOUND)

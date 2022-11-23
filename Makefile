@@ -17,11 +17,17 @@ build: $(BUILD_DIR)/.ran-cmake
 build-gui: $(BUILD_DIR)/.ran-cmake
 	$(MAKE) -C $(BUILD_DIR) penguins-gui
 
+build-tests: $(BUILD_DIR)/.ran-cmake
+	$(MAKE) -C $(BUILD_DIR) penguins-tests
+
 run: build
 	$(BUILD_DIR)/penguins
 
 run-gui: build-gui
 	$(BUILD_DIR)/penguins-gui
+
+test: build-tests
+	$(BUILD_DIR)/penguins-tests
 
 clean:
 	$(MAKE) -C $(BUILD_DIR) clean
