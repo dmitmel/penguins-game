@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     display_new_turn_message(player_data[current_player].id);
     while (true) {
       get_penguin_coordinates(&x, &y, player_data[current_player].id);
-      if (x < 0 || x > board.width || y < 0 || y > board.height) {
+      if (x < 0 || x >= board.width || y < 0 || y >= board.height) {
         display_error_message("Inputted coordinates are outside the bounds of the board");
       } else if (board.grid[y][x] == 0) {
         update_game_state_display(&board, player_data, player_count); // bad for gui
