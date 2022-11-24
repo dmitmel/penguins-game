@@ -57,8 +57,11 @@ void get_player_name(int player_number, char* name) {
   scanf("%s", name);
 }
 
-void get_penguin_coordinates(int* x, int* y, int player_number) {
+void ask_player_for_input(int player_number){
   printf("Player %d, please input x and y coordinates to place the penguin:\n", player_number);
+}
+
+void get_penguin_coordinates(int* x, int* y) {
   scanf("%d %d", x, y);
 }
 

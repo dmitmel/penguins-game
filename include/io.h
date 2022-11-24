@@ -13,7 +13,9 @@ void get_penguin_count(int* count);
 
 void get_player_name(int player_number, char* name);
 
-void get_penguin_coordinates(int* x, int* y, int player_number);
+void ask_player_for_input(int player_number);
+
+void get_penguin_coordinates(int* x, int* y);
 
 void display_new_turn_message(int player_number);
 
