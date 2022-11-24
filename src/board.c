@@ -37,7 +37,7 @@ void generate_random_board(Board* board) {
 bool placeable_spot_exists(Board* board) {
   for (int y = 0; y < board->height; y++) {
     for (int x = 0; x < board->width; x++) {
-      if (board->grid[y][x] > 0) {
+      if (board->grid[y][x] == 1) {
         return true;
       }
     }

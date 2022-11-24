@@ -13,7 +13,14 @@ typedef struct Coords {
   int y;
 } Coords;
 
-typedef enum SelectedTile { EMPTY, PENGUIN_OWN, PENGUIN_ENEMY, FISH, OUT_OF_BOUNDS } SelectedTile;
+typedef enum SelectedTile {
+  EMPTY,
+  PENGUIN_OWN,
+  PENGUIN_ENEMY,
+  FISH_MULTIPLE,
+  FISH_SINGLE,
+  OUT_OF_BOUNDS
+} SelectedTile;
 
 SelectedTile get_player_input_tile(int* x, int* y, Board* board, Player* current_player) {
   get_penguin_coordinates(x, y);
@@ -29,8 +36,12 @@ SelectedTile get_player_input_tile(int* x, int* y, Board* board, Player* current
     } else {
       return PENGUIN_ENEMY;
     }
+  } else {
+    if (tile == 1) {
+      return FISH_SINGLE;
+    }
   }
-  return FISH;
+  return FISH_MULTIPLE;
 }
 
 void handle_placement_input(
@@ -51,7 +62,10 @@ void handle_placement_input(
     case PENGUIN_OWN:
       display_error_message("This tile is already occupied by a penguin");
       break;
-    case FISH:
+    case FISH_MULTIPLE:
+      display_error_message("Only a tile with just one fish can be selected");
+      break;
+    case FISH_SINGLE:
       return;
     default:
       display_error_message("ERROR: what on god's green earth did you just select???");

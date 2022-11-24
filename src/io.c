@@ -54,6 +54,7 @@ void get_penguin_count(int* count) {
 
 void get_player_name(int player_number, char* name) {
   printf("Player %d, please input name:\n", player_number);
+  // TODO: guard against name being >15 characters
   scanf("%s", name);
 }
 
