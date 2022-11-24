@@ -15,10 +15,6 @@ typedef struct Coords {
 
 typedef enum SelectedTile { EMPTY, PENGUIN_OWN, PENGUIN_ENEMY, FISH, OUT_OF_BOUNDS } SelectedTile;
 
-// differences between placement and movement:
-// * in movement, the player CAN select a tile where THEIR penguin currently is
-// * in movement, it matters where the 2 positions are in relation to each other -> but it doesn't
-
 SelectedTile get_player_input_tile(int* x, int* y, Board* board, Player* current_player) {
   get_penguin_coordinates(x, y);
   if (*x < 0 || *x >= board->width || *y < 0 || *y >= board->height) {
@@ -106,7 +102,6 @@ int main(int argc, char* argv[]) {
     player_data[current_player].points += board.grid[y][x];
     board.grid[y][x] = -player_data[current_player].id;
     penguins_to_place--;
-
     update_game_state_display(&board, player_data, player_count);
     current_player = (current_player + 1) % player_count;
   }
