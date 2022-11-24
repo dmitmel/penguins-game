@@ -84,7 +84,11 @@ void update_game_state_display(Board* board, Player players[], int player_count)
 }
 
 void clear_screen() {
+#ifdef WIN32
+  system("cls");
+#else
   system("clear");
+#endif
 }
 
 void print_end_placement_phase(Board* board, Player players[], int player_count) {
