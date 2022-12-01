@@ -18,14 +18,17 @@ target_include_directories(penguins-lib PUBLIC include)
 add_library(munit munit/munit.c)
 target_include_directories(munit PUBLIC munit)
 
-add_executable(penguins
+# add executables (implementations of the files defined in the header files)
+add_executable(penguins 
   src/main.c
   src/random.c
 )
+# link all the 
 target_link_libraries(penguins PUBLIC penguins-lib)
 
 add_executable(penguins-tests src/tests.c)
-target_link_libraries(penguins-tests PUBLIC munit)
+# add all of the libraries defined in penguins-lib 
+target_link_libraries(penguins-tests PUBLIC munit penguins-lib)
 
 find_package(wxWidgets COMPONENTS core base)
 if(wxWidgets_FOUND)
