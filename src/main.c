@@ -77,6 +77,7 @@ void handle_placement_input(
 int main(int argc, char* argv[]) {
   random_init();
 
+  /*
   int player_count;
   get_players_count(&player_count);
   Player* player_data = malloc(player_count * sizeof(*player_data));
@@ -120,6 +121,26 @@ int main(int argc, char* argv[]) {
     current_player = (current_player + 1) % player_count;
   }
   print_end_placement_phase(&board, player_data, player_count);
+
+  */
+
+  // END OF PLACEMENT PHASE
+  //////////////////////////////////////////////
+  // START OF MOVEMENT PHASE
+
+  // stubbed data for testing movement
+  int player_count = 2;
+  int current_player = 0;
+  Player player_data[2] = { { .id = 0, .name = "player_1", .points = 2 },
+                            { .id = 1, .name = "player_2", .points = 2 } };
+  int row_1[4] = { 1, 0, 1, -1 };
+  int row_2[4] = { 0, -2, 0, 0 };
+  int row_3[4] = { 3, 1, -1, 3 };
+  int row_4[4] = { 0, -2, 1, 0 };
+  int* grid[4] = { row_1, row_2, row_3, row_4 };
+  Board board = { .height = 4, .width = 4, .grid = grid };
+
+  print_board(&board);
 
   return 0;
 }
