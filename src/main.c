@@ -74,6 +74,22 @@ void handle_placement_input(
   }
 }
 
+void handle_movement_input(
+  int* penguin_x,
+  int* penguin_y,
+  int* target_x,
+  int* target_y,
+  Board* board,
+  Player* current_player,
+  int player_count
+) {
+  // TODO: look how handle_placement_input is handled
+  // use movement_is_valid() method to check if the movement is valid
+  // only return (exit) from this method if the movement is valid
+  movement_is_valid(board, *penguin_x, *penguin_y, *target_x, *target_y);
+  return;
+}
+
 int main(int argc, char* argv[]) {
   random_init();
 
@@ -128,19 +144,37 @@ int main(int argc, char* argv[]) {
   //////////////////////////////////////////////
   // START OF MOVEMENT PHASE
 
-  // stubbed data for testing movement
+  // start of static data for testing movement
   int player_count = 2;
   int current_player = 0;
   Player player_data[2] = { { .id = 0, .name = "player_1", .points = 2 },
                             { .id = 1, .name = "player_2", .points = 2 } };
   int row_1[4] = { 1, 0, 1, -1 };
-  int row_2[4] = { 0, -2, 0, 0 };
+  int row_2[4] = { 0, -2, 3, 0 };
   int row_3[4] = { 3, 1, -1, 3 };
   int row_4[4] = { 0, -2, 1, 0 };
   int* grid[4] = { row_1, row_2, row_3, row_4 };
   Board board = { .height = 4, .width = 4, .grid = grid };
-
   print_board(&board);
+  int x;
+  int y;
+  // end of static data for testing movement
+
+  int penguin_x;
+  int penguin_y;
+  while (any_valid_player_move_exist()) {
+    if(!valid_player_move_exist(current_player)){
+      display_error_message("No valid moves for the player");
+    }
+    
+    handle_movement_input(
+      &penguin_x, &penguin_y, &x, &y, &board, &player_data[current_player], player_count
+    );
+    // after this function call we have:
+    // the x and y of the target tile and penguin_x and penguin_y of the penguin moving 
+    // and know that the movement is valid
+    move_penguin(&board, &penguin_x, &penguin_y, &x, &y, player_data[player_count].id);
+  }
 
   return 0;
 }
