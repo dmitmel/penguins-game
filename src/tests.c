@@ -19,24 +19,18 @@ static MunitResult test_example(const MunitParameter params[], void* data) {
 }
 
 static MunitResult test_placeable_spot_exists(const MunitParameter params, void* data) {
-  int grid[2][3] = { { 0, 1, 2 }, { -1, 2, 1 } };
-  int** pointer_grid = calloc(2, sizeof(int*));
-  pointer_grid[0] = grid[0];
-  pointer_grid[1] = grid[1];
+  int* grid[2] = { (int[3]){ 0, 1, 2 }, (int[3]){ -1, 2, 1 } };
 
-  Board board = { .height = 2, .width = 3, .grid = pointer_grid };
+  Board board = { .height = 2, .width = 3, .grid = grid };
 
   munit_assert_true(placeable_spot_exists(&board));
   return MUNIT_OK;
 }
 
 static MunitResult test_placeable_spot_does_not_exist(const MunitParameter params, void* data) {
-  int grid[2][3] = { { 0, 0, 2 }, { -1, -2, 1 } };
-  int** pointer_grid = calloc(2, sizeof(int*));
-  pointer_grid[0] = grid[0];
-  pointer_grid[1] = grid[1];
+  int* grid[2] = { (int[3]){ 0, 0, 2 }, (int[3]){ -1, 2, 1 } };
 
-  Board board = { .height = 2, .width = 3, .grid = pointer_grid };
+  Board board = { .height = 2, .width = 3, .grid = grid };
 
   // munit_assert_false(placeable_spot_exists(&board));
   return MUNIT_OK;
