@@ -13,100 +13,74 @@ int random_range(int min, int max) {
   return munit_rand_int_range(min, max);
 }
 
-static MunitResult test_example(const MunitParameter params[], void* data) {
-  munit_assert(2 + 2 == 4);
-  munit_assert(random_range(0, 1) == 0);
-  return MUNIT_OK;
-}
-
-static MunitResult test_placeable_spot_exists(const MunitParameter params, void* data) {
+static MunitResult test_placeable_spot_exists(const MunitParameter* params, void* data) {
   int* grid[2] = { (int[3]){ 0, 1, 2 }, (int[3]){ -1, 2, 1 } };
-
   Board board = { .height = 2, .width = 3, .grid = grid };
 
-  munit_assert_true(placeable_spot_exists(&board));
+  assert_true(placeable_spot_exists(&board));
   return MUNIT_OK;
 }
 
-static MunitResult test_placeable_spot_does_not_exist(const MunitParameter params, void* data) {
-  int* grid[2] = { (int[3]){ 0, 0, 2 }, (int[3]){ -1, 2, 1 } };
-
+static MunitResult test_placeable_spot_does_not_exist(const MunitParameter* params, void* data) {
+  int* grid[2] = { (int[3]){ 0, 0, 2 }, (int[3]){ -1, -2, 3 } };
   Board board = { .height = 2, .width = 3, .grid = grid };
 
-  munit_assert_false(placeable_spot_exists(&board));
+  assert_false(placeable_spot_exists(&board));
   return MUNIT_OK;
 }
 
-static MunitResult test_valid_movement_exists_for_player(const MunitParameter* params, void* data) {
-  int grid[2][3] = { { -1, 0, -2 }, { 0, 1, 3 } };
-  int** pointer_grid = calloc(2, sizeof(int*));
-  pointer_grid[0] = grid[0];
-  pointer_grid[1] = grid[1];
+static MunitResult
+test_valid_movement_exists_for_player(const MunitParameter* params, void* data) {
+  int* grid[2] = { (int[3]){ -1, 0, -2 }, (int[3]){ 0, 1, 3 } };
+  Board board = { .height = 2, .width = 3, .grid = grid };
 
-  Board board = { .height = 2, .width = 3, .grid = pointer_grid };
-
-  munit_assert_true(valid_movement_exists(&board, 2));
+  assert_true(valid_movement_exists(&board, 2));
   return MUNIT_OK;
 }
 
-static MunitResult test_no_valid_movement_exists_for_player(const MunitParameter* params, void* data) {
-  int grid[2][3] = { { -1, 0, -2 }, { 0, 1, 3 } };
-  int** pointer_grid = calloc(2, sizeof(int*));
-  pointer_grid[0] = grid[0];
-  pointer_grid[1] = grid[1];
+static MunitResult
+test_no_valid_movement_exists_for_player(const MunitParameter* params, void* data) {
+  int* grid[2] = { (int[3]){ -1, 0, -2 }, (int[3]){ 0, 1, 3 } };
+  Board board = { .height = 2, .width = 3, .grid = grid };
 
-  Board board = { .height = 2, .width = 3, .grid = pointer_grid };
-
-  munit_assert_false(valid_movement_exists(&board, 1));
+  assert_false(valid_movement_exists(&board, 1));
   return MUNIT_OK;
 }
 
 static MunitResult test_detect_valid_movement(const MunitParameter* params, void* data) {
-  int grid[1][3] = { { -1, 1, 3 } };
-  int** pointer_grid = calloc(1, sizeof(int*));
-  pointer_grid[0] = grid[0];
+  int* grid[1] = { (int[3]){ -1, 1, 3 } };
+  Board board = { .height = 1, .width = 3, .grid = grid };
 
-  Board board = { .height = 1, .width = 3, .grid = pointer_grid };
-
-  munit_assert_true(movement_is_valid(&board, 0, 0, 2, 0));
+  assert_true(movement_is_valid(&board, 0, 0, 2, 0));
   return MUNIT_OK;
 }
 
 static MunitResult
 test_movement_over_empty_space_invalid(const MunitParameter* params, void* data) {
-  int grid[1][3] = { { -1, 0, 3 } };
-  int** pointer_grid = calloc(1, sizeof(int*));
-  pointer_grid[0] = grid[0];
+  int* grid[1] = { (int[3]){ -1, 0, 3 } };
+  Board board = { .height = 1, .width = 3, .grid = grid };
 
-  Board board = { .height = 1, .width = 3, .grid = pointer_grid };
-
-  munit_assert_false(movement_is_valid(&board, 0, 0, 2, 0));
+  assert_false(movement_is_valid(&board, 0, 0, 2, 0));
   return MUNIT_OK;
 }
 
 static MunitResult test_movement_over_penguin_invalid(const MunitParameter* params, void* data) {
-  int grid[1][3] = { { -1, -2, 3 } };
-  int** pointer_grid = calloc(1, sizeof(int*));
-  pointer_grid[0] = grid[0];
+  int* grid[1] = { (int[3]){ -1, 2, 3 } };
+  Board board = { .height = 1, .width = 3, .grid = grid };
 
-  Board board = { .height = 1, .width = 3, .grid = pointer_grid };
-
-  munit_assert_false(movement_is_valid(&board, 0, 0, 2, 0));
+  assert_false(movement_is_valid(&board, 0, 0, 2, 0));
   return MUNIT_OK;
 }
 
 static MunitResult
 test_move_penguin_and_calculate_points(const MunitParameter* params, void* data) {
-  int grid[1][3] = { { -1, 1, 3 } };
-  int** pointer_grid = calloc(1, sizeof(int*));
-  pointer_grid[0] = grid[0];
+  int* grid[1] = { (int[3]){ -1, 1, 3 } };
+  Board board = { .height = 1, .width = 3, .grid = grid };
 
-  Board board = { .height = 1, .width = 3, .grid = pointer_grid };
-
-  munit_assert_int(move_penguin(&board, 0, 0, 2, 0, 1), ==, 4);
-  munit_assert_int(board.grid[0][0], ==, 0);
-  munit_assert_int(board.grid[0][1], ==, 0);
-  munit_assert_int(board.grid[0][2], ==, -1);
+  assert_int(move_penguin(&board, 0, 0, 2, 0, 1), ==, 4);
+  assert_int(board.grid[0][0], ==, 0);
+  assert_int(board.grid[0][1], ==, 0);
+  assert_int(board.grid[0][2], ==, -1);
   return MUNIT_OK;
 }
 
