@@ -34,7 +34,11 @@ wxEND_EVENT_TABLE();
 
 NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
 : wxDialog(parent, id, "New game options", wxDefaultPosition, wxDefaultSize) {
+#if wxCHECK_VERSION(3, 1, 4)
   float spacing = wxSizerFlags::GetDefaultBorderFractional();
+#else
+  float spacing = wxSizerFlags::GetDefaultBorder();
+#endif
 
   auto grid = new wxFlexGridSizer(
     /* cols */ 2,
