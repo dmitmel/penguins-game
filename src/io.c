@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "gamestate.h"
+#include "board.h"
 
 void print_board(Board* board) {
   printf("   ");
@@ -101,4 +102,13 @@ void print_end_placement_phase(Board* board, Player players[], int player_count)
   print_board(board);
   printf("\n");
   print_player_stats(players, player_count);
+}
+
+
+void get_data_for_movement(int* start_x, int* start_y, int* target_x, int* target_y)
+{
+  printf("Chose a penguin\n");
+  scanf("%d %d", start_x, start_y);
+  printf("Where do you want to move?\n");
+  scanf("%d %d", target_x, target_y);
 }

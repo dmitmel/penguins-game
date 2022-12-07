@@ -9,6 +9,19 @@ typedef struct Board {
   int** grid;
 } Board;
 
+typedef enum MovementInput{
+  OUT_OF_BOUNDS_MOVEMENT,
+  CURRENT_LOCATION,
+  DIAGONAL_MOVE,
+  VALID_INPUT
+}MovementInput;
+
+typedef enum CheckedTile {
+  EMPTY,
+  PENGUIN,
+  VALID_TILE
+} CheckedTile;
+
 Board init_board(int width, int height);
 
 void free_board(Board* board);

@@ -75,20 +75,6 @@ void handle_placement_input(
 }
 
 
-typedef enum MovementInput{
-  OUT_OF_BOUND_MOVEMENT,
-  CURRENT_LOCATION,
-  DIAGONAL_MOVE,
-  VALID_INPUT
-}MovementInput;
-
-typedef enum CheckedTile {
-  EMPTY,
-  PENGUIN,
-  VALID_TILE
-} CheckedTile;
-
-
 void handle_movement_input(
   int* penguin_x,
   int* penguin_y,
@@ -98,13 +84,13 @@ void handle_movement_input(
   Player* current_player,
   int player_count
 ) {
-  get_penguin_coordinates(target_x, target_y);
   while(true)
   {
+    get_data_for_movement(penguin_x, penguin_y, target_x, target_y);
     MovementInput input=check_movement_input(target_x, target_y, penguin_x, penguin_y, board);
     switch(input)
     {
-      case OUT_OF_BOUND_MOVEMENT:
+      case OUT_OF_BOUNDS_MOVEMENT:
       display_error_message("You cant move oustide the board!");
       break;
       case CURRENT_LOCATION:
