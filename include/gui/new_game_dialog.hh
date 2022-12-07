@@ -6,6 +6,7 @@
 #include <wx/gdicmn.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
+#include <wx/spinbutt.h>
 #include <wx/spinctrl.h>
 #include <wx/string.h>
 #include <wx/textctrl.h>
@@ -23,6 +24,7 @@ protected:
   wxSpinCtrl* height_input;
   bool height_was_changed = false;
   wxSpinCtrl* penguins_input;
+  wxSpinCtrl* players_number_input;
   wxFlexGridSizer* players_grid;
   struct PlayerRowWidgets {
     wxTextCtrl* name_input;
@@ -36,6 +38,7 @@ protected:
 
   void add_new_player_row(bool initial = false);
   void realize_player_row(size_t index);
+  void delete_player_row(size_t index);
 
   bool can_submit() const;
 
@@ -46,6 +49,7 @@ protected:
   void on_board_width_input(wxSpinEvent& event);
   void on_board_height_input(wxSpinEvent& event);
   void on_player_delete_clicked(wxCommandEvent& event);
+  void on_players_number_input(wxSpinEvent& event);
 
 private:
   wxDECLARE_EVENT_TABLE();

@@ -5,6 +5,7 @@
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/panel.h>
+#include <wx/spinbutt.h>
 #include <wx/statline.h>
 #include <wx/stattext.h>
 #include <wx/string.h>
@@ -13,6 +14,7 @@ enum {
   ID_BOARD_WIDTH = wxID_HIGHEST + 1,
   ID_BOARD_HEIGHT,
   ID_PENGUINS_NUMBER,
+  ID_PLAYERS_NUMBER,
   ID_PLAYER_NAME,
   ID_PLAYER_DELETE,
 };
@@ -26,6 +28,7 @@ wxBEGIN_EVENT_TABLE(NewGameDialog, wxDialog)
   EVT_SPINCTRL(ID_BOARD_WIDTH, NewGameDialog::on_board_width_input)
   EVT_SPINCTRL(ID_BOARD_HEIGHT, NewGameDialog::on_board_height_input)
   EVT_BUTTON(ID_PLAYER_DELETE, NewGameDialog::on_player_delete_clicked)
+  EVT_SPINCTRL(ID_PLAYERS_NUMBER, NewGameDialog::on_players_number_input)
 wxEND_EVENT_TABLE();
 // clang-format on
 
@@ -63,6 +66,13 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   this->penguins_input->SetRange(1, 100);
   grid->Add(this->penguins_input, wxSizerFlags().Expand());
 
+  auto players_number_label = new wxStaticText(panel, ID_PLAYERS_NUMBER, "Number of players:");
+  grid->Add(players_number_label, wxSizerFlags().Centre().Left());
+  this->players_number_input = new wxSpinCtrl(panel, ID_PLAYERS_NUMBER);
+  this->players_number_input->SetValue(2);
+  this->players_number_input->SetRange(1, 100);
+  grid->Add(this->players_number_input, wxSizerFlags().Expand());
+
   this->players_grid = new wxFlexGridSizer(
     /* cols */ 2,
     /* vgap */ wxRound(spacing),
@@ -71,7 +81,7 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   this->players_grid->AddGrowableCol(0, 1);
 
   this->add_new_player_row(true);
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < this->players_number_input->GetValue(); i++) {
     this->add_new_player_row();
   }
 
@@ -125,6 +135,13 @@ void NewGameDialog::realize_player_row(size_t index) {
   row.delete_btn->Show();
 }
 
+void NewGameDialog::delete_player_row(size_t index) {
+  PlayerRowWidgets& row = this->player_rows.at(index);
+  row.name_input->Destroy();
+  row.delete_btn->Destroy();
+  this->player_rows.erase(&row);
+}
+
 bool NewGameDialog::can_submit() const {
   if (this->player_rows.size() <= 0) {
     return false;
@@ -150,14 +167,14 @@ void NewGameDialog::on_close(wxCommandEvent& event) {
 void NewGameDialog::on_player_name_input(wxCommandEvent& event) {
   if (event.GetEventObject() == this->new_player_row.name_input) {
     this->add_new_player_row();
+    this->players_number_input->SetValue(this->player_rows.size());
     this->update_layout();
   }
 }
 
 void NewGameDialog::on_player_name_enter_pressed(wxCommandEvent& event) {
   for (size_t i = 0; i < this->player_rows.size(); i++) {
-    const PlayerRowWidgets& row = this->player_rows.at(i);
-    if (row.name_input == event.GetEventObject()) {
+    if (this->player_rows.at(i).name_input == event.GetEventObject()) {
       for (size_t j = i + 1; j < this->player_rows.size(); j++) {
         PlayerRowWidgets& row = this->player_rows.at(j);
         if (row.name_input->IsEmpty()) {
@@ -188,17 +205,34 @@ void NewGameDialog::on_board_height_input(wxSpinEvent& event) {
 
 void NewGameDialog::on_player_delete_clicked(wxCommandEvent& event) {
   for (size_t i = 0; i < this->player_rows.size(); i++) {
-    PlayerRowWidgets& row = this->player_rows.at(i);
-    if (row.delete_btn == event.GetEventObject()) {
-      row.name_input->Destroy();
-      row.delete_btn->Destroy();
-      this->player_rows.erase(&row);
-      for (size_t j = 0; j < this->player_rows.size(); j++) {
-        this->realize_player_row(j);
+    if (this->player_rows.at(i).delete_btn == event.GetEventObject()) {
+      if (this->player_rows.size() > 1) {
+        this->delete_player_row(i);
+        this->players_number_input->SetValue(this->player_rows.size());
+        for (size_t j = 0; j < this->player_rows.size(); j++) {
+          this->realize_player_row(j);
+        }
+        this->update_layout();
       }
-      this->update_layout();
       return;
     }
   }
   event.Skip();
+}
+
+void NewGameDialog::on_players_number_input(wxSpinEvent& event) {
+  size_t prev_len = this->player_rows.size();
+  size_t next_len = this->players_number_input->GetValue();
+  if (next_len < prev_len) {
+    for (size_t i = prev_len - 1; i >= next_len; i--) {
+      this->delete_player_row(i);
+    }
+  } else if (next_len > prev_len) {
+    for (size_t i = prev_len; i < next_len; i++) {
+      this->add_new_player_row();
+    }
+  } else {
+    return;
+  }
+  this->update_layout();
 }
