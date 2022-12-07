@@ -63,8 +63,9 @@ bool any_valid_movement_exists(Board* board, Player* players, int player_count){
 }
 
 
-MovementInput check_movement_input(int target_x, int target_y, int start_x, int start_y, Board* board)
+MovementInput check_movement_input(int target_x, int target_y, int start_x, int start_y, Board* board, Player* current_player)
 {
+  int tile=board->grid[start_y][start_x];
   if (target_x < 0 || target_x >= board->width || target_y < 0 || target_y >= board->height)
   {
     return OUT_OF_BOUNDS_MOVEMENT; 
@@ -74,6 +75,9 @@ MovementInput check_movement_input(int target_x, int target_y, int start_x, int 
   }else if(target_x!=start_x&&target_y!=start_y)
   {
     return DIAGONAL_MOVE;
+  }else if(-tile!=current_player->id)
+  {
+    return NOT_YOUR_PENGUIN;
   }
   return VALID_INPUT;
 }
@@ -100,41 +104,24 @@ bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int
     {
       movement_start=target_x;
       movement_end=start_x;
-
-      for(x=movement_start;x<movement_end;x++)
-      {
-        CheckedTile tile=check_a_tile(x, start_y, board);
-        switch(tile)
-        {
-          case EMPTY:
-          display_error_message("You cant move over an empty tile!");
-          break;
-          case PENGUIN:
-          display_error_message("You cant move over another penguin!");
-          break;
-          case VALID_TILE:
-          return;
-        }
-      }
     }else
     {
-      movement_start=start_x;
-      movement_end=target_x;
-
-      for(x=movement_start+1;x<movement_end+1;x++)
+      movement_start=start_x+1;
+      movement_end=target_x+1;
+    }
+    for(x=movement_start;x<movement_end;x++)
+    {
+      CheckedTile tile=check_a_tile(x, start_y, board);
+      switch(tile)
       {
-        CheckedTile tile=check_a_tile(x, start_y, board);
-        switch(tile)
-        {
-          case EMPTY:
-          display_error_message("You cant move over an empty tile!");
-          break;
-          case PENGUIN:
-          display_error_message("You cant move over another penguin!");
-          break;
-          case VALID_TILE:
-          return;
-        } 
+        case EMPTY:
+        display_error_message("You cant move over an empty tile!");
+        break;
+        case PENGUIN:
+        display_error_message("You cant move over another penguin!");
+        break;
+        case VALID_TILE:
+        return;
       }
     }
   }else
@@ -143,41 +130,24 @@ bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int
     {
       movement_start=target_y;
       movement_end=start_y;
-
-      for(y=movement_start;y<movement_end;y++)
-      {
-        CheckedTile tile=check_a_tile(start_x, y, board);
-        switch(tile)
-        {
-          case EMPTY:
-          display_error_message("You cant move over an empty tile!");
-          break;
-          case PENGUIN:
-          display_error_message("You cant move over another penguin!");
-          break;
-          case VALID_TILE:
-          return;
-        }
-      }
     }else
     {
-      movement_start=start_y;
-      movement_end=target_y;
-
-      for(y=movement_start+1;y<movement_end+1;y++)
+      movement_start=start_y+1;
+      movement_end=target_y+1;
+    }
+    for(y=movement_start+1;y<movement_end+1;y++)
+    {
+      CheckedTile tile=check_a_tile(start_x, y, board);
+      switch(tile)
       {
-        CheckedTile tile=check_a_tile(start_x, y, board);
-        switch(tile)
-        {
-          case EMPTY:
-          display_error_message("You cant move over an empty tile!");
-          break;
-          case PENGUIN:
-          display_error_message("You cant move over another penguin!");
-          break;
-          case VALID_TILE:
-          return;
-        }
+        case EMPTY:
+        display_error_message("You cant move over an empty tile!");
+        break;
+        case PENGUIN:
+        display_error_message("You cant move over another penguin!");
+        break;
+        case VALID_TILE:
+        return;
       }
     }
   }

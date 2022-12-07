@@ -87,7 +87,7 @@ void handle_movement_input(
   while(true)
   {
     get_data_for_movement(penguin_x, penguin_y, target_x, target_y);
-    MovementInput input=check_movement_input(target_x, target_y, penguin_x, penguin_y, board);
+    MovementInput input=check_movement_input(target_x, target_y, penguin_x, penguin_y, board, current_player);
     switch(input)
     {
       case OUT_OF_BOUNDS_MOVEMENT:
@@ -99,6 +99,8 @@ void handle_movement_input(
       case DIAGONAL_MOVE:
       display_error_message("You cant move diagonaly!");
       break;
+      case NOT_YOUR_PENGUIN:
+      display_error_message("Chose YOUR PENGUIN for movement");
       case VALID_INPUT:
       return;
 
