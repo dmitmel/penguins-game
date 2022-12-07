@@ -13,6 +13,7 @@ typedef enum MovementInput{
   OUT_OF_BOUNDS_MOVEMENT,
   CURRENT_LOCATION,
   DIAGONAL_MOVE,
+  NOT_YOUR_PENGUIN,
   VALID_INPUT
 }MovementInput;
 
