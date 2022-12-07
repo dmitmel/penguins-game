@@ -1,9 +1,9 @@
 #include "gui/main.hh"
+#include "gui/new_game_dialog.hh"
 #include <cmath>
 #include <wx/dcclient.h>
 #include <wx/gdicmn.h>
 #include <wx/graphics.h>
-#include <wx/gtk/brush.h>
 #include <wx/log.h>
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
@@ -39,12 +39,27 @@ bool PenguinsApp::OnInit() {
   }
 
   this->game_frame = new GameFrame();
-  this->game_frame->Show(true);
+  this->game_frame->Centre();
+  this->game_frame->Show();
   return true;
 }
 
+enum {
+  ID_NEW_GAME = wxID_HIGHEST + 1,
+};
+
+// clang-format off
+wxBEGIN_EVENT_TABLE(GameFrame, wxFrame)
+  EVT_MENU(ID_NEW_GAME, GameFrame::OnNewGame)
+  EVT_MENU(wxID_ABOUT, GameFrame::OnAbout)
+  EVT_MENU(wxID_EXIT, GameFrame::OnExit)
+wxEND_EVENT_TABLE();
+// clang-format on
+
 GameFrame::GameFrame() : wxFrame(nullptr, wxID_ANY, "Penguins game") {
   auto menuFile = new wxMenu();
+  menuFile->Append(ID_NEW_GAME, "&New Game...\tCtrl-N", "Start a new game");
+  menuFile->AppendSeparator();
   menuFile->Append(wxID_EXIT);
 
   auto menuHelp = new wxMenu();
@@ -54,21 +69,23 @@ GameFrame::GameFrame() : wxFrame(nullptr, wxID_ANY, "Penguins game") {
   menuBar->Append(menuFile, "&File");
   menuBar->Append(menuHelp, "&Help");
 
-  auto v_sizer = new wxBoxSizer(wxVERTICAL);
-  auto h_sizer = new wxBoxSizer(wxHORIZONTAL);
+  auto vbox = new wxBoxSizer(wxVERTICAL);
+  auto hbox = new wxBoxSizer(wxHORIZONTAL);
 
   this->board_panel = new BoardPanel(this);
-  v_sizer->Add(board_panel, 1, wxALIGN_CENTRE);
-  h_sizer->Add(v_sizer, 1, wxALIGN_CENTRE);
+  vbox->Add(this->board_panel, wxSizerFlags(1).Centre().Border());
+  hbox->Add(vbox, wxSizerFlags(1).Centre().Border());
 
-  this->SetSizerAndFit(h_sizer);
+  this->SetSizerAndFit(hbox);
   this->SetMenuBar(menuBar);
 
   this->CreateStatusBar();
   this->SetStatusText("Welcome to wxWidgets!");
+}
 
-  this->Bind(wxEVT_MENU, &GameFrame::OnAbout, this, wxID_ABOUT);
-  this->Bind(wxEVT_MENU, &GameFrame::OnExit, this, wxID_EXIT);
+void GameFrame::OnNewGame(wxCommandEvent& event) {
+  NewGameDialog dialog(this, wxID_ANY);
+  int result = dialog.ShowModal();
 }
 
 void GameFrame::OnExit(wxCommandEvent& event) {
@@ -81,8 +98,13 @@ void GameFrame::OnAbout(wxCommandEvent& event) {
   );
 }
 
+// clang-format off
+wxBEGIN_EVENT_TABLE(BoardPanel, wxPanel)
+  EVT_PAINT(BoardPanel::OnPaint)
+wxEND_EVENT_TABLE();
+// clang-format on
+
 BoardPanel::BoardPanel(wxFrame* parent) : wxPanel(parent) {
-  this->Bind(wxEVT_PAINT, &BoardPanel::OnPaint, this);
   this->SetBackgroundColour(*wxWHITE);
 }
 

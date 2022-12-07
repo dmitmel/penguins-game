@@ -36,6 +36,7 @@ if(wxWidgets_FOUND)
   add_executable(penguins-gui
     src/gui/main.cc
     src/gui/better_random.cc
+    src/gui/new_game_dialog.cc
   )
   target_link_libraries(penguins-gui PUBLIC penguins-lib)
 
