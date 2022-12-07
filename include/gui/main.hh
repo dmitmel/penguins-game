@@ -1,10 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <wx/app.h>
 #include <wx/dc.h>
 #include <wx/event.h>
 #include <wx/frame.h>
 #include <wx/panel.h>
+#include <wx/window.h>
 
 extern "C" {
 #include "board.h"
@@ -14,7 +16,7 @@ class PenguinsApp;
 
 class BoardPanel : public wxPanel {
 public:
-  BoardPanel(wxFrame* parent);
+  BoardPanel(wxWindow* parent);
 
   static const wxCoord CELL_SIZE = 32;
   static const int CELL_FONT_SIZE = 16;
@@ -30,13 +32,14 @@ private:
 
 class GameFrame : public wxFrame {
 public:
-  GameFrame();
+  GameFrame(wxWindow* parent, wxWindowID id);
+
+  void start_new_game();
 
 protected:
-  void OnHello(wxCommandEvent& event);
-  void OnExit(wxCommandEvent& event);
-  void OnAbout(wxCommandEvent& event);
-  void OnNewGame(wxCommandEvent& event);
+  void on_exit(wxCommandEvent& event);
+  void on_about(wxCommandEvent& event);
+  void on_new_game(wxCommandEvent& event);
 
   BoardPanel* board_panel;
 
@@ -47,11 +50,9 @@ private:
 class PenguinsApp : public wxApp {
 public:
   PenguinsApp();
-  virtual ~PenguinsApp();
   virtual bool OnInit() override;
 
-  bool board_inited = false;
-  Board board;
+  std::shared_ptr<Board> board;
 
 private:
   GameFrame* game_frame;

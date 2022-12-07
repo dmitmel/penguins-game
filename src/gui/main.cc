@@ -17,30 +17,16 @@ wxIMPLEMENT_APP(PenguinsApp);
 
 PenguinsApp::PenguinsApp() {}
 
-PenguinsApp::~PenguinsApp() {
-  if (this->board_inited) {
-    free_board(&this->board);
-  }
-}
-
 bool PenguinsApp::OnInit() {
   random_init();
 
-  this->board = init_board(20, 20);
-  this->board_inited = true;
-  generate_random_board(&this->board);
-
-  for (int player = 1; player <= 3; player++) {
-    for (int penguin = 0; penguin < 2; penguin++) {
-      int y = random_range(0, this->board.height - 1);
-      int x = random_range(0, this->board.width - 1);
-      this->board.grid[y][x] = -player;
-    }
-  }
-
-  this->game_frame = new GameFrame();
+  this->game_frame = new GameFrame(nullptr, wxID_ANY);
   this->game_frame->Centre();
   this->game_frame->Show();
+
+  this->Yield(true);
+  this->game_frame->start_new_game();
+
   return true;
 }
 
@@ -50,9 +36,9 @@ enum {
 
 // clang-format off
 wxBEGIN_EVENT_TABLE(GameFrame, wxFrame)
-  EVT_MENU(ID_NEW_GAME, GameFrame::OnNewGame)
-  EVT_MENU(wxID_ABOUT, GameFrame::OnAbout)
-  EVT_MENU(wxID_EXIT, GameFrame::OnExit)
+  EVT_MENU(ID_NEW_GAME, GameFrame::on_new_game)
+  EVT_MENU(wxID_ABOUT, GameFrame::on_about)
+  EVT_MENU(wxID_EXIT, GameFrame::on_exit)
 wxEND_EVENT_TABLE();
 // clang-format on
 
@@ -83,19 +69,45 @@ GameFrame::GameFrame() : wxFrame(nullptr, wxID_ANY, "Penguins game") {
   this->SetStatusText("Welcome to wxWidgets!");
 }
 
-void GameFrame::OnNewGame(wxCommandEvent& event) {
-  NewGameDialog dialog(this, wxID_ANY);
-  int result = dialog.ShowModal();
+void GameFrame::on_new_game(wxCommandEvent& event) {
+  this->start_new_game();
 }
 
-void GameFrame::OnExit(wxCommandEvent& event) {
+void GameFrame::on_exit(wxCommandEvent& event) {
   this->Close(true);
 }
 
-void GameFrame::OnAbout(wxCommandEvent& event) {
+void GameFrame::on_about(wxCommandEvent& event) {
   wxMessageBox(
     "This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION
   );
+}
+
+void GameFrame::start_new_game() {
+  NewGameDialog dialog(this, wxID_ANY);
+  int result = dialog.ShowModal();
+  if (result != wxID_OK) {
+    return;
+  }
+
+  Board* board_ptr = new Board;
+  *board_ptr = init_board(dialog.get_board_width(), dialog.get_board_height());
+  std::shared_ptr<Board> board(board_ptr, free_board);
+  wxGetApp().board = board;
+
+  generate_random_board(board.get());
+
+  for (int player = 1; player <= dialog.get_number_of_players(); player++) {
+    for (int penguin = 0; penguin < dialog.get_penguins_per_player(); penguin++) {
+      int y = random_range(0, board->height - 1);
+      int x = random_range(0, board->width - 1);
+      board->grid[y][x] = -player;
+    }
+  }
+
+  this->board_panel->InvalidateBestSize();
+  this->GetSizer()->SetSizeHints(this);
+  this->Refresh();
 }
 
 // clang-format off
@@ -104,17 +116,23 @@ wxBEGIN_EVENT_TABLE(BoardPanel, wxPanel)
 wxEND_EVENT_TABLE();
 // clang-format on
 
-BoardPanel::BoardPanel(wxFrame* parent) : wxPanel(parent) {
-  this->SetBackgroundColour(*wxWHITE);
-}
+BoardPanel::BoardPanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {}
 
 wxSize BoardPanel::DoGetBestClientSize() const {
-  auto board = &wxGetApp().board;
-  return CELL_SIZE * wxSize(board->width, board->height);
+  if (auto& board = wxGetApp().board) {
+    return CELL_SIZE * wxSize(board->width, board->height);
+  } else {
+    return wxSize(640, 640);
+  }
 }
 
 void BoardPanel::OnPaint(wxPaintEvent& event) {
   wxPaintDC dc(this);
+
+  auto& board = wxGetApp().board;
+  if (!board) {
+    return;
+  }
 
   dc.SetTextForeground(*wxBLACK);
   const wxFont default_font = dc.GetFont();
@@ -123,7 +141,6 @@ void BoardPanel::OnPaint(wxPaintEvent& event) {
   cell_font.SetPointSize(CELL_FONT_SIZE);
   dc.SetFont(cell_font);
 
-  auto board = &wxGetApp().board;
   for (int y = 0; y < board->height; y++) {
     for (int x = 0; x < board->width; x++) {
       int cell = board->grid[y][x];

@@ -4,7 +4,6 @@
 #include <wx/dialog.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
-#include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/spinbutt.h>
 #include <wx/spinctrl.h>
@@ -16,9 +15,13 @@ class NewGameDialog : public wxDialog {
 public:
   NewGameDialog(wxWindow* parent, wxWindowID id);
 
-protected:
-  wxPanel* main_panel;
+  int get_board_width() const;
+  int get_board_height() const;
+  int get_penguins_per_player() const;
+  size_t get_number_of_players() const;
+  wxString get_player_name(size_t index) const;
 
+protected:
   wxSpinCtrl* width_input;
   bool width_was_changed = false;
   wxSpinCtrl* height_input;
@@ -39,8 +42,6 @@ protected:
   void add_new_player_row(bool initial = false);
   void realize_player_row(size_t index);
   void delete_player_row(size_t index);
-
-  bool can_submit() const;
 
   void on_ok(wxCommandEvent& event);
   void on_close(wxCommandEvent& event);

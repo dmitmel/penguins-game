@@ -34,9 +34,6 @@ wxEND_EVENT_TABLE();
 
 NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
 : wxDialog(parent, id, "New game options", wxDefaultPosition, wxDefaultSize) {
-  this->main_panel = new wxPanel(this);
-  auto panel = this->main_panel;
-
   float spacing = wxSizerFlags::GetDefaultBorderFractional();
 
   auto grid = new wxFlexGridSizer(
@@ -45,30 +42,30 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
     /* hgap */ wxRound(spacing * 3)
   );
 
-  auto width_label = new wxStaticText(panel, ID_BOARD_WIDTH, "Board width:");
+  auto width_label = new wxStaticText(this, ID_BOARD_WIDTH, "Board width:");
   grid->Add(width_label, wxSizerFlags().Centre().Left());
-  this->width_input = new wxSpinCtrl(panel, ID_BOARD_WIDTH);
+  this->width_input = new wxSpinCtrl(this, ID_BOARD_WIDTH);
   this->width_input->SetValue(20);
   this->width_input->SetRange(1, 1000);
   grid->Add(this->width_input, wxSizerFlags().Expand());
 
-  auto height_label = new wxStaticText(panel, ID_BOARD_HEIGHT, "Board height:");
+  auto height_label = new wxStaticText(this, ID_BOARD_HEIGHT, "Board height:");
   grid->Add(height_label, wxSizerFlags().Centre().Left());
-  this->height_input = new wxSpinCtrl(panel, ID_BOARD_HEIGHT);
+  this->height_input = new wxSpinCtrl(this, ID_BOARD_HEIGHT);
   this->height_input->SetValue(20);
   this->height_input->SetRange(1, 1000);
   grid->Add(this->height_input, wxSizerFlags().Expand());
 
-  auto penguins_number_label = new wxStaticText(panel, ID_PENGUINS_NUMBER, "Penguins per player:");
+  auto penguins_number_label = new wxStaticText(this, ID_PENGUINS_NUMBER, "Penguins per player:");
   grid->Add(penguins_number_label, wxSizerFlags().Centre().Left());
-  this->penguins_input = new wxSpinCtrl(panel, ID_PENGUINS_NUMBER);
+  this->penguins_input = new wxSpinCtrl(this, ID_PENGUINS_NUMBER);
   this->penguins_input->SetValue(2);
   this->penguins_input->SetRange(1, 100);
   grid->Add(this->penguins_input, wxSizerFlags().Expand());
 
-  auto players_number_label = new wxStaticText(panel, ID_PLAYERS_NUMBER, "Number of players:");
+  auto players_number_label = new wxStaticText(this, ID_PLAYERS_NUMBER, "Number of players:");
   grid->Add(players_number_label, wxSizerFlags().Centre().Left());
-  this->players_number_input = new wxSpinCtrl(panel, ID_PLAYERS_NUMBER);
+  this->players_number_input = new wxSpinCtrl(this, ID_PLAYERS_NUMBER);
   this->players_number_input->SetValue(2);
   this->players_number_input->SetRange(1, 100);
   grid->Add(this->players_number_input, wxSizerFlags().Expand());
@@ -85,13 +82,15 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
     this->add_new_player_row();
   }
 
+  this->player_rows.at(0).name_input->SetValue("A");
+  this->player_rows.at(1).name_input->SetValue("B");
+
   auto grids_vbox = new wxBoxSizer(wxVERTICAL);
   grids_vbox->Add(grid, wxSizerFlags().Expand().DoubleBorder(wxBOTTOM));
   grids_vbox->Add(this->players_grid, wxSizerFlags().Expand());
-  panel->SetSizerAndFit(grids_vbox);
 
   auto outer_vbox = new wxBoxSizer(wxVERTICAL);
-  outer_vbox->Add(panel, wxSizerFlags().Expand().DoubleBorder());
+  outer_vbox->Add(grids_vbox, wxSizerFlags().Expand().DoubleBorder());
   this->buttons_sizer = this->CreateStdDialogButtonSizer(wxOK | wxCLOSE);
   this->SetEscapeId(wxID_CLOSE);
   outer_vbox->Add(new wxStaticLine(this), wxSizerFlags().Expand());
@@ -102,12 +101,30 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
 }
 
 void NewGameDialog::update_layout() {
-  this->main_panel->GetSizer()->SetSizeHints(this->main_panel);
   this->GetSizer()->SetSizeHints(this);
 }
 
+int NewGameDialog::get_board_width() const {
+  return this->width_input->GetValue();
+}
+
+int NewGameDialog::get_board_height() const {
+  return this->height_input->GetValue();
+}
+
+int NewGameDialog::get_penguins_per_player() const {
+  return this->penguins_input->GetValue();
+}
+
+size_t NewGameDialog::get_number_of_players() const {
+  return this->player_rows.size();
+}
+
+wxString NewGameDialog::get_player_name(size_t index) const {
+  return this->player_rows.at(index).name_input->GetValue();
+}
+
 void NewGameDialog::add_new_player_row(bool initial) {
-  auto panel = this->main_panel;
   auto grid = this->players_grid;
 
   if (!initial) {
@@ -116,13 +133,13 @@ void NewGameDialog::add_new_player_row(bool initial) {
   }
 
   auto name_input = new wxTextCtrl(
-    panel, ID_PLAYER_NAME, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER
+    this, ID_PLAYER_NAME, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER
   );
   name_input->SetHint("Add a new player...");
   grid->Add(name_input, wxSizerFlags().Expand());
 
   auto delete_btn =
-    new wxBitmapButton(panel, ID_PLAYER_DELETE, wxArtProvider::GetIcon(wxART_CROSS_MARK));
+    new wxBitmapButton(this, ID_PLAYER_DELETE, wxArtProvider::GetIcon(wxART_CROSS_MARK));
   delete_btn->Hide();
   grid->Add(delete_btn, wxSizerFlags());
 
@@ -142,22 +159,17 @@ void NewGameDialog::delete_player_row(size_t index) {
   this->player_rows.erase(&row);
 }
 
-bool NewGameDialog::can_submit() const {
-  if (this->player_rows.size() <= 0) {
-    return false;
+void NewGameDialog::on_ok(wxCommandEvent& event) {
+  if (this->player_rows.empty()) {
+    return;
   }
   for (auto& row : this->player_rows) {
     if (row.name_input->IsEmpty()) {
-      return false;
+      row.name_input->SetFocus();
+      return;
     }
   }
-  return true;
-}
-
-void NewGameDialog::on_ok(wxCommandEvent& event) {
-  if (this->can_submit()) {
-    this->EndModal(wxID_OK);
-  }
+  this->EndModal(wxID_OK);
 }
 
 void NewGameDialog::on_close(wxCommandEvent& event) {
