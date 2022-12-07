@@ -185,19 +185,23 @@ int main(int argc, char* argv[]) {
 
   int penguin_x;
   int penguin_y;
+  int points_gained;
   while (any_valid_player_move_exist()) {
     if(!valid_player_move_exist(current_player)){
       display_error_message("No valid moves for the player");
     }
-    
+    display_new_turn_message(player_data[current_player].id);
     handle_movement_input(
       &penguin_x, &penguin_y, &x, &y, &board, &player_data[current_player], player_count
     );
     // after this function call we have:
     // the x and y of the target tile and penguin_x and penguin_y of the penguin moving 
     // and know that the movement is valid
-    move_penguin(&board, &penguin_x, &penguin_y, &x, &y, player_data[player_count].id);
+    points_gained=move_penguin(&board, &penguin_x, &penguin_y, &x, &y, player_data[player_count].id);
+    player_data[current_player].points+=points_gained;
+    update_game_state_display(&board, player_data, player_count);
+    current_player=(current_player+1)%player_count;
   }
-
+  
   return 0;
 }

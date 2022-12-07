@@ -162,5 +162,9 @@ int move_penguin(Board* board, int start_x, int start_y, int target_x, int targe
   // remove the tiles destroyed by the movement (set to 0)
   // set the target position as -player_id (board->grid[target_y][target_x] = -player_id)
   // count and then return the number of fish captured on the way
-  return 1;
+  int points_gained=board->grid[target_y][target_x];
+  board->grid[target_y][target_x]=-player_id;
+  board->grid[start_y][start_x]=0;
+
+  return points_gained;
 }
