@@ -42,7 +42,7 @@ wxBEGIN_EVENT_TABLE(GameFrame, wxFrame)
 wxEND_EVENT_TABLE();
 // clang-format on
 
-GameFrame::GameFrame() : wxFrame(nullptr, wxID_ANY, "Penguins game") {
+GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Penguins game") {
   auto menuFile = new wxMenu();
   menuFile->Append(ID_NEW_GAME, "&New Game...\tCtrl-N", "Start a new game");
   menuFile->AppendSeparator();
