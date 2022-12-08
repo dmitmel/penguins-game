@@ -8,13 +8,8 @@
 #include "io.h"
 #include "random.h"
 
-typedef struct Coords {
-  int x;
-  int y;
-} Coords;
-
 typedef enum SelectedTile {
-  EMPTY,
+  EMPTY_TILE,
   PENGUIN_OWN,
   PENGUIN_ENEMY,
   FISH_MULTIPLE,
@@ -29,7 +24,7 @@ SelectedTile get_player_input_tile(int* x, int* y, Board* board, Player* current
   }
   int tile = board->grid[*y][*x];
   if (tile == 0) {
-    return EMPTY;
+    return EMPTY_TILE;
   } else if (tile < 0) {
     if (-tile == current_player->id) {
       return PENGUIN_OWN;
@@ -53,7 +48,7 @@ void handle_placement_input(
     case OUT_OF_BOUNDS:
       display_error_message("Inputted coordinates are outside the bounds of the board");
       break;
-    case EMPTY:
+    case EMPTY_TILE:
       display_error_message("This tile is empty, you can't select an empty(water) tile");
       break;
     case PENGUIN_ENEMY:
@@ -74,7 +69,6 @@ void handle_placement_input(
   }
 }
 
-
 void handle_movement_input(
   int* penguin_x,
   int* penguin_y,
@@ -84,26 +78,24 @@ void handle_movement_input(
   Player* current_player,
   int player_count
 ) {
-  while(true)
-  {
+  while (true) {
     get_data_for_movement(penguin_x, penguin_y, target_x, target_y);
-    MovementInput input=check_movement_input(target_x, target_y, penguin_x, penguin_y, board, current_player);
-    switch(input)
-    {
-      case OUT_OF_BOUNDS_MOVEMENT:
+    MovementInput input =
+      check_movement_input(*target_x, *target_y, *penguin_x, *penguin_y, board, current_player);
+    switch (input) {
+    case OUT_OF_BOUNDS_MOVEMENT:
       display_error_message("You cant move oustide the board!");
       break;
-      case CURRENT_LOCATION:
+    case CURRENT_LOCATION:
       display_error_message("Thats your current location");
       break;
-      case DIAGONAL_MOVE:
+    case DIAGONAL_MOVE:
       display_error_message("You cant move diagonaly!");
       break;
-      case NOT_YOUR_PENGUIN:
+    case NOT_YOUR_PENGUIN:
       display_error_message("Chose YOUR PENGUIN for movement");
-      case VALID_INPUT:
+    case VALID_INPUT:
       return;
-
     }
   }
   // TODO: look how handle_placement_input is handled
@@ -170,8 +162,8 @@ int main(int argc, char* argv[]) {
   // start of static data for testing movement
   int player_count = 2;
   int current_player = 0;
-  Player player_data[2] = { { .id = 0, .name = "player_1", .points = 2 },
-                            { .id = 1, .name = "player_2", .points = 2 } };
+  Player player_data[2] = { { .id = 1, .name = "player_1", .points = 2 },
+                            { .id = 2, .name = "player_2", .points = 2 } };
   int row_1[4] = { 1, 0, 1, -1 };
   int row_2[4] = { 0, -2, 3, 0 };
   int row_3[4] = { 3, 1, -1, 3 };
@@ -186,8 +178,8 @@ int main(int argc, char* argv[]) {
   int penguin_x;
   int penguin_y;
   int points_gained;
-  while (any_valid_player_move_exist()) {
-    if(!valid_player_move_exist(current_player)){
+  while (any_valid_movement_exists(&board, player_data, player_count)) {
+    if (!any_valid_player_move_exists(&board, current_player)) {
       display_error_message("No valid moves for the player");
     }
     display_new_turn_message(player_data[current_player].id);
@@ -195,13 +187,13 @@ int main(int argc, char* argv[]) {
       &penguin_x, &penguin_y, &x, &y, &board, &player_data[current_player], player_count
     );
     // after this function call we have:
-    // the x and y of the target tile and penguin_x and penguin_y of the penguin moving 
+    // the x and y of the target tile and penguin_x and penguin_y of the penguin moving
     // and know that the movement is valid
-    points_gained=move_penguin(&board, &penguin_x, &penguin_y, &x, &y, player_data[player_count].id);
-    player_data[current_player].points+=points_gained;
+    points_gained = move_penguin(&board, penguin_x, penguin_y, x, y, player_data[current_player].id);
+    player_data[current_player].points += points_gained;
     update_game_state_display(&board, player_data, player_count);
-    current_player=(current_player+1)%player_count;
+    current_player = (current_player + 1) % player_count;
   }
-  
+
   return 0;
 }

@@ -2,8 +2,8 @@
 #include <stdlib.h>
 
 #include "board.h"
-#include "random.h"
 #include "gamestate.h"
+#include "random.h"
 
 Board init_board(int width, int height) {
   int** grid = calloc(height, sizeof(int*));
@@ -46,37 +46,34 @@ bool placeable_spot_exists(Board* board) {
   return false;
 }
 
-bool valid_movement_exists(Board* board, int player_id) {
+bool any_valid_player_move_exists(Board* board, int player_id) {
   // TODO the selected player can move their penguin
   // players are encoded on the board as an integer equal to -player_id
-  // so a row [0, 1, -1, -2] means that player 1 and player 2 have a penguin on the right half of the row
+  // so a row [0, 1, -1, -2] means that player 1 and player 2 have a penguin on the right half of
+  // the row
   return true;
 }
 
-bool any_valid_movement_exists(Board* board, Player* players, int player_count){
-  for(int i =0; i<player_count; i++){
-    if(valid_movement_exists(board, players[i].id)){
+bool any_valid_movement_exists(Board* board, Player* players, int player_count) {
+  for (int i = 0; i < player_count; i++) {
+    if (any_valid_player_move_exists(board, players[i].id)) {
       return true;
     }
   }
   return false;
 }
 
-
-MovementInput check_movement_input(int target_x, int target_y, int start_x, int start_y, Board* board, Player* current_player)
-{
-  int tile=board->grid[start_y][start_x];
-  if (target_x < 0 || target_x >= board->width || target_y < 0 || target_y >= board->height)
-  {
-    return OUT_OF_BOUNDS_MOVEMENT; 
-  }else if(target_x==start_x&&target_y==start_y)
-  {
+MovementInput check_movement_input(
+  int target_x, int target_y, int start_x, int start_y, Board* board, Player* current_player
+) {
+  int tile = board->grid[start_y][start_x];
+  if (target_x < 0 || target_x >= board->width || target_y < 0 || target_y >= board->height) {
+    return OUT_OF_BOUNDS_MOVEMENT;
+  } else if (target_x == start_x && target_y == start_y) {
     return CURRENT_LOCATION;
-  }else if(target_x!=start_x&&target_y!=start_y)
-  {
+  } else if (target_x != start_x && target_y != start_y) {
     return DIAGONAL_MOVE;
-  }else if(-tile!=current_player->id)
-  {
+  } else if (-tile != current_player->id) {
     return NOT_YOUR_PENGUIN;
   }
   return VALID_INPUT;
@@ -86,85 +83,75 @@ CheckedTile check_a_tile(int x, int y, Board* board) {
   int Tile = board->grid[y][x];
   if (Tile == 0) {
     return EMPTY;
-  } else if (Tile < 0)
-  {
+  } else if (Tile < 0) {
     return PENGUIN;
   }
   return VALID_TILE;
 }
 
 bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int target_y) {
-  // TODO no penguins or empty tiles in the way to interrupt the itended movement  
+  // TODO no penguins or empty tiles in the way to interrupt the itended movement
   int x, y;
   int movement_start, movement_end;
 
-  if(target_x!=start_x)
-  {
-    if(start_x>target_x)
-    {
-      movement_start=target_x;
-      movement_end=start_x;
-    }else
-    {
-      movement_start=start_x+1;
-      movement_end=target_x+1;
+  if (target_x != start_x) {
+    if (start_x > target_x) {
+      movement_start = target_x;
+      movement_end = start_x;
+    } else {
+      movement_start = start_x + 1;
+      movement_end = target_x + 1;
     }
-    for(x=movement_start;x<movement_end;x++)
-    {
-      CheckedTile tile=check_a_tile(x, start_y, board);
-      switch(tile)
-      {
-        case EMPTY:
+    for (x = movement_start; x < movement_end; x++) {
+      CheckedTile tile = check_a_tile(x, start_y, board);
+      switch (tile) {
+      case EMPTY:
         display_error_message("You cant move over an empty tile!");
         break;
-        case PENGUIN:
+      case PENGUIN:
         display_error_message("You cant move over another penguin!");
         break;
-        case VALID_TILE:
+      case VALID_TILE:
         return;
       }
     }
-  }else
-  {
-    if(start_y>target_y)
-    {
-      movement_start=target_y;
-      movement_end=start_y;
-    }else
-    {
-      movement_start=start_y+1;
-      movement_end=target_y+1;
+  } else {
+    if (start_y > target_y) {
+      movement_start = target_y;
+      movement_end = start_y;
+    } else {
+      movement_start = start_y + 1;
+      movement_end = target_y + 1;
     }
-    for(y=movement_start+1;y<movement_end+1;y++)
-    {
-      CheckedTile tile=check_a_tile(start_x, y, board);
-      switch(tile)
-      {
-        case EMPTY:
+    for (y = movement_start + 1; y < movement_end + 1; y++) {
+      CheckedTile tile = check_a_tile(start_x, y, board);
+      switch (tile) {
+      case EMPTY:
         display_error_message("You cant move over an empty tile!");
         break;
-        case PENGUIN:
+      case PENGUIN:
         display_error_message("You cant move over another penguin!");
         break;
-        case VALID_TILE:
+      case VALID_TILE:
         return;
       }
     }
   }
 
   return true;
-
 }
 
 // returns the number of fish captured on the way
-int move_penguin(Board* board, int start_x, int start_y, int target_x, int target_y, int player_id) {
+int move_penguin(
+  Board* board, int start_x, int start_y, int target_x, int target_y, int player_id
+) {
   // TODO update the board
   // remove the tiles destroyed by the movement (set to 0)
   // set the target position as -player_id (board->grid[target_y][target_x] = -player_id)
   // count and then return the number of fish captured on the way
-  int points_gained=board->grid[target_y][target_x];
-  board->grid[target_y][target_x]=-player_id;
-  board->grid[start_y][start_x]=0;
+  int points_gained = board->grid[target_y][target_x];
+  board->grid[target_y][target_x] = -player_id;
+  board->grid[start_y][start_x] = 0;
 
   return points_gained;
 }
