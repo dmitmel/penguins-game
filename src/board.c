@@ -129,7 +129,7 @@ bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int
       movement_start = start_y + 1;
       movement_end = target_y;
     }
-    for (y = movement_start + 1; y <= movement_end; y++) {
+    for (y = movement_start; y <= movement_end; y++) {
       CheckedTile tile = check_a_tile(start_x, y, board);
       switch (tile) {
       case EMPTY:
