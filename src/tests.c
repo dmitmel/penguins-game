@@ -34,7 +34,7 @@ test_valid_movement_exists_for_player(const MunitParameter* params, void* data) 
   int* grid[2] = { (int[3]){ -1, 0, -2 }, (int[3]){ 0, 1, 3 } };
   Board board = { .height = 2, .width = 3, .grid = grid };
 
-  assert_true(valid_movement_exists(&board, 2));
+  assert_true(any_valid_player_move_exists(&board, 2));
   return MUNIT_OK;
 }
 
@@ -43,7 +43,7 @@ test_no_valid_movement_exists_for_player(const MunitParameter* params, void* dat
   int* grid[2] = { (int[3]){ -1, 0, -2 }, (int[3]){ 0, 1, 3 } };
   Board board = { .height = 2, .width = 3, .grid = grid };
 
-  assert_false(valid_movement_exists(&board, 1));
+  assert_false(any_valid_player_move_exists(&board, 1));
   return MUNIT_OK;
 }
 
