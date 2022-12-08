@@ -77,7 +77,7 @@ test_move_penguin_and_calculate_points(const MunitParameter* params, void* data)
   int* grid[1] = { (int[3]){ -1, 1, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
-  assert_int(move_penguin(&board, 0, 0, 2, 0, 1), ==, 4);
+  assert_int(move_penguin(&board, 0, 0, 2, 0, 1), ==, 3);
   assert_int(board.grid[0][0], ==, 0);
   assert_int(board.grid[0][1], ==, 0);
   assert_int(board.grid[0][2], ==, -1);
