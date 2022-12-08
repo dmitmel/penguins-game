@@ -95,6 +95,9 @@ void handle_movement_input(
     case NOT_YOUR_PENGUIN:
       display_error_message("Chose YOUR PENGUIN for movement");
       break;
+    case EMPTY_FLOE:
+      display_error_message("Can't move onto an empty tile");
+      break;
     case VALID_INPUT:
       if (movement_is_valid(board, *penguin_x, *penguin_y, *target_x, *target_y)) {
         return;

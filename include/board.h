@@ -14,7 +14,8 @@ typedef enum MovementInput{
   CURRENT_LOCATION,
   DIAGONAL_MOVE,
   NOT_YOUR_PENGUIN,
-  VALID_INPUT
+  VALID_INPUT,
+  EMPTY_FLOE
 }MovementInput;
 
 typedef enum CheckedTile {

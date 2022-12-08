@@ -77,6 +77,8 @@ MovementInput check_movement_input(
     return DIAGONAL_MOVE;
   } else if (-tile != current_player->id) {
     return NOT_YOUR_PENGUIN;
+  } else if (board->grid[target_y][target_x]==0){
+    return EMPTY_FLOE;
   }
   return VALID_INPUT;
 }
