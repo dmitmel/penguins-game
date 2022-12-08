@@ -5,6 +5,8 @@
 #include "gamestate.h"
 #include "random.h"
 
+#include "io.h" // bad, remove this after
+
 Board init_board(int width, int height) {
   int** grid = calloc(height, sizeof(int*));
   for (int i = 0; i < height; i++) {
@@ -97,43 +99,45 @@ bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int
   if (target_x != start_x) {
     if (start_x > target_x) {
       movement_start = target_x;
-      movement_end = start_x;
+      movement_end = start_x -1;
     } else {
       movement_start = start_x + 1;
-      movement_end = target_x + 1;
+      movement_end = target_x;
     }
-    for (x = movement_start; x < movement_end; x++) {
+    for (x = movement_start; x <= movement_end; x++) {
       CheckedTile tile = check_a_tile(x, start_y, board);
       switch (tile) {
       case EMPTY:
         display_error_message("You cant move over an empty tile!");
+        return false;
         break;
       case PENGUIN:
         display_error_message("You cant move over another penguin!");
+        return false;
         break;
       case VALID_TILE:
-        return;
+        break;
       }
     }
   } else {
     if (start_y > target_y) {
       movement_start = target_y;
-      movement_end = start_y;
+      movement_end = start_y - 1;
     } else {
       movement_start = start_y + 1;
-      movement_end = target_y + 1;
+      movement_end = target_y;
     }
-    for (y = movement_start + 1; y < movement_end + 1; y++) {
+    for (y = movement_start + 1; y <= movement_end; y++) {
       CheckedTile tile = check_a_tile(start_x, y, board);
       switch (tile) {
       case EMPTY:
         display_error_message("You cant move over an empty tile!");
-        break;
+        return false;
       case PENGUIN:
         display_error_message("You cant move over another penguin!");
-        break;
+        return false;
       case VALID_TILE:
-        return;
+        break;
       }
     }
   }

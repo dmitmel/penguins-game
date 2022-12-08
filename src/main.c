@@ -94,14 +94,18 @@ void handle_movement_input(
       break;
     case NOT_YOUR_PENGUIN:
       display_error_message("Chose YOUR PENGUIN for movement");
+      break;
     case VALID_INPUT:
-      return;
+      if (movement_is_valid(board, *penguin_x, *penguin_y, *target_x, *target_y)) {
+        return;
+      }
+      break;
     }
   }
   // TODO: look how handle_placement_input is handled
   // use movement_is_valid() method to check if the movement is valid
   // only return (exit) from this method if the movement is valid
-  movement_is_valid(board, *penguin_x, *penguin_y, *target_x, *target_y);
+
   return;
 }
 
@@ -189,7 +193,8 @@ int main(int argc, char* argv[]) {
     // after this function call we have:
     // the x and y of the target tile and penguin_x and penguin_y of the penguin moving
     // and know that the movement is valid
-    points_gained = move_penguin(&board, penguin_x, penguin_y, x, y, player_data[current_player].id);
+    points_gained =
+      move_penguin(&board, penguin_x, penguin_y, x, y, player_data[current_player].id);
     player_data[current_player].points += points_gained;
     update_game_state_display(&board, player_data, player_count);
     current_player = (current_player + 1) % player_count;
