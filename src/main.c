@@ -6,18 +6,11 @@
 #include "board.h"
 #include "gamestate.h"
 #include "io.h"
+#include "movement.h"
 #include "random.h"
 
-typedef enum SelectedTile {
-  EMPTY_TILE,
-  PENGUIN_OWN,
-  PENGUIN_ENEMY,
-  FISH_MULTIPLE,
-  FISH_SINGLE,
-  OUT_OF_BOUNDS
-} SelectedTile;
 
-SelectedTile get_player_input_tile(int* x, int* y, Board* board, Player* current_player) {
+TileType get_player_input_tile(int* x, int* y, Board* board, Player* current_player) {
   get_penguin_coordinates(x, y);
   if (*x < 0 || *x >= board->width || *y < 0 || *y >= board->height) {
     return OUT_OF_BOUNDS;
@@ -43,7 +36,7 @@ void handle_placement_input(
   int* x, int* y, Board* board, Player* current_player, int player_count
 ) {
   while (true) {
-    SelectedTile tile = get_player_input_tile(x, y, board, current_player);
+    TileType tile = get_player_input_tile(x, y, board, current_player);
     switch (tile) {
     case OUT_OF_BOUNDS:
       display_error_message("Inputted coordinates are outside the bounds of the board");
@@ -67,49 +60,6 @@ void handle_placement_input(
       break;
     }
   }
-}
-
-void handle_movement_input(
-  int* penguin_x,
-  int* penguin_y,
-  int* target_x,
-  int* target_y,
-  Board* board,
-  Player* current_player,
-  int player_count
-) {
-  while (true) {
-    get_data_for_movement(penguin_x, penguin_y, target_x, target_y);
-    MovementInput input =
-      check_movement_input(*target_x, *target_y, *penguin_x, *penguin_y, board, current_player);
-    switch (input) {
-    case OUT_OF_BOUNDS_MOVEMENT:
-      display_error_message("You cant move oustide the board!");
-      break;
-    case CURRENT_LOCATION:
-      display_error_message("Thats your current location");
-      break;
-    case DIAGONAL_MOVE:
-      display_error_message("You cant move diagonaly!");
-      break;
-    case NOT_YOUR_PENGUIN:
-      display_error_message("Chose YOUR PENGUIN for movement");
-      break;
-    case EMPTY_FLOE:
-      display_error_message("Can't move onto an empty tile");
-      break;
-    case VALID_INPUT:
-      if (movement_is_valid(board, *penguin_x, *penguin_y, *target_x, *target_y)) {
-        return;
-      }
-      break;
-    }
-  }
-  // TODO: look how handle_placement_input is handled
-  // use movement_is_valid() method to check if the movement is valid
-  // only return (exit) from this method if the movement is valid
-
-  return;
 }
 
 int main(int argc, char* argv[]) {
@@ -182,7 +132,8 @@ int main(int argc, char* argv[]) {
   int y;
   // end of static data for testing movement
 
-  int penguin_x;
+  interactive_movement(&board, player_data, player_count);
+  /* int penguin_x;
   int penguin_y;
   int points_gained;
   while (any_valid_movement_exists(&board, player_data, player_count)) {
@@ -201,7 +152,7 @@ int main(int argc, char* argv[]) {
     player_data[current_player].points += points_gained;
     update_game_state_display(&board, player_data, player_count);
     current_player = (current_player + 1) % player_count;
-  }
+  } */
 
   return 0;
 }

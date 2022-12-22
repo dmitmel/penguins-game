@@ -1,6 +1,7 @@
 #pragma once
 
-#include "stdbool.h"
+#include <stdbool.h>
+
 #include "gamestate.h"
 
 typedef struct Board {
@@ -9,20 +10,21 @@ typedef struct Board {
   int** grid;
 } Board;
 
-typedef enum MovementInput{
-  OUT_OF_BOUNDS_MOVEMENT,
-  CURRENT_LOCATION,
-  DIAGONAL_MOVE,
-  NOT_YOUR_PENGUIN,
-  VALID_INPUT,
-  EMPTY_FLOE
-}MovementInput;
-
 typedef enum CheckedTile {
   EMPTY,
   PENGUIN,
   VALID_TILE
 } CheckedTile;
+
+
+typedef enum TileType {
+  EMPTY_TILE,
+  PENGUIN_OWN,
+  PENGUIN_ENEMY,
+  FISH_MULTIPLE,
+  FISH_SINGLE,
+  OUT_OF_BOUNDS
+} TileType;
 
 Board init_board(int width, int height);
 
@@ -33,8 +35,6 @@ void generate_random_board(Board* board);
 bool placeable_spot_exists(Board* board);
 
 bool any_valid_player_move_exists(Board* board, int player_id) ;
-
-MovementInput check_movement_input(int target_x, int target_y, int start_x, int start_y, Board* board, Player* current_player);
 
 bool any_valid_movement_exists(Board* board, Player* players, int player_count);
 

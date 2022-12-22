@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(penguins-lib
   src/io.c
   src/board.c
+  src/movement.c
 )
 target_include_directories(penguins-lib PUBLIC include)
 
