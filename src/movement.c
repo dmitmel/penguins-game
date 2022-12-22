@@ -20,8 +20,8 @@ bool any_valid_movement_exists(Board* board, Player* players, int player_count) 
   return false;
 }
 
-CheckedTile check_a_tile(int x, int y, Board* board) {
-  int Tile = board->grid[y][x];
+CheckedTile check_a_tile(Coords coords, Board* board) {
+  int Tile = board->grid[coords.y][coords.x];
   if (Tile == 0) {
     return EMPTY;
   } else if (Tile < 0) {
@@ -31,38 +31,38 @@ CheckedTile check_a_tile(int x, int y, Board* board) {
 }
 
 MovementInput check_movement_input(
-  int target_x, int target_y, int start_x, int start_y, Board* board, Player* current_player
+  Coords target, Coords start, Board* board, Player* current_player
 ) {
-  int tile = board->grid[start_y][start_x];
-  if (target_x < 0 || target_x >= board->width || target_y < 0 || target_y >= board->height) {
+  int tile = board->grid[start.y][start.x];
+  if (target.x < 0 || target.x >= board->width || target.y < 0 || target.y >= board->height) {
     return OUT_OF_BOUNDS_MOVEMENT;
-  } else if (target_x == start_x && target_y == start_y) {
+  } else if (target.x == start.x && target.y == start.y) {
     return CURRENT_LOCATION;
-  } else if (target_x != start_x && target_y != start_y) {
+  } else if (target.x != start.x && target.y != start.y) {
     return DIAGONAL_MOVE;
   } else if (-tile != current_player->id) {
     return NOT_YOUR_PENGUIN;
-  } else if (board->grid[target_y][target_x]==0){
+  } else if (board->grid[target.y][target.x]==0){
     return EMPTY_FLOE;
   }
   return VALID_INPUT;
 }
 
-bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int target_y) {
+bool movement_is_valid(Board* board, Coords start, Coords target) {
   // TODO no penguins or empty tiles in the way to interrupt the itended movement
   int x, y;
   int movement_start, movement_end;
 
-  if (target_x != start_x) {
-    if (start_x > target_x) {
-      movement_start = target_x;
-      movement_end = start_x - 1;
+  if (target.x != start.x) {
+    if (start.x > target.x) {
+      movement_start = target.x;
+      movement_end = start.x - 1;
     } else {
-      movement_start = start_x + 1;
-      movement_end = target_x;
+      movement_start = start.x + 1;
+      movement_end = target.x;
     }
     for (x = movement_start; x <= movement_end; x++) {
-      CheckedTile tile = check_a_tile(x, start_y, board);
+      CheckedTile tile = check_a_tile((Coords){x, start.y}, board);
       switch (tile) {
       case EMPTY:
         display_error_message("You cant move over an empty tile!");
@@ -77,15 +77,15 @@ bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int
       }
     }
   } else {
-    if (start_y > target_y) {
-      movement_start = target_y;
-      movement_end = start_y - 1;
+    if (start.y > target.y) {
+      movement_start = target.y;
+      movement_end = start.y - 1;
     } else {
-      movement_start = start_y + 1;
-      movement_end = target_y;
+      movement_start = start.y + 1;
+      movement_end = target.y;
     }
     for (y = movement_start; y <= movement_end; y++) {
-      CheckedTile tile = check_a_tile(start_x, y, board);
+      CheckedTile tile = check_a_tile((Coords){start.x, y}, board);
       switch (tile) {
       case EMPTY:
         display_error_message("You cant move over an empty tile!");
@@ -105,28 +105,26 @@ bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int
 
 // returns the number of fish captured on the way
 int move_penguin(
-  Board* board, int start_x, int start_y, int target_x, int target_y, int player_id
+  Board* board, Coords start, Coords target, int player_id
 ) {
-  int points_gained = board->grid[target_y][target_x];
-  board->grid[target_y][target_x] = -player_id;
-  board->grid[start_y][start_x] = 0;
+  int points_gained = board->grid[target.y][target.x];
+  board->grid[target.y][target.x] = -player_id;
+  board->grid[start.y][start.x] = 0;
 
   return points_gained;
 }
 
 void handle_movement_input(
-  int* penguin_x,
-  int* penguin_y,
-  int* target_x,
-  int* target_y,
+  Coords* penguin,
+  Coords* target,
   Board* board,
   Player* current_player,
   int player_count
 ) {
   while (true) {
-    get_data_for_movement(penguin_x, penguin_y, target_x, target_y);
+    get_data_for_movement(penguin, target);
     MovementInput input =
-      check_movement_input(*target_x, *target_y, *penguin_x, *penguin_y, board, current_player);
+      check_movement_input(*target, *penguin, board, current_player);
     switch (input) {
     case OUT_OF_BOUNDS_MOVEMENT:
       display_error_message("You cant move oustide the board!");
@@ -144,7 +142,7 @@ void handle_movement_input(
       display_error_message("Can't move onto an empty tile");
       break;
     case VALID_INPUT:
-      if (movement_is_valid(board, *penguin_x, *penguin_y, *target_x, *target_y)) {
+      if (movement_is_valid(board, *penguin, *target)) {
         return;
       }
       break;
@@ -159,10 +157,8 @@ void handle_movement_input(
 
 void interactive_movement(Board* board, Player player_data[], int player_count) {
   int current_player = 0;
-  int x;
-  int y;
-  int penguin_x;
-  int penguin_y;
+  Coords target;
+  Coords penguin;
   int points_gained;
   while (any_valid_movement_exists(board, player_data, player_count)) {
     if (!any_valid_player_move_exists(board, current_player)) {
@@ -170,13 +166,13 @@ void interactive_movement(Board* board, Player player_data[], int player_count) 
     }
     display_new_turn_message(player_data[current_player].id);
     handle_movement_input(
-      &penguin_x, &penguin_y, &x, &y, board, &player_data[current_player], player_count
+      &penguin, &target, board, &player_data[current_player], player_count
     );
     // after this function call we have:
     // the x and y of the target tile and penguin_x and penguin_y of the penguin moving
     // and know that the movement is valid
     points_gained =
-      move_penguin(board, penguin_x, penguin_y, x, y, player_data[current_player].id);
+      move_penguin(board, penguin, target, player_data[current_player].id);
     player_data[current_player].points += points_gained;
     update_game_state_display(board, player_data, player_count);
     current_player = (current_player + 1) % player_count;

@@ -38,6 +38,6 @@ bool any_valid_player_move_exists(Board* board, int player_id) ;
 
 bool any_valid_movement_exists(Board* board, Player* players, int player_count);
 
-bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int target_y);
+bool movement_is_valid(Board* board, Coords start, Coords target);
 
-int move_penguin(Board* board, int start_x, int start_y, int target_x, int target_y, int player_id);
+int move_penguin(Board* board, Coords start, Coords target, int player_id);

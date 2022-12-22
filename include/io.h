@@ -25,4 +25,4 @@ void update_game_state_display(Board* board, Player players[], int player_count)
 
 void print_end_placement_phase(Board* board, Player players[], int player_count);
 
-void get_data_for_movement(int* start_x, int* start_y, int* target_x, int* target_y);
+void get_data_for_movement(Coords* start, Coords* target);

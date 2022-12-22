@@ -5,3 +5,8 @@ typedef struct Player {
   char name[16];
   int points;
 } Player;
+
+typedef struct Coords {
+  int x;
+  int y;
+} Coords;

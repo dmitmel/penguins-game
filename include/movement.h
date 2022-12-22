@@ -16,26 +16,17 @@ bool any_valid_player_move_exists(Board* board, int player_id);
 
 bool any_valid_movement_exists(Board* board, Player* players, int player_count);
 
-CheckedTile check_a_tile(int x, int y, Board* board);
+CheckedTile check_a_tile(Coords coords, Board* board);
 
-MovementInput check_movement_input(
-  int target_x, int target_y, int start_x, int start_y, Board* board, Player* current_player
-);
+MovementInput
+check_movement_input(Coords target, Coords start, Board* board, Player* current_player);
 
-bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int target_y);
+bool movement_is_valid(Board* board, Coords start, Coords target);
 
 void handle_movement_input(
-  int* penguin_x,
-  int* penguin_y,
-  int* target_x,
-  int* target_y,
-  Board* board,
-  Player* current_player,
-  int player_count
+  Coords* penguin, Coords* target, Board* board, Player* current_player, int player_count
 );
 
-int move_penguin(
-  Board* board, int start_x, int start_y, int target_x, int target_y, int player_id
-);
+int move_penguin(Board* board, Coords start, Coords target, int player_id);
 
 void interactive_movement(Board* board, Player player_data[], int player_count);
