@@ -13,6 +13,7 @@ add_library(penguins-lib
   src/io.c
   src/board.c
   src/movement.c
+  src/placement.c
 )
 target_include_directories(penguins-lib PUBLIC include)
 

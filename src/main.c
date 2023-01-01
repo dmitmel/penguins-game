@@ -10,58 +10,6 @@
 #include "random.h"
 
 
-TileType get_player_input_tile(int* x, int* y, Board* board, Player* current_player) {
-  get_penguin_coordinates(x, y);
-  if (*x < 0 || *x >= board->width || *y < 0 || *y >= board->height) {
-    return OUT_OF_BOUNDS;
-  }
-  int tile = board->grid[*y][*x];
-  if (tile == 0) {
-    return EMPTY_TILE;
-  } else if (tile < 0) {
-    if (-tile == current_player->id) {
-      return PENGUIN_OWN;
-    } else {
-      return PENGUIN_ENEMY;
-    }
-  } else {
-    if (tile == 1) {
-      return FISH_SINGLE;
-    }
-  }
-  return FISH_MULTIPLE;
-}
-
-void handle_placement_input(
-  int* x, int* y, Board* board, Player* current_player, int player_count
-) {
-  while (true) {
-    TileType tile = get_player_input_tile(x, y, board, current_player);
-    switch (tile) {
-    case OUT_OF_BOUNDS:
-      display_error_message("Inputted coordinates are outside the bounds of the board");
-      break;
-    case EMPTY_TILE:
-      display_error_message("This tile is empty, you can't select an empty(water) tile");
-      break;
-    case PENGUIN_ENEMY:
-      display_error_message("This tile is already occupied by a penguin");
-      break;
-    case PENGUIN_OWN:
-      display_error_message("This tile is already occupied by a penguin");
-      break;
-    case FISH_MULTIPLE:
-      display_error_message("Only a tile with just one fish can be selected");
-      break;
-    case FISH_SINGLE:
-      return;
-    default:
-      display_error_message("ERROR: what on god's green earth did you just select???");
-      break;
-    }
-  }
-}
-
 int main(int argc, char* argv[]) {
   random_init();
 
