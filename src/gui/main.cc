@@ -1,15 +1,26 @@
 #include "gui/main.hh"
 #include "gui/new_game_dialog.hh"
 #include <cmath>
+#include <wx/bitmap.h>
+#include <wx/brush.h>
+#include <wx/colour.h>
+#include <wx/dc.h>
 #include <wx/dcclient.h>
+#include <wx/dcmemory.h>
+#include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/graphics.h>
 #include <wx/log.h>
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
+#include <wx/pen.h>
 #include <wx/sizer.h>
+#include <wx/types.h>
+#include <wx/window.h>
 
 extern "C" {
+#include "board.h"
+#include "gamestate.h"
 #include "random.h"
 }
 
@@ -20,7 +31,7 @@ PenguinsApp::PenguinsApp() {}
 bool PenguinsApp::OnInit() {
   random_init();
 
-  this->game_frame = new GameFrame(nullptr, wxID_ANY);
+  this->game_frame = new GameFrame(nullptr, wxID_ANY, this->game_state);
   this->game_frame->Centre();
   this->game_frame->Show();
 
@@ -42,28 +53,30 @@ wxBEGIN_EVENT_TABLE(GameFrame, wxFrame)
 wxEND_EVENT_TABLE();
 // clang-format on
 
-GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Penguins game") {
-  auto menuFile = new wxMenu();
-  menuFile->Append(ID_NEW_GAME, "&New Game...\tCtrl-N", "Start a new game");
-  menuFile->AppendSeparator();
-  menuFile->Append(wxID_EXIT);
+GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GameState& state)
+: wxFrame(parent, id, "Penguins game"), state(state) {
+  auto menu_file = new wxMenu();
+  menu_file->Append(ID_NEW_GAME, "&New Game...\tCtrl-N", "Start a new game");
+  menu_file->AppendSeparator();
+  menu_file->Append(wxID_EXIT);
 
-  auto menuHelp = new wxMenu();
-  menuHelp->Append(wxID_ABOUT);
+  auto menu_help = new wxMenu();
+  menu_help->Append(wxID_ABOUT);
 
-  auto menuBar = new wxMenuBar();
-  menuBar->Append(menuFile, "&File");
-  menuBar->Append(menuHelp, "&Help");
+  auto menu_bar = new wxMenuBar();
+  menu_bar->Append(menu_file, "&File");
+  menu_bar->Append(menu_help, "&Help");
+
+  this->SetMenuBar(menu_bar);
 
   auto vbox = new wxBoxSizer(wxVERTICAL);
   auto hbox = new wxBoxSizer(wxHORIZONTAL);
 
-  this->board_panel = new BoardPanel(this);
-  vbox->Add(this->board_panel, wxSizerFlags(1).Centre().Border());
+  this->canvas_panel = new CanvasPanel(this, wxID_ANY, state);
+  vbox->Add(this->canvas_panel, wxSizerFlags(1).Centre().Border());
   hbox->Add(vbox, wxSizerFlags(1).Centre().Border());
 
   this->SetSizerAndFit(hbox);
-  this->SetMenuBar(menuBar);
 
   this->CreateStatusBar();
   this->SetStatusText("Welcome to wxWidgets!");
@@ -84,52 +97,106 @@ void GameFrame::on_about(wxCommandEvent& event) {
 }
 
 void GameFrame::start_new_game() {
-  NewGameDialog dialog(this, wxID_ANY);
-  int result = dialog.ShowModal();
+  std::unique_ptr<NewGameDialog> dialog(new NewGameDialog(this, wxID_ANY));
+  int result = dialog->ShowModal();
   if (result != wxID_OK) {
     return;
   }
 
-  Board* board_ptr = new Board;
-  *board_ptr = init_board(dialog.get_board_width(), dialog.get_board_height());
-  std::shared_ptr<Board> board(board_ptr, free_board);
-  wxGetApp().board = board;
-
-  generate_random_board(board.get());
-
-  for (int player = 1; player <= dialog.get_number_of_players(); player++) {
-    for (int penguin = 0; penguin < dialog.get_penguins_per_player(); penguin++) {
-      int y = random_range(0, board->height - 1);
-      int x = random_range(0, board->width - 1);
-      board->grid[y][x] = -player;
-    }
+  state.penguins_per_player = dialog->get_penguins_per_player();
+  state.players_count = dialog->get_number_of_players();
+  state.player_names = new wxString[state.players_count];
+  for (int i = 0; i < state.players_count; i++) {
+    state.player_names[i] = dialog->get_player_name(i);
   }
+  state.board.reset(new Board(init_board(dialog->get_board_width(), dialog->get_board_height())));
 
-  this->board_panel->InvalidateBestSize();
+  state.game_phase = PHASE_PLACEMENT;
+  state.current_player = 0;
+  state.penguins_left_to_place = 0;
+
+  Board* board = state.board.get();
+  generate_random_board(board);
+
+  this->canvas_panel->mark_dirty();
+  this->canvas_panel->InvalidateBestSize();
   this->GetSizer()->SetSizeHints(this);
   this->Refresh();
+  this->Centre();
 }
 
 // clang-format off
-wxBEGIN_EVENT_TABLE(BoardPanel, wxPanel)
-  EVT_PAINT(BoardPanel::OnPaint)
+wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
+  EVT_PAINT(CanvasPanel::on_paint)
+  EVT_MOUSE_EVENTS(CanvasPanel::on_any_mouse_event)
 wxEND_EVENT_TABLE();
 // clang-format on
 
-BoardPanel::BoardPanel(wxWindow* parent) : wxPanel(parent, wxID_ANY) {}
-
-wxSize BoardPanel::DoGetBestClientSize() const {
-  if (auto& board = wxGetApp().board) {
-    return CELL_SIZE * wxSize(board->width, board->height);
-  } else {
-    return wxSize(640, 640);
-  }
+CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GameState& state)
+: wxPanel(parent, id), state(state) {
+  this->SetMinClientSize(CELL_SIZE * wxSize(20, 20));
 }
 
-void BoardPanel::OnPaint(wxPaintEvent& event) {
-  wxPaintDC dc(this);
+wxSize CanvasPanel::get_board_size() const {
+  Board* board = state.board.get();
+  return board ? wxSize(board->width, board->height) : wxSize(0, 0);
+}
 
-  auto& board = wxGetApp().board;
+bool CanvasPanel::is_cell_in_bounds(wxPoint cell) const {
+  wxSize size = this->get_board_size();
+  return 0 <= cell.x && cell.x < size.x && 0 <= cell.y && cell.y < size.y;
+}
+
+wxSize CanvasPanel::get_canvas_size() const {
+  return CELL_SIZE * this->get_board_size();
+}
+
+int* CanvasPanel::cell_ptr(wxPoint cell) const {
+  wxASSERT(this->is_cell_in_bounds(cell));
+  return &state.board->grid[cell.y][cell.x];
+}
+
+wxPoint CanvasPanel::get_cell_by_coords(wxPoint point) const {
+  return wxPoint(point.x / CELL_SIZE, point.y / CELL_SIZE);
+}
+
+wxRect CanvasPanel::get_cell_rect(wxPoint cell) const {
+  return wxRect(cell.x * CELL_SIZE, cell.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+}
+
+bool CanvasPanel::is_cell_blocked(wxPoint cell) const {
+  wxASSERT(this->is_cell_in_bounds(cell));
+  return !is_spot_valid_for_placement(state.board.get(), cell.x, cell.y);
+}
+
+wxSize CanvasPanel::DoGetBestClientSize() const {
+  return this->get_canvas_size();
+}
+
+void CanvasPanel::on_paint(wxPaintEvent& event) {
+  wxPaintDC win_dc(this);
+  wxSize size = this->get_canvas_size();
+  if (!(size.x > 0 && size.y > 0)) {
+    this->dirty = false;
+    this->bitmap.UnRef();
+    return;
+  }
+  if (!this->bitmap.IsOk() || this->bitmap.GetSize() != size) {
+    this->dirty = true;
+    this->bitmap.Create(size);
+  }
+  wxMemoryDC mem_dc(this->bitmap);
+  if (this->dirty) {
+    this->dirty = false;
+    mem_dc.SetBackground(*wxWHITE_BRUSH);
+    mem_dc.Clear();
+    this->paint_to(mem_dc);
+  }
+  win_dc.Blit(0, 0, size.x, size.y, &mem_dc, 0, 0);
+}
+
+void CanvasPanel::paint_to(wxDC& dc) {
+  Board* board = state.board.get();
   if (!board) {
     return;
   }
@@ -143,20 +210,29 @@ void BoardPanel::OnPaint(wxPaintEvent& event) {
 
   for (int y = 0; y < board->height; y++) {
     for (int x = 0; x < board->width; x++) {
-      int cell = board->grid[y][x];
-      wxRect cell_rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      wxPoint cell(x, y);
+      int cell_value = *this->cell_ptr(cell);
+      wxRect cell_rect = this->get_cell_rect(cell);
       wxPoint cell_centre = cell_rect.GetPosition() + cell_rect.GetSize() / 2;
 
-      dc.SetPen(*wxBLACK_PEN);
+      int lightness = 100;
+      if (this->mouse_within_window && this->is_cell_blocked(cell)) {
+        lightness += BLOCKED_CELL_LIGHTNESS;
+      }
+      auto blend_colour = [lightness](const wxColour& colour) {
+        return colour.ChangeLightness(lightness);
+      };
 
-      if (cell > 0) {
+      dc.SetPen(*wxBLACK);
+
+      if (cell_value > 0) {
         // an ice floe with fish on it
-        int fish_count = cell;
-        dc.SetBrush(*wxWHITE_BRUSH);
+        int fish_count = cell_value;
+        dc.SetBrush(blend_colour(*wxWHITE));
         dc.DrawRectangle(cell_rect);
 
         dc.SetPen(wxNullPen);
-        dc.SetBrush(*wxGREY_BRUSH);
+        dc.SetBrush(blend_colour((*wxGREY_BRUSH).GetColour()));
         if (fish_count == 1) {
           dc.DrawCircle(cell_centre, FISH_CIRCLE_RADIUS);
         } else {
@@ -171,10 +247,10 @@ void BoardPanel::OnPaint(wxPaintEvent& event) {
           }
         }
 
-      } else if (cell < 0) {
+      } else if (cell_value < 0) {
         // a penguin
-        int player = -cell;
-        dc.SetBrush(*wxYELLOW_BRUSH);
+        int player = -cell_value;
+        dc.SetBrush(*wxYELLOW);
         dc.DrawRectangle(cell_rect);
 
         wxString str;
@@ -183,9 +259,67 @@ void BoardPanel::OnPaint(wxPaintEvent& event) {
 
       } else {
         // a water tile
-        dc.SetBrush(*wxCYAN_BRUSH);
+        dc.SetBrush(blend_colour(*wxCYAN));
         dc.DrawRectangle(cell_rect);
       }
     }
   }
+
+  wxPoint current_cell = this->get_cell_by_coords(this->mouse_pos);
+  if (this->mouse_within_window && this->is_cell_in_bounds(current_cell)) {
+    dc.SetBrush(wxNullBrush);
+    dc.SetPen(wxPen(this->is_cell_blocked(current_cell) ? *wxRED : *wxGREEN, 5));
+    dc.DrawRectangle(this->get_cell_rect(current_cell));
+  }
+}
+
+void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
+  this->mouse_pos = event.GetPosition();
+  if (event.ButtonDown()) {
+    this->mouse_drag_pos = this->mouse_pos;
+  }
+  if (event.Entering()) {
+    this->mouse_within_window = true;
+  } else if (event.Leaving()) {
+    this->mouse_within_window = false;
+  }
+  // NOTE: a `switch` is unusable here because the event types are defined as
+  // `extern` variables. `switch` in C++ can only work with statically-known
+  // constants.
+  auto event_type = event.GetEventType();
+  if (event_type == wxEVT_LEFT_DOWN) {
+    this->on_mouse_down(event);
+  } else if (event_type == wxEVT_MOTION) {
+    this->on_mouse_move(event);
+  } else if (event_type == wxEVT_LEFT_UP) {
+    this->on_mouse_up(event);
+  } else if (event_type == wxEVT_ENTER_WINDOW) {
+    this->on_mouse_enter_leave(event);
+  } else if (event_type == wxEVT_LEAVE_WINDOW) {
+    this->on_mouse_enter_leave(event);
+  } else {
+    event.Skip();
+  }
+}
+
+void CanvasPanel::on_mouse_down(wxMouseEvent& event) {
+  wxPoint cell = this->get_cell_by_coords(this->mouse_pos);
+  if (this->is_cell_in_bounds(cell) && !this->is_cell_blocked(cell)) {
+    *this->cell_ptr(cell) = -(state.current_player + 1);
+    state.current_player = (state.current_player + 1) % state.players_count;
+    this->mark_dirty();
+    this->Refresh();
+  }
+}
+
+void CanvasPanel::on_mouse_move(wxMouseEvent& event) {
+  this->mark_dirty();
+  this->Refresh();
+}
+
+void CanvasPanel::on_mouse_up(wxMouseEvent& event) {}
+
+void CanvasPanel::on_mouse_enter_leave(wxMouseEvent& event) {
+  this->mark_dirty();
+  this->Refresh();
 }

@@ -2,29 +2,82 @@
 
 #include <memory>
 #include <wx/app.h>
+#include <wx/bitmap.h>
 #include <wx/dc.h>
 #include <wx/event.h>
 #include <wx/frame.h>
+#include <wx/gdicmn.h>
 #include <wx/panel.h>
+#include <wx/scrolwin.h>
+#include <wx/string.h>
+#include <wx/vector.h>
 #include <wx/window.h>
 
 extern "C" {
 #include "board.h"
+#include "gamestate.h"
 }
 
-class PenguinsApp;
+class GameState {
+  wxDECLARE_NO_COPY_CLASS(GameState);
 
-class BoardPanel : public wxPanel {
 public:
-  BoardPanel(wxWindow* parent);
+  GameState() {}
 
+  int players_count;
+  int penguins_per_player;
+  wxString* player_names;
+  std::unique_ptr<Board, decltype(&free_board)> board{ nullptr, free_board };
+
+  GamePhase game_phase;
+  int current_player;
+  int penguins_left_to_place;
+};
+
+class CanvasPanel : public wxPanel {
+public:
   static const wxCoord CELL_SIZE = 32;
   static const int CELL_FONT_SIZE = 16;
   static const int FISH_CIRCLE_RADIUS = 4;
+  static const int BLOCKED_CELL_LIGHTNESS = -40;
+
+  CanvasPanel(wxWindow* parent, wxWindowID id, GameState& state);
+
+  wxSize get_board_size() const;
+  bool is_cell_in_bounds(wxPoint cell) const;
+  int* cell_ptr(wxPoint cell) const;
+  bool is_cell_blocked(wxPoint cell) const;
+
+  wxSize get_canvas_size() const;
+  wxPoint get_cell_by_coords(wxPoint point) const;
+  wxRect get_cell_rect(wxPoint cell) const;
+
+  void mark_dirty() {
+    this->dirty = true;
+  }
+
+  void paint_to(wxDC& dc);
 
 protected:
-  void OnPaint(wxPaintEvent& event);
   virtual wxSize DoGetBestClientSize() const override;
+  void on_paint(wxPaintEvent& event);
+
+  void draw_base_tile(wxDC& dc, const wxColour& colour, wxRect cell_rect, int lightness);
+
+  void on_any_mouse_event(wxMouseEvent& event);
+  void on_mouse_down(wxMouseEvent& event);
+  void on_mouse_move(wxMouseEvent& event);
+  void on_mouse_up(wxMouseEvent& event);
+  void on_mouse_enter_leave(wxMouseEvent& event);
+
+  bool dirty = true;
+  wxBitmap bitmap;
+
+  bool mouse_within_window = false;
+  wxPoint mouse_pos;
+  wxPoint mouse_drag_pos;
+
+  GameState& state;
 
 private:
   wxDECLARE_EVENT_TABLE();
@@ -32,7 +85,7 @@ private:
 
 class GameFrame : public wxFrame {
 public:
-  GameFrame(wxWindow* parent, wxWindowID id);
+  GameFrame(wxWindow* parent, wxWindowID id, GameState& state);
 
   void start_new_game();
 
@@ -40,8 +93,10 @@ protected:
   void on_exit(wxCommandEvent& event);
   void on_about(wxCommandEvent& event);
   void on_new_game(wxCommandEvent& event);
+  void on_mouse_enter_leave(wxMouseEvent& event);
 
-  BoardPanel* board_panel;
+  CanvasPanel* canvas_panel;
+  GameState& state;
 
 private:
   wxDECLARE_EVENT_TABLE();
@@ -52,8 +107,9 @@ public:
   PenguinsApp();
   virtual bool OnInit() override;
 
-  std::shared_ptr<Board> board;
-
-private:
+protected:
   GameFrame* game_frame;
+  GameState game_state;
 };
+
+wxDECLARE_APP(PenguinsApp);
