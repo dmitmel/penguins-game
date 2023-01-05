@@ -133,9 +133,7 @@ wxEND_EVENT_TABLE();
 // clang-format on
 
 CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GameState& state)
-: wxPanel(parent, id), state(state) {
-  this->SetMinClientSize(CELL_SIZE * wxSize(20, 20));
-}
+: wxPanel(parent, id), state(state) {}
 
 wxSize CanvasPanel::get_board_size() const {
   Board* board = state.board.get();
@@ -170,7 +168,11 @@ bool CanvasPanel::is_cell_blocked(wxPoint cell) const {
 }
 
 wxSize CanvasPanel::DoGetBestClientSize() const {
-  return this->get_canvas_size();
+  wxSize size = this->get_canvas_size();
+  if (!(size.x > 0 && size.y > 0)) {
+    return CELL_SIZE * wxSize(20, 20);
+  }
+  return size;
 }
 
 void CanvasPanel::on_paint(wxPaintEvent& event) {
