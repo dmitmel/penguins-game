@@ -52,17 +52,15 @@ public:
   wxPoint get_cell_by_coords(wxPoint point) const;
   wxRect get_cell_rect(wxPoint cell) const;
 
-  void mark_dirty() {
-    this->dirty = true;
+  void mark_board_dirty() {
+    this->board_dirty = true;
   }
-
-  void paint_to(wxDC& dc);
 
 protected:
   virtual wxSize DoGetBestClientSize() const override;
   void on_paint(wxPaintEvent& event);
-
-  void draw_base_tile(wxDC& dc, const wxColour& colour, wxRect cell_rect, int lightness);
+  void paint_board(wxDC& dc);
+  void paint_overlay(wxDC& dc);
 
   void on_any_mouse_event(wxMouseEvent& event);
   void on_mouse_down(wxMouseEvent& event);
@@ -70,8 +68,8 @@ protected:
   void on_mouse_up(wxMouseEvent& event);
   void on_mouse_enter_leave(wxMouseEvent& event);
 
-  bool dirty = true;
-  wxBitmap bitmap;
+  bool board_dirty = true;
+  wxBitmap board_bitmap;
 
   bool mouse_within_window = false;
   wxPoint mouse_pos;

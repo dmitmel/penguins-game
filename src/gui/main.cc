@@ -118,7 +118,7 @@ void GameFrame::start_new_game() {
   Board* board = state.board.get();
   generate_random_board(board);
 
-  this->canvas_panel->mark_dirty();
+  this->canvas_panel->mark_board_dirty();
   this->canvas_panel->InvalidateBestSize();
   this->GetSizer()->SetSizeHints(this);
   this->Refresh();
@@ -179,25 +179,28 @@ void CanvasPanel::on_paint(wxPaintEvent& event) {
   wxPaintDC win_dc(this);
   wxSize size = this->get_canvas_size();
   if (!(size.x > 0 && size.y > 0)) {
-    this->dirty = false;
-    this->bitmap.UnRef();
+    this->board_dirty = false;
+    this->board_bitmap.UnRef();
     return;
   }
-  if (!this->bitmap.IsOk() || this->bitmap.GetSize() != size) {
-    this->dirty = true;
-    this->bitmap.Create(size);
+
+  if (!this->board_bitmap.IsOk() || this->board_bitmap.GetSize() != size) {
+    this->board_dirty = true;
+    this->board_bitmap.Create(size);
   }
-  wxMemoryDC mem_dc(this->bitmap);
-  if (this->dirty) {
-    this->dirty = false;
+  wxMemoryDC mem_dc(this->board_bitmap);
+  if (this->board_dirty) {
+    this->board_dirty = false;
     mem_dc.SetBackground(*wxWHITE_BRUSH);
     mem_dc.Clear();
-    this->paint_to(mem_dc);
+    this->paint_board(mem_dc);
   }
   win_dc.Blit(0, 0, size.x, size.y, &mem_dc, 0, 0);
+
+  this->paint_overlay(win_dc);
 }
 
-void CanvasPanel::paint_to(wxDC& dc) {
+void CanvasPanel::paint_board(wxDC& dc) {
   Board* board = state.board.get();
   if (!board) {
     return;
@@ -266,7 +269,9 @@ void CanvasPanel::paint_to(wxDC& dc) {
       }
     }
   }
+}
 
+void CanvasPanel::paint_overlay(wxDC& dc) {
   wxPoint current_cell = this->get_cell_by_coords(this->mouse_pos);
   if (this->mouse_within_window && this->is_cell_in_bounds(current_cell)) {
     dc.SetBrush(wxNullBrush);
@@ -309,19 +314,18 @@ void CanvasPanel::on_mouse_down(wxMouseEvent& event) {
   if (this->is_cell_in_bounds(cell) && !this->is_cell_blocked(cell)) {
     *this->cell_ptr(cell) = -(state.current_player + 1);
     state.current_player = (state.current_player + 1) % state.players_count;
-    this->mark_dirty();
+    this->mark_board_dirty();
     this->Refresh();
   }
 }
 
 void CanvasPanel::on_mouse_move(wxMouseEvent& event) {
-  this->mark_dirty();
   this->Refresh();
 }
 
 void CanvasPanel::on_mouse_up(wxMouseEvent& event) {}
 
 void CanvasPanel::on_mouse_enter_leave(wxMouseEvent& event) {
-  this->mark_dirty();
+  this->mark_board_dirty();
   this->Refresh();
 }
