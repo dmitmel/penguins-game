@@ -13,4 +13,5 @@ Cpp11BracedListStyle: false
 AlignEscapedNewlines: Left
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortBlocksOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 ReflowComments: false

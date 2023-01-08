@@ -16,6 +16,7 @@
 extern "C" {
 #include "board.h"
 #include "gamestate.h"
+#include "movement.h"
 }
 
 class GameState {
@@ -24,10 +25,16 @@ class GameState {
 public:
   GameState() {}
 
+  static void free_board_ptr(Board* board) {
+    free_board(board);
+    delete board;
+  }
+
   int players_count;
   int penguins_per_player;
-  wxString* player_names;
-  std::unique_ptr<Board, decltype(&free_board)> board{ nullptr, free_board };
+  std::unique_ptr<wxString[]> player_names;
+  std::unique_ptr<Board, decltype(&free_board_ptr)> board{ nullptr, free_board_ptr };
+  std::unique_ptr<bool[]> blocked_cells;
 
   GamePhase game_phase;
   int current_player;
@@ -46,11 +53,16 @@ public:
   wxSize get_board_size() const;
   bool is_cell_in_bounds(wxPoint cell) const;
   int* cell_ptr(wxPoint cell) const;
+
   bool is_cell_blocked(wxPoint cell) const;
+  void update_blocked_cells();
+
+  MovementError validate_movement(wxPoint start, wxPoint target, wxPoint* fail = nullptr);
 
   wxSize get_canvas_size() const;
   wxPoint get_cell_by_coords(wxPoint point) const;
   wxRect get_cell_rect(wxPoint cell) const;
+  wxPoint get_cell_centre(wxPoint cell) const;
 
   void mark_board_dirty() {
     this->board_dirty = true;
@@ -72,8 +84,10 @@ protected:
   wxBitmap board_bitmap;
 
   bool mouse_within_window = false;
-  wxPoint mouse_pos;
-  wxPoint mouse_drag_pos;
+  bool mouse_is_down;
+  wxPoint mouse_pos = wxDefaultPosition;
+  wxPoint prev_mouse_pos = wxDefaultPosition;
+  wxPoint mouse_drag_pos = wxDefaultPosition;
 
   GameState& state;
 

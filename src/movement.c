@@ -22,19 +22,28 @@ bool any_valid_movement_exists(Board* board, Player* players, int player_count) 
 }
 
 MovementError validate_movement(
-  Board* board, int start_x, int start_y, int target_x, int target_y, int current_player_id
+  Board* board,
+  int start_x,
+  int start_y,
+  int target_x,
+  int target_y,
+  int current_player_id,
+  int* fail_x,
+  int* fail_y
 ) {
   int tile = board->grid[start_y][start_x];
   if (target_x < 0 || target_x >= board->width || target_y < 0 || target_y >= board->height) {
     return OUT_OF_BOUNDS_MOVEMENT;
+  } else if (-tile != current_player_id) {
+    return NOT_YOUR_PENGUIN;
   } else if (target_x == start_x && target_y == start_y) {
     return CURRENT_LOCATION;
   } else if (target_x != start_x && target_y != start_y) {
     return DIAGONAL_MOVE;
-  } else if (-tile != current_player_id) {
-    return NOT_YOUR_PENGUIN;
   } else if (board->grid[target_y][target_x] == 0) {
-    return EMPTY_FLOE;
+    return MOVE_ONTO_EMPTY_TILE;
+  } else if (board->grid[target_y][target_x] < 0) {
+    return MOVE_ONTO_PENGUIN;
   }
 
   int x = start_x, y = start_y;
@@ -42,6 +51,8 @@ MovementError validate_movement(
   int dy = target_y > start_y ? 1 : target_y < start_y ? -1 : 0;
   while (x != target_x || y != target_y) {
     x += dx, y += dy;
+    if (fail_x) *fail_x = x;
+    if (fail_y) *fail_y = y;
     int tile = board->grid[y][x];
     if (tile == 0) {
       return MOVE_OVER_EMPTY_TILE;
@@ -75,8 +86,9 @@ void handle_movement_input(
 ) {
   while (true) {
     get_data_for_movement(penguin_x, penguin_y, target_x, target_y);
-    MovementError input =
-      validate_movement(board, *penguin_x, *penguin_y, *target_x, *target_y, current_player->id);
+    MovementError input = validate_movement(
+      board, *penguin_x, *penguin_y, *target_x, *target_y, current_player->id, NULL, NULL
+    );
     switch (input) {
     case OUT_OF_BOUNDS_MOVEMENT:
       display_error_message("You cant move oustide the board!");
@@ -90,8 +102,11 @@ void handle_movement_input(
     case NOT_YOUR_PENGUIN:
       display_error_message("Chose YOUR PENGUIN for movement");
       break;
-    case EMPTY_FLOE:
+    case MOVE_ONTO_EMPTY_TILE:
       display_error_message("Can't move onto an empty tile");
+      break;
+    case MOVE_ONTO_PENGUIN:
+      display_error_message("Can't move onto another penguin!");
       break;
     case MOVE_OVER_EMPTY_TILE:
       display_error_message("You cant move over an empty tile!");
