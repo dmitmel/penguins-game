@@ -10,13 +10,6 @@ typedef struct Board {
   int** grid;
 } Board;
 
-typedef enum CheckedTile {
-  EMPTY,
-  PENGUIN,
-  VALID_TILE
-} CheckedTile;
-
-
 typedef enum TileType {
   EMPTY_TILE,
   PENGUIN_OWN,
@@ -36,10 +29,8 @@ bool placeable_spot_exists(Board* board);
 
 bool is_spot_valid_for_placement(Board* board, int x, int y);
 
-bool any_valid_player_move_exists(Board* board, int player_id) ;
+bool any_valid_player_move_exists(Board* board, int player_id);
 
 bool any_valid_movement_exists(Board* board, Player* players, int player_count);
-
-bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int target_y);
 
 int move_penguin(Board* board, int start_x, int start_y, int target_x, int target_y, int player_id);

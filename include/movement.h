@@ -4,25 +4,23 @@
 #include "gamestate.h"
 
 typedef enum MovementInput {
+  VALID_INPUT = 0,
   OUT_OF_BOUNDS_MOVEMENT,
   CURRENT_LOCATION,
   DIAGONAL_MOVE,
   NOT_YOUR_PENGUIN,
-  VALID_INPUT,
-  EMPTY_FLOE
-} MovementInput;
+  EMPTY_FLOE,
+  MOVE_OVER_EMPTY_TILE,
+  MOVE_OVER_PENGUIN,
+} MovementError;
 
 bool any_valid_player_move_exists(Board* board, int player_id);
 
 bool any_valid_movement_exists(Board* board, Player* players, int player_count);
 
-CheckedTile check_a_tile(int x, int y, Board* board);
-
-MovementInput check_movement_input(
-  int target_x, int target_y, int start_x, int start_y, Board* board, Player* current_player
+MovementError validate_movement(
+  Board* board, int start_x, int start_y, int target_x, int target_y, int current_player_id
 );
-
-bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int target_y);
 
 void handle_movement_input(
   int* penguin_x,

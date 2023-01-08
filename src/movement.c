@@ -1,7 +1,8 @@
 #include "movement.h"
 #include "board.h"
-#include "io.h"
 #include "gamestate.h"
+#include "io.h"
+#include <stdio.h>
 
 bool any_valid_player_move_exists(Board* board, int player_id) {
   // TODO the selected player can move their penguin
@@ -20,18 +21,8 @@ bool any_valid_movement_exists(Board* board, Player* players, int player_count) 
   return false;
 }
 
-CheckedTile check_a_tile(int x, int y, Board* board) {
-  int Tile = board->grid[y][x];
-  if (Tile == 0) {
-    return EMPTY;
-  } else if (Tile < 0) {
-    return PENGUIN;
-  }
-  return VALID_TILE;
-}
-
-MovementInput check_movement_input(
-  int target_x, int target_y, int start_x, int start_y, Board* board, Player* current_player
+MovementError validate_movement(
+  Board* board, int start_x, int start_y, int target_x, int target_y, int current_player_id
 ) {
   int tile = board->grid[start_y][start_x];
   if (target_x < 0 || target_x >= board->width || target_y < 0 || target_y >= board->height) {
@@ -40,68 +31,27 @@ MovementInput check_movement_input(
     return CURRENT_LOCATION;
   } else if (target_x != start_x && target_y != start_y) {
     return DIAGONAL_MOVE;
-  } else if (-tile != current_player->id) {
+  } else if (-tile != current_player_id) {
     return NOT_YOUR_PENGUIN;
-  } else if (board->grid[target_y][target_x]==0){
+  } else if (board->grid[target_y][target_x] == 0) {
     return EMPTY_FLOE;
   }
-  return VALID_INPUT;
-}
 
-bool movement_is_valid(Board* board, int start_x, int start_y, int target_x, int target_y) {
-  // TODO no penguins or empty tiles in the way to interrupt the itended movement
-  int x, y;
-  int movement_start, movement_end;
-
-  if (target_x != start_x) {
-    if (start_x > target_x) {
-      movement_start = target_x;
-      movement_end = start_x - 1;
-    } else {
-      movement_start = start_x + 1;
-      movement_end = target_x;
-    }
-    for (x = movement_start; x <= movement_end; x++) {
-      CheckedTile tile = check_a_tile(x, start_y, board);
-      switch (tile) {
-      case EMPTY:
-        display_error_message("You cant move over an empty tile!");
-        return false;
-        break;
-      case PENGUIN:
-        display_error_message("You cant move over another penguin!");
-        return false;
-        break;
-      case VALID_TILE:
-        break;
-      }
-    }
-  } else {
-    if (start_y > target_y) {
-      movement_start = target_y;
-      movement_end = start_y - 1;
-    } else {
-      movement_start = start_y + 1;
-      movement_end = target_y;
-    }
-    for (y = movement_start; y <= movement_end; y++) {
-      CheckedTile tile = check_a_tile(start_x, y, board);
-      switch (tile) {
-      case EMPTY:
-        display_error_message("You cant move over an empty tile!");
-        return false;
-      case PENGUIN:
-        display_error_message("You cant move over another penguin!");
-        return false;
-      case VALID_TILE:
-        break;
-      }
+  int x = start_x, y = start_y;
+  int dx = target_x > start_x ? 1 : target_x < start_x ? -1 : 0;
+  int dy = target_y > start_y ? 1 : target_y < start_y ? -1 : 0;
+  while (x != target_x || y != target_y) {
+    x += dx, y += dy;
+    int tile = board->grid[y][x];
+    if (tile == 0) {
+      return MOVE_OVER_EMPTY_TILE;
+    } else if (tile < 0) {
+      return MOVE_OVER_PENGUIN;
     }
   }
 
-  return true;
+  return VALID_INPUT;
 }
-
 
 // returns the number of fish captured on the way
 int move_penguin(
@@ -125,8 +75,8 @@ void handle_movement_input(
 ) {
   while (true) {
     get_data_for_movement(penguin_x, penguin_y, target_x, target_y);
-    MovementInput input =
-      check_movement_input(*target_x, *target_y, *penguin_x, *penguin_y, board, current_player);
+    MovementError input =
+      validate_movement(board, *penguin_x, *penguin_y, *target_x, *target_y, current_player->id);
     switch (input) {
     case OUT_OF_BOUNDS_MOVEMENT:
       display_error_message("You cant move oustide the board!");
@@ -143,18 +93,16 @@ void handle_movement_input(
     case EMPTY_FLOE:
       display_error_message("Can't move onto an empty tile");
       break;
-    case VALID_INPUT:
-      if (movement_is_valid(board, *penguin_x, *penguin_y, *target_x, *target_y)) {
-        return;
-      }
+    case MOVE_OVER_EMPTY_TILE:
+      display_error_message("You cant move over an empty tile!");
       break;
+    case MOVE_OVER_PENGUIN:
+      display_error_message("You cant move over another penguin!");
+      break;
+    case VALID_INPUT:
+      return;
     }
   }
-  // TODO: look how handle_placement_input is handled
-  // use movement_is_valid() method to check if the movement is valid
-  // only return (exit) from this method if the movement is valid
-
-  return;
 }
 
 void interactive_movement(Board* board, Player player_data[], int player_count) {
