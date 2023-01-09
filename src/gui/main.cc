@@ -217,8 +217,8 @@ void CanvasPanel::update_blocked_cells() {
 MovementError CanvasPanel::validate_movement(wxPoint start, wxPoint target, wxPoint* fail) {
   return ::validate_movement(
     state.board.get(),
-    Coords{ start.x, start.y },
-    Coords{ target.x, target.y },
+    *reinterpret_cast<Coords*>(&start),
+    *reinterpret_cast<Coords*>(&target),
     state.current_player + 1,
     reinterpret_cast<Coords*>(fail)
   );
@@ -491,8 +491,8 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& event) {
       if (result == VALID_INPUT) {
         move_penguin(
           state.board.get(),
-          Coords{ prev_cell.x, prev_cell.y },
-          Coords{ curr_cell.x, curr_cell.y },
+          *reinterpret_cast<Coords*>(&prev_cell),
+          *reinterpret_cast<Coords*>(&curr_cell),
           state.current_player + 1
         );
         this->mark_board_dirty();
