@@ -19,11 +19,19 @@ extern "C" {
 #include "movement.h"
 }
 
-class GameState {
-  wxDECLARE_NO_COPY_CLASS(GameState);
+static_assert(
+  std::is_standard_layout<wxPoint>() && std::is_standard_layout<Coords>() &&
+    sizeof(wxPoint) == sizeof(Coords) && sizeof(wxPoint::x) == sizeof(Coords::x) &&
+    offsetof(wxPoint, x) == offsetof(Coords, x) && sizeof(wxPoint::y) == sizeof(Coords::y) &&
+    offsetof(wxPoint, y) == offsetof(Coords, y),
+  "The layout of wxPoint and Coords must be compatible"
+);
+
+class GuiGameState {
+  wxDECLARE_NO_COPY_CLASS(GuiGameState);
 
 public:
-  GameState() {}
+  GuiGameState() {}
 
   static void free_board_ptr(Board* board) {
     free_board(board);
@@ -48,7 +56,7 @@ public:
   static const int FISH_CIRCLE_RADIUS = 4;
   static const int BLOCKED_CELL_LIGHTNESS = -40;
 
-  CanvasPanel(wxWindow* parent, wxWindowID id, GameState& state);
+  CanvasPanel(wxWindow* parent, wxWindowID id, GuiGameState& state);
 
   wxSize get_board_size() const;
   bool is_cell_in_bounds(wxPoint cell) const;
@@ -89,7 +97,7 @@ protected:
   wxPoint prev_mouse_pos = wxDefaultPosition;
   wxPoint mouse_drag_pos = wxDefaultPosition;
 
-  GameState& state;
+  GuiGameState& state;
 
 private:
   wxDECLARE_EVENT_TABLE();
@@ -97,7 +105,7 @@ private:
 
 class GameFrame : public wxFrame {
 public:
-  GameFrame(wxWindow* parent, wxWindowID id, GameState& state);
+  GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state);
 
   void start_new_game();
 
@@ -108,7 +116,7 @@ protected:
   void on_mouse_enter_leave(wxMouseEvent& event);
 
   CanvasPanel* canvas_panel;
-  GameState& state;
+  GuiGameState& state;
 
 private:
   wxDECLARE_EVENT_TABLE();
@@ -121,7 +129,7 @@ public:
 
 protected:
   GameFrame* game_frame;
-  GameState game_state;
+  GuiGameState game_state;
 };
 
 wxDECLARE_APP(PenguinsApp);

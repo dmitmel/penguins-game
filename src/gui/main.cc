@@ -56,7 +56,7 @@ wxBEGIN_EVENT_TABLE(GameFrame, wxFrame)
 wxEND_EVENT_TABLE();
 // clang-format on
 
-GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GameState& state)
+GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
 : wxFrame(parent, id, "Penguins game"), state(state) {
   auto menu_file = new wxMenu();
   menu_file->Append(ID_NEW_GAME, "&New Game...\tCtrl-N", "Start a new game");
@@ -137,7 +137,7 @@ wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
 wxEND_EVENT_TABLE();
 // clang-format on
 
-CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GameState& state)
+CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GuiGameState& state)
 : wxPanel(parent, id), state(state) {}
 
 wxSize CanvasPanel::get_board_size() const {
@@ -183,7 +183,8 @@ void CanvasPanel::update_blocked_cells() {
   if (state.game_phase == PHASE_PLACEMENT) {
     for (int y = 0; y < board->height; y++) {
       for (int x = 0; x < board->width; x++) {
-        state.blocked_cells[x + y * board->width] = !is_spot_valid_for_placement(board, x, y);
+        state.blocked_cells[x + y * board->width] =
+          !is_spot_valid_for_placement(board, Coords{ x, y });
       }
     }
   } else if (state.game_phase == PHASE_MOVEMENT) {
@@ -216,13 +217,10 @@ void CanvasPanel::update_blocked_cells() {
 MovementError CanvasPanel::validate_movement(wxPoint start, wxPoint target, wxPoint* fail) {
   return ::validate_movement(
     state.board.get(),
-    start.x,
-    start.y,
-    target.x,
-    target.y,
+    Coords{ start.x, start.y },
+    Coords{ target.x, target.y },
     state.current_player + 1,
-    fail ? &fail->x : nullptr,
-    fail ? &fail->y : nullptr
+    reinterpret_cast<Coords*>(fail)
   );
 }
 
@@ -493,10 +491,8 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& event) {
       if (result == VALID_INPUT) {
         move_penguin(
           state.board.get(),
-          prev_cell.x,
-          prev_cell.y,
-          curr_cell.x,
-          curr_cell.y,
+          Coords{ prev_cell.x, prev_cell.y },
+          Coords{ curr_cell.x, curr_cell.y },
           state.current_player + 1
         );
         this->mark_board_dirty();

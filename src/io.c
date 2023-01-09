@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "gamestate.h"
 #include "board.h"
+#include "gamestate.h"
 
 void print_board(Board* board) {
   printf("   ");
@@ -59,12 +59,12 @@ void get_player_name(int player_number, char* name) {
   scanf("%s", name);
 }
 
-void ask_player_for_input(int player_number){
+void ask_player_for_input(int player_number) {
   printf("Player %d, please input x and y coordinates to place the penguin:\n", player_number);
 }
 
-void get_penguin_coordinates(int* x, int* y) {
-  scanf("%d %d", x, y);
+void get_penguin_coordinates(Coords* coords) {
+  scanf("%d %d", &coords->x, &coords->y);
 }
 
 void display_new_turn_message(int player_number) {
@@ -104,11 +104,9 @@ void print_end_placement_phase(Board* board, Player players[], int player_count)
   print_player_stats(players, player_count);
 }
 
-
-void get_data_for_movement(int* start_x, int* start_y, int* target_x, int* target_y)
-{
+void get_data_for_movement(Coords* start, Coords* target) {
   printf("Chose a penguin\n");
-  scanf("%d %d", start_x, start_y);
+  scanf("%d %d", &start->x, &start->y);
   printf("Where do you want to move?\n");
-  scanf("%d %d", target_x, target_y);
+  scanf("%d %d", &target->x, &target->y);
 }

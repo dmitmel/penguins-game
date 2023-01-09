@@ -27,4 +27,4 @@ void generate_random_board(Board* board);
 
 bool placeable_spot_exists(Board* board);
 
-bool is_spot_valid_for_placement(Board* board, int x, int y);
+bool is_spot_valid_for_placement(Board* board, Coords coords);

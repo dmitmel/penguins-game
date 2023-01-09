@@ -19,29 +19,13 @@ bool any_valid_player_move_exists(Board* board, int player_id);
 
 bool any_valid_movement_exists(Board* board, Player* players, int player_count);
 
-MovementError validate_movement(
-  Board* board,
-  int start_x,
-  int start_y,
-  int target_x,
-  int target_y,
-  int current_player_id,
-  int* fail_x,
-  int* fail_y
-);
+MovementError
+validate_movement(Board* board, Coords start, Coords target, int current_player_id, Coords* fail);
 
 void handle_movement_input(
-  int* penguin_x,
-  int* penguin_y,
-  int* target_x,
-  int* target_y,
-  Board* board,
-  Player* current_player,
-  int player_count
+  Coords* penguin, Coords* target, Board* board, Player* current_player, int player_count
 );
 
-int move_penguin(
-  Board* board, int start_x, int start_y, int target_x, int target_y, int player_id
-);
+int move_penguin(Board* board, Coords start, Coords target, int player_id);
 
 void interactive_movement(Board* board, Player player_data[], int player_count);

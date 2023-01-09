@@ -52,7 +52,9 @@ static MunitResult test_detect_valid_movement(const MunitParameter* params, void
   int* grid[1] = { (int[3]){ -1, 1, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
-  assert_true(validate_movement(&board, 0, 0, 2, 0, 1, NULL, NULL) == VALID_INPUT);
+  assert_true(
+    validate_movement(&board, (Coords){ 0, 0 }, (Coords){ 2, 0 }, 1, NULL) == VALID_INPUT
+  );
   return MUNIT_OK;
 }
 
@@ -61,7 +63,9 @@ test_movement_over_empty_space_invalid(const MunitParameter* params, void* data)
   int* grid[1] = { (int[3]){ -1, 0, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
-  assert_false(validate_movement(&board, 0, 0, 2, 0, 1, NULL, NULL) == VALID_INPUT);
+  assert_false(
+    validate_movement(&board, (Coords){ 0, 0 }, (Coords){ 2, 0 }, 1, NULL) == VALID_INPUT
+  );
   return MUNIT_OK;
 }
 
@@ -69,7 +73,9 @@ static MunitResult test_movement_over_penguin_invalid(const MunitParameter* para
   int* grid[1] = { (int[3]){ -1, -2, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
-  assert_false(validate_movement(&board, 0, 0, 2, 0, 1, NULL, NULL) == VALID_INPUT);
+  assert_false(
+    validate_movement(&board, (Coords){ 0, 0 }, (Coords){ 2, 0 }, 1, NULL) == VALID_INPUT
+  );
   return MUNIT_OK;
 }
 
@@ -78,7 +84,7 @@ test_move_penguin_and_calculate_points(const MunitParameter* params, void* data)
   int* grid[1] = { (int[3]){ -1, 1, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
-  assert_int(move_penguin(&board, 0, 0, 2, 0, 1), ==, 3);
+  assert_int(move_penguin(&board, (Coords){ 0, 0 }, (Coords){ 2, 0 }, 1), ==, 3);
   assert_int(board.grid[0][0], ==, 0);
   assert_int(board.grid[0][1], ==, 1);
   assert_int(board.grid[0][2], ==, -1);
