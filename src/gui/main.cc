@@ -162,10 +162,12 @@ void CanvasPanel::load_tileset() {
     return get_sub_image(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   };
 
-  for (int i = 0; i < 9; i++) {
-    this->ice_tiles[i] = get_tile(i % 3, i / 3);
+  for (int i = 0; i < WXSIZEOF(this->ice_tiles); i++) {
+    this->ice_tiles[i] = get_tile(0 + i % 3, 0 + i / 3);
   }
-  this->water_tile = get_tile(4, 3);
+  for (int i = 0; i < WXSIZEOF(this->water_tiles); i++) {
+    this->water_tiles[i] = get_tile(0 + i % 3, 2 + i / 3);
+  }
   this->tile_edges[EDGE_TOP] = get_tile(4, 2);
   this->tile_edges[EDGE_RIGHT] = get_tile(3, 1);
   this->tile_edges[EDGE_BOTTOM] = get_tile(4, 0);
@@ -267,7 +269,8 @@ MovementError CanvasPanel::validate_movement(wxPoint start, wxPoint target, wxPo
 wxSize CanvasPanel::DoGetBestClientSize() const {
   wxSize size = this->get_canvas_size();
   if (!(size.x > 0 && size.y > 0)) {
-    return CELL_SIZE * wxSize(20, 20);
+    wxSize default_size(NewGameDialog::DEFAULT_BOARD_WIDTH, NewGameDialog::DEFAULT_BOARD_HEIGHT);
+    return CELL_SIZE * default_size;
   }
   return size;
 }
@@ -395,7 +398,7 @@ void CanvasPanel::paint_board(wxDC& dc) {
 
       } else {
         // a water tile
-        dc.DrawBitmap(this->water_tile, cell_pos);
+        dc.DrawBitmap(this->water_tiles[(x ^ y) % WXSIZEOF(this->water_tiles)], cell_pos);
         dc.DrawRectangle(cell_rect);
       }
     }

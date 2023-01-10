@@ -15,6 +15,11 @@ class NewGameDialog : public wxDialog {
 public:
   NewGameDialog(wxWindow* parent, wxWindowID id);
 
+  static const int DEFAULT_BOARD_WIDTH = 16;
+  static const int DEFAULT_BOARD_HEIGHT = 16;
+  static const int DEFAULT_PENGUINS_PER_PLAYER = 2;
+  static const int DEFAULT_NUMBER_OF_PLAYERS = 2;
+
   int get_board_width() const;
   int get_board_height() const;
   int get_penguins_per_player() const;

@@ -51,7 +51,7 @@ public:
 
 class CanvasPanel : public wxPanel {
 public:
-  static const wxCoord CELL_SIZE = 32;
+  static const wxCoord CELL_SIZE = 40;
   static const int CELL_FONT_SIZE = 16;
   static const int FISH_CIRCLE_RADIUS = 4;
   static const int BLOCKED_CELL_LIGHTNESS = -40;
@@ -72,7 +72,7 @@ public:
     CORNER_MAX,
   };
 
-  static const int TILE_SIZE = 16;
+  static const int TILE_SIZE = 20;
   static const int TILESET_SCALING = CELL_SIZE / TILE_SIZE;
 
   CanvasPanel(wxWindow* parent, wxWindowID id, GuiGameState& state);
@@ -112,7 +112,7 @@ protected:
   bool board_dirty = true;
   wxBitmap board_bitmap;
 
-  wxBitmap water_tile;
+  wxBitmap water_tiles[3];
   wxBitmap ice_tiles[6];
   wxBitmap tile_edges[EDGE_MAX];
   wxBitmap tile_convex_corners[CORNER_MAX];

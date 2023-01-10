@@ -49,28 +49,28 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   auto width_label = new wxStaticText(this, ID_BOARD_WIDTH, "Board width:");
   grid->Add(width_label, wxSizerFlags().Centre().Left());
   this->width_input = new wxSpinCtrl(this, ID_BOARD_WIDTH);
-  this->width_input->SetValue(20);
+  this->width_input->SetValue(DEFAULT_BOARD_WIDTH);
   this->width_input->SetRange(1, 1000);
   grid->Add(this->width_input, wxSizerFlags().Expand());
 
   auto height_label = new wxStaticText(this, ID_BOARD_HEIGHT, "Board height:");
   grid->Add(height_label, wxSizerFlags().Centre().Left());
   this->height_input = new wxSpinCtrl(this, ID_BOARD_HEIGHT);
-  this->height_input->SetValue(20);
+  this->height_input->SetValue(DEFAULT_BOARD_HEIGHT);
   this->height_input->SetRange(1, 1000);
   grid->Add(this->height_input, wxSizerFlags().Expand());
 
   auto penguins_number_label = new wxStaticText(this, ID_PENGUINS_NUMBER, "Penguins per player:");
   grid->Add(penguins_number_label, wxSizerFlags().Centre().Left());
   this->penguins_input = new wxSpinCtrl(this, ID_PENGUINS_NUMBER);
-  this->penguins_input->SetValue(2);
+  this->penguins_input->SetValue(DEFAULT_PENGUINS_PER_PLAYER);
   this->penguins_input->SetRange(1, 100);
   grid->Add(this->penguins_input, wxSizerFlags().Expand());
 
   auto players_number_label = new wxStaticText(this, ID_PLAYERS_NUMBER, "Number of players:");
   grid->Add(players_number_label, wxSizerFlags().Centre().Left());
   this->players_number_input = new wxSpinCtrl(this, ID_PLAYERS_NUMBER);
-  this->players_number_input->SetValue(2);
+  this->players_number_input->SetValue(DEFAULT_NUMBER_OF_PLAYERS);
   this->players_number_input->SetRange(1, 100);
   grid->Add(this->players_number_input, wxSizerFlags().Expand());
 
