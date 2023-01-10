@@ -9,7 +9,18 @@ bool any_valid_player_move_exists(Board* board, int player_id) {
   // players are encoded on the board as an integer equal to -player_id
   // so a row [0, 1, -1, -2] means that player 1 and player 2 have a penguin on the right half of
   // the row
-  return true;
+  for (int y = 0; y < board->height; y++) {
+    for (int x = 0; x < board->width; x++) {
+      int tile = board->grid[y][x];
+      if (-tile == player_id) {
+        PossibleMoves moves = calculate_all_possible_moves(board, (Coords){ x, y });
+        if (moves.steps_up != 0 || moves.steps_right != 0 || moves.steps_down != 0 || moves.steps_left != 0) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 bool any_valid_movement_exists(Board* board, Player* players, int player_count) {
@@ -56,6 +67,33 @@ validate_movement(Board* board, Coords start, Coords target, int current_player_
   }
 
   return VALID_INPUT;
+}
+
+static int get_possible_steps_in_direction(Board* board, Coords start, int dx, int dy) {
+  int x = start.x, y = start.y;
+  int steps = 0;
+  while (true) {
+    x += dx, y += dy;
+    if (!(0 <= x && x < board->width && 0 <= y && y < board->height)) {
+      break;
+    }
+    int tile = board->grid[y][x];
+    if (tile <= 0) {
+      break;
+    }
+    steps++;
+  }
+  return steps;
+}
+
+PossibleMoves calculate_all_possible_moves(Board* board, Coords start) {
+  PossibleMoves result = {
+    .steps_up = get_possible_steps_in_direction(board, start, 0, -1),
+    .steps_right = get_possible_steps_in_direction(board, start, 1, 0),
+    .steps_down = get_possible_steps_in_direction(board, start, 0, 1),
+    .steps_left = get_possible_steps_in_direction(board, start, -1, 0),
+  };
+  return result;
 }
 
 // returns the number of fish captured on the way

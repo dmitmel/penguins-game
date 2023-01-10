@@ -26,6 +26,15 @@ bool any_valid_movement_exists(Board* board, Player* players, int player_count);
 MovementError
 validate_movement(Board* board, Coords start, Coords target, int current_player_id, Coords* fail);
 
+typedef struct PossibleMoves {
+  int steps_up;
+  int steps_right;
+  int steps_down;
+  int steps_left;
+} PossibleMoves;
+
+PossibleMoves calculate_all_possible_moves(Board* board, Coords start);
+
 void handle_movement_input(
   Coords* penguin, Coords* target, Board* board, Player* current_player, int player_count
 );

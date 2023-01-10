@@ -230,25 +230,37 @@ void CanvasPanel::update_blocked_cells() {
       }
     }
   } else if (state.game_phase == PHASE_MOVEMENT) {
+    int current_player_cell = -(state.current_player + 1);
     wxPoint curr_cell =
       this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
-    if (!this->is_cell_in_bounds(curr_cell)) return;
-    if (*this->cell_ptr(curr_cell) < 0) {
+    if (this->is_cell_in_bounds(curr_cell) && *this->cell_ptr(curr_cell) == current_player_cell) {
       // A penguin is selected
       for (int y = 0; y < board->height; y++) {
         for (int x = 0; x < board->width; x++) {
-          MovementError result = this->validate_movement(curr_cell, wxPoint(x, y));
-          if (!this->mouse_is_down && result == CURRENT_LOCATION) {
-            result = VALID_INPUT;
-          }
-          state.blocked_cells[x + y * board->width] = result != VALID_INPUT;
+          state.blocked_cells[x + y * board->width] = true;
         }
       }
+      if (!this->mouse_is_down) {
+        state.blocked_cells[curr_cell.x + curr_cell.y * board->width] = false;
+      }
+      PossibleMoves moves =
+        calculate_all_possible_moves(board, *reinterpret_cast<Coords*>(&curr_cell));
+      auto unblock_steps = [&](int steps, int dx, int dy) -> void {
+        int x = curr_cell.x, y = curr_cell.y;
+        while (steps > 0) {
+          x += dx, y += dy;
+          state.blocked_cells[x + y * board->width] = false;
+          steps--;
+        }
+      };
+      unblock_steps(moves.steps_up, 0, -1);
+      unblock_steps(moves.steps_right, 1, 0);
+      unblock_steps(moves.steps_down, 0, 1);
+      unblock_steps(moves.steps_left, -1, 0);
     } else {
       for (int y = 0; y < board->height; y++) {
         for (int x = 0; x < board->width; x++) {
-          state.blocked_cells[x + y * board->width] =
-            board->grid[y][x] != -(state.current_player + 1);
+          state.blocked_cells[x + y * board->width] = board->grid[y][x] != current_player_cell;
         }
       }
     }
