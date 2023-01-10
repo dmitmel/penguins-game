@@ -5,6 +5,7 @@
 #include "movement.h"
 #include "random.h"
 #include "resources_tileset_png.h"
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <wx/bitmap.h>
@@ -180,6 +181,11 @@ void CanvasPanel::load_tileset() {
   this->tile_convex_corners[CORNER_BOTTOM_RIGHT] = get_tile(7, 2);
   this->tile_convex_corners[CORNER_BOTTOM_LEFT] = get_tile(6, 2);
   this->tile_convex_corners[CORNER_TOP_LEFT] = get_tile(6, 1);
+  this->blocked_tile = get_tile(4, 3);
+  this->grid_tile = get_tile(3, 3);
+  for (int i = 0; i < WXSIZEOF(this->fish_sprites); i++) {
+    this->fish_sprites[i] = get_tile(5 + i, 3);
+  }
 }
 
 wxSize CanvasPanel::get_board_size() const {
@@ -323,6 +329,15 @@ void CanvasPanel::paint_board(wxDC& dc) {
   cell_font.SetPointSize(CELL_FONT_SIZE);
   dc.SetFont(cell_font);
 
+  bool should_block_cells = this->mouse_within_window;
+  if (state.game_phase == PHASE_MOVEMENT) {
+    wxPoint curr_cell =
+      this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
+    if (this->is_cell_in_bounds(curr_cell)) {
+      should_block_cells = *this->cell_ptr(curr_cell) == -(state.current_player + 1);
+    }
+  }
+
   for (int y = 0; y < board->height; y++) {
     for (int x = 0; x < board->width; x++) {
       wxPoint cell(x, y);
@@ -331,20 +346,11 @@ void CanvasPanel::paint_board(wxDC& dc) {
       wxPoint cell_pos = cell_rect.GetPosition();
       wxPoint cell_centre = this->get_cell_centre(cell);
 
-      int lightness = 100;
-      if (this->mouse_within_window && this->is_cell_blocked(cell)) {
-        lightness += BLOCKED_CELL_LIGHTNESS;
-      }
-      auto blend_colour = [&](const wxColour& colour) {
-        return colour.ChangeLightness(lightness);
-      };
+      bool is_blocked = should_block_cells && this->is_cell_blocked(cell);
 
-      dc.SetPen(wxNullPen);
-      dc.SetBrush(wxNullBrush);
-
-      if (cell_value > 0) {
-        // an ice floe with fish on it
-        int fish_count = cell_value;
+      if (cell_value == 0) {
+        dc.DrawBitmap(this->water_tiles[(x ^ y) % WXSIZEOF(this->water_tiles)], cell_pos);
+      } else {
         dc.DrawBitmap(this->ice_tiles[(x ^ y) % WXSIZEOF(this->ice_tiles)], cell_pos);
 
         auto check_water = [&](int dx, int dy) -> bool {
@@ -382,37 +388,25 @@ void CanvasPanel::paint_board(wxDC& dc) {
         draw_convex_corner(-1, 1, CORNER_BOTTOM_LEFT);
         draw_convex_corner(-1, -1, CORNER_TOP_LEFT);
 
-        dc.DrawRectangle(cell_rect);
-
-        dc.SetPen(wxNullPen);
-        dc.SetBrush(blend_colour((*wxGREY_BRUSH).GetColour()));
-        if (fish_count == 1) {
-          dc.DrawCircle(cell_centre, FISH_CIRCLE_RADIUS);
-        } else {
-          for (int i = 0; i < fish_count; i++) {
-            float angle = (float)i / fish_count * 2 * M_PI;
-            float offset = (float)CELL_SIZE / 5;
-            wxPoint centre(
-              (float)cell_centre.x + cos(angle) * offset,
-              (float)cell_centre.y + sin(angle) * offset
-            );
-            dc.DrawCircle(centre, FISH_CIRCLE_RADIUS);
+        if (cell_value > 0) {
+          int fish_count = cell_value;
+          dc.DrawBitmap(
+            this->fish_sprites[(fish_count - 1) % WXSIZEOF(this->fish_sprites)], cell_pos
+          );
+          if (is_blocked) {
+            dc.DrawBitmap(this->blocked_tile, cell_pos);
           }
+        } else if (cell_value < 0) {
+          // a penguin
+          int player = -cell_value;
+          dc.SetPen(*wxBLACK);
+          dc.SetBrush(*wxYELLOW);
+          dc.DrawRectangle(cell_rect);
+          dc.DrawLabel(wxString::Format("%d", player), cell_rect, wxALIGN_CENTRE);
         }
-
-      } else if (cell_value < 0) {
-        // a penguin
-        int player = -cell_value;
-        dc.SetBrush(*wxYELLOW);
-        dc.DrawRectangle(cell_rect);
-
-        dc.DrawLabel(wxString::Format("%d", player), cell_rect, wxALIGN_CENTRE);
-
-      } else {
-        // a water tile
-        dc.DrawBitmap(this->water_tiles[(x ^ y) % WXSIZEOF(this->water_tiles)], cell_pos);
-        dc.DrawRectangle(cell_rect);
       }
+
+      dc.DrawBitmap(this->grid_tile, cell_pos);
     }
   }
 }

@@ -114,6 +114,9 @@ protected:
   wxBitmap tile_edges[EDGE_MAX];
   wxBitmap tile_convex_corners[CORNER_MAX];
   wxBitmap tile_concave_corners[CORNER_MAX];
+  wxBitmap blocked_tile;
+  wxBitmap grid_tile;
+  wxBitmap fish_sprites[3];
 
   bool mouse_within_window = false;
   bool mouse_is_down;
