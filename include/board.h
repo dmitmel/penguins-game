@@ -1,8 +1,11 @@
 #pragma once
 
+#include "gamestate.h"
 #include <stdbool.h>
 
-#include "gamestate.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct Board {
   int width;
@@ -28,3 +31,7 @@ void generate_random_board(Board* board);
 bool placeable_spot_exists(Board* board);
 
 bool is_spot_valid_for_placement(Board* board, Coords coords);
+
+#ifdef __cplusplus
+}
+#endif

@@ -3,7 +3,11 @@
 #include "board.h"
 #include "gamestate.h"
 
-typedef enum MovementInput {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum MovementError {
   VALID_INPUT = 0,
   OUT_OF_BOUNDS_MOVEMENT,
   CURRENT_LOCATION,
@@ -29,3 +33,7 @@ void handle_movement_input(
 int move_penguin(Board* board, Coords start, Coords target, int player_id);
 
 void interactive_movement(Board* board, Player player_data[], int player_count);
+
+#ifdef __cplusplus
+}
+#endif

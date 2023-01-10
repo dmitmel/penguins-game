@@ -1,5 +1,8 @@
 #pragma once
 
+#include "board.h"
+#include "gamestate.h"
+#include "movement.h"
 #include <memory>
 #include <wx/app.h>
 #include <wx/bitmap.h>
@@ -12,12 +15,6 @@
 #include <wx/string.h>
 #include <wx/vector.h>
 #include <wx/window.h>
-
-extern "C" {
-#include "board.h"
-#include "gamestate.h"
-#include "movement.h"
-}
 
 static_assert(
   std::is_standard_layout<wxPoint>() && std::is_standard_layout<Coords>() &&

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct Player {
   int id;
   char name[16];
@@ -21,3 +25,7 @@ typedef struct Coords {
   int x;
   int y;
 } Coords;
+
+#ifdef __cplusplus
+}
+#endif

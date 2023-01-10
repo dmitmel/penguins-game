@@ -1,11 +1,8 @@
-extern "C" {
-#include <random.h>
-}
-
+#include "random.h"
 #include <random>
 
 static std::default_random_engine& get_random_engine() {
-  static thread_local std::default_random_engine rng{std::random_device()()};
+  static thread_local std::default_random_engine rng{ std::random_device()() };
   return rng;
 }
 

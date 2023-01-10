@@ -3,6 +3,10 @@
 #include "board.h"
 #include "gamestate.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void print_board(Board* board);
 
 void get_board_dimensions(int* width, int* height);
@@ -26,3 +30,7 @@ void update_game_state_display(Board* board, Player players[], int player_count)
 void print_end_placement_phase(Board* board, Player players[], int player_count);
 
 void get_data_for_movement(Coords* start, Coords* target);
+
+#ifdef __cplusplus
+}
+#endif

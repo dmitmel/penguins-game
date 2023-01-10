@@ -1,5 +1,9 @@
 #include "gui/main.hh"
+#include "board.h"
+#include "gamestate.h"
 #include "gui/new_game_dialog.hh"
+#include "movement.h"
+#include "random.h"
 #include <cmath>
 #include <cstring>
 #include <wx/bitmap.h>
@@ -22,13 +26,6 @@
 #include <wx/sizer.h>
 #include <wx/types.h>
 #include <wx/window.h>
-
-extern "C" {
-#include "board.h"
-#include "gamestate.h"
-#include "movement.h"
-#include "random.h"
-}
 
 wxIMPLEMENT_APP(PenguinsApp);
 
