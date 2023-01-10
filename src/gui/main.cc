@@ -4,6 +4,7 @@
 #include "gui/new_game_dialog.hh"
 #include "movement.h"
 #include "random.h"
+#include "resources_tileset_png.h"
 #include <cmath>
 #include <cstring>
 #include <wx/bitmap.h>
@@ -21,6 +22,7 @@
 #include <wx/log.h>
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
+#include <wx/mstream.h>
 #include <wx/pen.h>
 #include <wx/peninfobase.h>
 #include <wx/sizer.h>
@@ -144,7 +146,8 @@ CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GuiGameState& state)
 }
 
 void CanvasPanel::load_tileset() {
-  wxImage tileset_img(wxT("resources/tileset.png"), wxBITMAP_TYPE_PNG);
+  wxMemoryInputStream is(resources_tileset_png, resources_tileset_png_size);
+  wxImage tileset_img(is, wxBITMAP_TYPE_PNG);
   wxCHECK_RET(tileset_img.IsOk(), "Failed to load the tileset");
 
   const int scaling = TILESET_SCALING;
