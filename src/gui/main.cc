@@ -1,6 +1,7 @@
 #include "gui/main.hh"
 #include "gui/new_game_dialog.hh"
 #include <cmath>
+#include <cstring>
 #include <wx/bitmap.h>
 #include <wx/brush.h>
 #include <wx/colour.h>
@@ -11,6 +12,8 @@
 #include <wx/gdicmn.h>
 #include <wx/geometry.h>
 #include <wx/graphics.h>
+#include <wx/image.h>
+#include <wx/imagpng.h>
 #include <wx/log.h>
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
@@ -33,6 +36,7 @@ PenguinsApp::PenguinsApp() {}
 
 bool PenguinsApp::OnInit() {
   random_init();
+  wxImage::AddHandler(new wxPNGHandler());
 
   this->game_frame = new GameFrame(nullptr, wxID_ANY, this->game_state);
   this->game_frame->Centre();
@@ -138,7 +142,43 @@ wxEND_EVENT_TABLE();
 // clang-format on
 
 CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GuiGameState& state)
-: wxPanel(parent, id), state(state) {}
+: wxPanel(parent, id), state(state) {
+  this->load_tileset();
+}
+
+void CanvasPanel::load_tileset() {
+  wxImage tileset_img(wxT("resources/tileset.png"), wxBITMAP_TYPE_PNG);
+  wxCHECK_RET(tileset_img.IsOk(), "Failed to load the tileset");
+
+  const int scaling = TILESET_SCALING;
+  tileset_img.Rescale(
+    tileset_img.GetWidth() * scaling, tileset_img.GetHeight() * scaling, wxIMAGE_QUALITY_NEAREST
+  );
+
+  auto get_sub_image = [&](int x, int y, int w, int h) -> wxImage {
+    return tileset_img.GetSubImage(wxRect(x * scaling, y * scaling, w * scaling, h * scaling));
+  };
+  auto get_tile = [&](int x, int y) -> wxImage {
+    return get_sub_image(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  };
+
+  for (int i = 0; i < 9; i++) {
+    this->ice_tiles[i] = get_tile(i % 3, i / 3);
+  }
+  this->water_tile = get_tile(4, 3);
+  this->tile_edges[EDGE_TOP] = get_tile(4, 2);
+  this->tile_edges[EDGE_RIGHT] = get_tile(3, 1);
+  this->tile_edges[EDGE_BOTTOM] = get_tile(4, 0);
+  this->tile_edges[EDGE_LEFT] = get_tile(5, 1);
+  this->tile_concave_corners[CORNER_TOP_RIGHT] = get_tile(3, 2);
+  this->tile_concave_corners[CORNER_BOTTOM_RIGHT] = get_tile(3, 0);
+  this->tile_concave_corners[CORNER_BOTTOM_LEFT] = get_tile(5, 0);
+  this->tile_concave_corners[CORNER_TOP_LEFT] = get_tile(5, 2);
+  this->tile_convex_corners[CORNER_TOP_RIGHT] = get_tile(7, 1);
+  this->tile_convex_corners[CORNER_BOTTOM_RIGHT] = get_tile(7, 2);
+  this->tile_convex_corners[CORNER_BOTTOM_LEFT] = get_tile(6, 2);
+  this->tile_convex_corners[CORNER_TOP_LEFT] = get_tile(6, 1);
+}
 
 wxSize CanvasPanel::get_board_size() const {
   Board* board = state.board.get();
@@ -273,22 +313,60 @@ void CanvasPanel::paint_board(wxDC& dc) {
       wxPoint cell(x, y);
       int cell_value = *this->cell_ptr(cell);
       wxRect cell_rect = this->get_cell_rect(cell);
+      wxPoint cell_pos = cell_rect.GetPosition();
       wxPoint cell_centre = this->get_cell_centre(cell);
 
       int lightness = 100;
       if (this->mouse_within_window && this->is_cell_blocked(cell)) {
         lightness += BLOCKED_CELL_LIGHTNESS;
       }
-      auto blend_colour = [lightness](const wxColour& colour) {
+      auto blend_colour = [&](const wxColour& colour) {
         return colour.ChangeLightness(lightness);
       };
 
-      dc.SetPen(*wxBLACK);
+      dc.SetPen(wxNullPen);
+      dc.SetBrush(wxNullBrush);
 
       if (cell_value > 0) {
         // an ice floe with fish on it
         int fish_count = cell_value;
-        dc.SetBrush(blend_colour(*wxWHITE));
+        dc.DrawBitmap(this->ice_tiles[(x ^ y) % WXSIZEOF(this->ice_tiles)], cell_pos);
+
+        auto check_water = [&](int dx, int dy) -> bool {
+          wxPoint cell2 = cell + wxPoint(dx, dy);
+          return this->is_cell_in_bounds(cell2) && *this->cell_ptr(cell2) == 0;
+        };
+
+        auto draw_edge = [&](int dx, int dy, TileEdge type) {
+          if (check_water(dx, dy)) {
+            dc.DrawBitmap(this->tile_edges[type], cell_pos);
+          }
+        };
+        draw_edge(0, -1, EDGE_TOP);
+        draw_edge(1, 0, EDGE_RIGHT);
+        draw_edge(0, 1, EDGE_BOTTOM);
+        draw_edge(-1, 0, EDGE_LEFT);
+
+        auto draw_concave_corner = [&](int dx, int dy, TileCorner type) -> void {
+          if (check_water(dx, dy) && !check_water(dx, 0) && !check_water(0, dy)) {
+            dc.DrawBitmap(this->tile_concave_corners[type], cell_pos);
+          }
+        };
+        draw_concave_corner(1, -1, CORNER_TOP_RIGHT);
+        draw_concave_corner(1, 1, CORNER_BOTTOM_RIGHT);
+        draw_concave_corner(-1, 1, CORNER_BOTTOM_LEFT);
+        draw_concave_corner(-1, -1, CORNER_TOP_LEFT);
+
+        auto draw_convex_corner = [&](int dx, int dy, TileCorner type) -> void {
+          if (check_water(dx, 0) && check_water(0, dy)) {
+            dc.DrawBitmap(this->tile_convex_corners[type], cell_pos);
+          }
+        };
+        draw_convex_corner(1, -1, CORNER_TOP_RIGHT);
+        draw_convex_corner(1, 1, CORNER_BOTTOM_RIGHT);
+        draw_convex_corner(-1, 1, CORNER_BOTTOM_LEFT);
+        draw_convex_corner(-1, -1, CORNER_TOP_LEFT);
+
         dc.DrawRectangle(cell_rect);
 
         dc.SetPen(wxNullPen);
@@ -313,13 +391,11 @@ void CanvasPanel::paint_board(wxDC& dc) {
         dc.SetBrush(*wxYELLOW);
         dc.DrawRectangle(cell_rect);
 
-        wxString str;
-        str << player;
-        dc.DrawLabel(str, cell_rect, wxALIGN_CENTRE);
+        dc.DrawLabel(wxString::Format("%d", player), cell_rect, wxALIGN_CENTRE);
 
       } else {
         // a water tile
-        dc.SetBrush(blend_colour(*wxCYAN));
+        dc.DrawBitmap(this->water_tile, cell_pos);
         dc.DrawRectangle(cell_rect);
       }
     }

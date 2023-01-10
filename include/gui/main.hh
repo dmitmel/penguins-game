@@ -56,6 +56,25 @@ public:
   static const int FISH_CIRCLE_RADIUS = 4;
   static const int BLOCKED_CELL_LIGHTNESS = -40;
 
+  enum TileEdge {
+    EDGE_TOP = 0,
+    EDGE_RIGHT = 1,
+    EDGE_BOTTOM = 2,
+    EDGE_LEFT = 3,
+    EDGE_MAX,
+  };
+
+  enum TileCorner {
+    CORNER_TOP_RIGHT = 0,
+    CORNER_BOTTOM_RIGHT = 1,
+    CORNER_BOTTOM_LEFT = 2,
+    CORNER_TOP_LEFT = 3,
+    CORNER_MAX,
+  };
+
+  static const int TILE_SIZE = 16;
+  static const int TILESET_SCALING = CELL_SIZE / TILE_SIZE;
+
   CanvasPanel(wxWindow* parent, wxWindowID id, GuiGameState& state);
 
   wxSize get_board_size() const;
@@ -82,6 +101,8 @@ protected:
   void paint_board(wxDC& dc);
   void paint_overlay(wxDC& dc);
 
+  void load_tileset();
+
   void on_any_mouse_event(wxMouseEvent& event);
   void on_mouse_down(wxMouseEvent& event);
   void on_mouse_move(wxMouseEvent& event);
@@ -90,6 +111,12 @@ protected:
 
   bool board_dirty = true;
   wxBitmap board_bitmap;
+
+  wxBitmap water_tile;
+  wxBitmap ice_tiles[6];
+  wxBitmap tile_edges[EDGE_MAX];
+  wxBitmap tile_convex_corners[CORNER_MAX];
+  wxBitmap tile_concave_corners[CORNER_MAX];
 
   bool mouse_within_window = false;
   bool mouse_is_down;
