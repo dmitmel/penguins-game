@@ -88,7 +88,7 @@ void update_game_state_display(const Board* board, const Player players[], int p
   print_board(board);
 }
 
-void clear_screen() {
+void clear_screen(void) {
 #ifdef WIN32
   system("cls");
 #else

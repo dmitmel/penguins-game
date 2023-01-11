@@ -143,23 +143,24 @@ void handle_movement_input(
   }
 }
 
-void interactive_movement(Board* board, Player player_data[], int player_count) {
-  int current_player = 0;
+void interactive_movement(Board* board, GameState* state) {
+  int current_player_idx = 0;
   Coords target;
   Coords penguin;
   int points_gained;
-  while (any_valid_movement_exists(board, player_data, player_count)) {
-    if (!any_valid_player_move_exists(board, current_player)) {
+  while (any_valid_movement_exists(board, state->players, state->player_count)) {
+    if (!any_valid_player_move_exists(board, current_player_idx)) {
       display_error_message("No valid moves for the player");
     }
-    display_new_turn_message(player_data[current_player].id);
-    handle_movement_input(&penguin, &target, board, &player_data[current_player], player_count);
+    Player* current_player = &state->players[current_player_idx];
+    display_new_turn_message(current_player->id);
+    handle_movement_input(&penguin, &target, board, current_player, state->player_count);
     // after this function call we have:
     // the x and y of the target tile and penguin_x and penguin_y of the penguin moving
     // and know that the movement is valid
-    points_gained = move_penguin(board, penguin, target, player_data[current_player].id);
-    player_data[current_player].points += points_gained;
-    update_game_state_display(board, player_data, player_count);
-    current_player = (current_player + 1) % player_count;
+    points_gained = move_penguin(board, penguin, target, current_player->id);
+    current_player->points += points_gained;
+    update_game_state_display(board, state->players, state->player_count);
+    current_player_idx = (current_player_idx + 1) % state->player_count;
   }
 }

@@ -55,12 +55,12 @@ void handle_placement_input(
   }
 }
 
-void interactive_placement(Board* board, GameState* gameState) {
+void interactive_placement(Board* board, GameState* state) {
   Coords target;
-  int current_player = 0;
-  int penguins_to_place = gameState->playerCount * gameState->penguinCount;
+  int current_player_idx = 0;
+  int penguins_to_place = state->player_count * state->penguin_count;
 
-  update_game_state_display(board, gameState->players, gameState->playerCount);
+  update_game_state_display(board, state->players, state->player_count);
 
   while (penguins_to_place > 0) {
     if (!placeable_spot_exists(board)) {
@@ -68,15 +68,14 @@ void interactive_placement(Board* board, GameState* gameState) {
       break;
     }
     int x, y;
-    display_new_turn_message(gameState->players[current_player].id);
-    handle_placement_input(
-      &target, board, &(gameState->players[current_player]), gameState->playerCount
-    );
-    gameState->players[current_player].points += board->grid[y][x];
-    board->grid[y][x] = -gameState->players[current_player].id;
+    Player* current_player = &state->players[current_player_idx];
+    display_new_turn_message(current_player->id);
+    handle_placement_input(&target, board, current_player, state->player_count);
+    current_player->points += board->grid[y][x];
+    board->grid[y][x] = -current_player->id;
     penguins_to_place--;
-    update_game_state_display(board, gameState->players, gameState->playerCount);
-    current_player = (current_player + 1) % gameState->playerCount;
+    update_game_state_display(board, state->players, state->player_count);
+    current_player_idx = (current_player_idx + 1) % state->player_count;
   }
-  print_end_placement_phase(board, gameState->players, gameState->playerCount);
+  print_end_placement_phase(board, state->players, state->player_count);
 }

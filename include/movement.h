@@ -42,7 +42,7 @@ void handle_movement_input(
 
 int move_penguin(Board* board, Coords start, Coords target, int player_id);
 
-void interactive_movement(Board* board, Player player_data[], int player_count);
+void interactive_movement(Board* board, GameState* state);
 
 #ifdef __cplusplus
 }

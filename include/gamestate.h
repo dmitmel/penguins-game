@@ -17,8 +17,8 @@ enum GamePhase {
 
 typedef struct GameState {
   Player* players;
-  int playerCount;
-  int penguinCount;
+  int player_count;
+  int penguin_count;
 } GameState;
 
 typedef struct Coords {

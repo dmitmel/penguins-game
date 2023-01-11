@@ -27,6 +27,8 @@ void display_error_message(const char* message);
 
 void update_game_state_display(const Board* board, const Player players[], int player_count);
 
+void clear_screen(void);
+
 void print_end_placement_phase(const Board* board, const Player players[], int player_count);
 
 void get_data_for_movement(Coords* start, Coords* target);
