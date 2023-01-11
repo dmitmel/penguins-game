@@ -41,4 +41,5 @@ void TilesetHelper::load() {
     this->penguin_sprites[i] = tile;
     this->penguin_sprites_flipped[i] = tile.Mirror(/* horizontally */ true);
   }
+  this->current_penguin_overlay = get_tile(1, 4);
 }

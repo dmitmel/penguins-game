@@ -59,4 +59,5 @@ public:
   wxBitmap fish_sprites[3];
   wxBitmap penguin_sprites[5];
   wxBitmap penguin_sprites_flipped[WXSIZEOF(penguin_sprites)];
+  wxBitmap current_penguin_overlay;
 };

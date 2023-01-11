@@ -71,6 +71,8 @@ if(wxWidgets_FOUND)
     src/gui/game.cc
     src/gui/main.cc
     src/gui/new_game_dialog.cc
+    src/gui/player_info_box.cc
+    src/gui/simple_static_box.cc
     src/gui/tileset.cc
     resources_tileset_png.c
   )
