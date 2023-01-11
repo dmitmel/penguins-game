@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void print_board(Board* board);
+void print_board(const Board* board);
 
 void get_board_dimensions(int* width, int* height);
 
@@ -23,11 +23,11 @@ void get_penguin_coordinates(Coords* coords);
 
 void display_new_turn_message(int player_number);
 
-void display_error_message(char* message);
+void display_error_message(const char* message);
 
-void update_game_state_display(Board* board, Player players[], int player_count);
+void update_game_state_display(const Board* board, const Player players[], int player_count);
 
-void print_end_placement_phase(Board* board, Player players[], int player_count);
+void print_end_placement_phase(const Board* board, const Player players[], int player_count);
 
 void get_data_for_movement(Coords* start, Coords* target);
 

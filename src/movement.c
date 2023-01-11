@@ -4,7 +4,7 @@
 #include "io.h"
 #include <stdio.h>
 
-bool any_valid_player_move_exists(Board* board, int player_id) {
+bool any_valid_player_move_exists(const Board* board, int player_id) {
   // TODO the selected player can move their penguin
   // players are encoded on the board as an integer equal to -player_id
   // so a row [0, 1, -1, -2] means that player 1 and player 2 have a penguin on the right half of
@@ -23,7 +23,7 @@ bool any_valid_player_move_exists(Board* board, int player_id) {
   return false;
 }
 
-bool any_valid_movement_exists(Board* board, Player* players, int player_count) {
+bool any_valid_movement_exists(const Board* board, const Player* players, int player_count) {
   for (int i = 0; i < player_count; i++) {
     if (any_valid_player_move_exists(board, players[i].id)) {
       return true;
@@ -32,8 +32,9 @@ bool any_valid_movement_exists(Board* board, Player* players, int player_count) 
   return false;
 }
 
-MovementError
-validate_movement(Board* board, Coords start, Coords target, int current_player_id, Coords* fail) {
+MovementError validate_movement(
+  const Board* board, Coords start, Coords target, int current_player_id, Coords* fail
+) {
   int tile = board->grid[start.y][start.x];
   if (target.x < 0 || target.x >= board->width || target.y < 0 || target.y >= board->height) {
     return OUT_OF_BOUNDS_MOVEMENT;
@@ -69,7 +70,7 @@ validate_movement(Board* board, Coords start, Coords target, int current_player_
   return VALID_INPUT;
 }
 
-static int get_possible_steps_in_direction(Board* board, Coords start, int dx, int dy) {
+static int get_possible_steps_in_direction(const Board* board, Coords start, int dx, int dy) {
   int x = start.x, y = start.y;
   int steps = 0;
   while (true) {
@@ -86,7 +87,7 @@ static int get_possible_steps_in_direction(Board* board, Coords start, int dx, i
   return steps;
 }
 
-PossibleMoves calculate_all_possible_moves(Board* board, Coords start) {
+PossibleMoves calculate_all_possible_moves(const Board* board, Coords start) {
   PossibleMoves result = {
     .steps_up = get_possible_steps_in_direction(board, start, 0, -1),
     .steps_right = get_possible_steps_in_direction(board, start, 1, 0),

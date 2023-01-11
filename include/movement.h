@@ -19,12 +19,13 @@ typedef enum MovementError {
   MOVE_OVER_PENGUIN,
 } MovementError;
 
-bool any_valid_player_move_exists(Board* board, int player_id);
+bool any_valid_player_move_exists(const Board* board, int player_id);
 
-bool any_valid_movement_exists(Board* board, Player* players, int player_count);
+bool any_valid_movement_exists(const Board* board, const Player* players, int player_count);
 
-MovementError
-validate_movement(Board* board, Coords start, Coords target, int current_player_id, Coords* fail);
+MovementError validate_movement(
+  const Board* board, Coords start, Coords target, int current_player_id, Coords* fail
+);
 
 typedef struct PossibleMoves {
   int steps_up;
@@ -33,7 +34,7 @@ typedef struct PossibleMoves {
   int steps_left;
 } PossibleMoves;
 
-PossibleMoves calculate_all_possible_moves(Board* board, Coords start);
+PossibleMoves calculate_all_possible_moves(const Board* board, Coords start);
 
 void handle_movement_input(
   Coords* penguin, Coords* target, Board* board, Player* current_player, int player_count

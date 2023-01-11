@@ -35,7 +35,7 @@ void generate_random_board(Board* board) {
   }
 }
 
-bool placeable_spot_exists(Board* board) {
+bool placeable_spot_exists(const Board* board) {
   for (int y = 0; y < board->height; y++) {
     for (int x = 0; x < board->width; x++) {
       if (is_spot_valid_for_placement(board, (Coords){ x, y })) {
@@ -46,6 +46,6 @@ bool placeable_spot_exists(Board* board) {
   return false;
 }
 
-bool is_spot_valid_for_placement(Board* board, Coords coords) {
+bool is_spot_valid_for_placement(const Board* board, Coords coords) {
   return board->grid[coords.y][coords.x] == 1;
 }

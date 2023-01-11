@@ -1,8 +1,9 @@
+#include "placement.h"
 #include "board.h"
 #include "gamestate.h"
 #include "io.h"
 
-TileType get_player_input_tile(Coords* target, Board* board, Player* current_player) {
+TileType get_player_input_tile(Coords* target, const Board* board, const Player* current_player) {
   get_penguin_coordinates(target);
   if (target->x < 0 || target->x >= board->width || target->y < 0 || target->y >= board->height) {
     return OUT_OF_BOUNDS;
@@ -25,7 +26,7 @@ TileType get_player_input_tile(Coords* target, Board* board, Player* current_pla
 }
 
 void handle_placement_input(
-  Coords* selected, Board* board, Player* current_player, int player_count
+  Coords* selected, Board* board, const Player* current_player, int player_count
 ) {
   while (true) {
     TileType tile = get_player_input_tile(selected, board, current_player);

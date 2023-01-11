@@ -5,7 +5,7 @@
 #include "board.h"
 #include "gamestate.h"
 
-void print_board(Board* board) {
+void print_board(const Board* board) {
   printf("   ");
   for (int x = 0; x < board->width; x++) {
     if (x % 5 == 0) {
@@ -71,18 +71,18 @@ void display_new_turn_message(int player_number) {
   printf("\nPlayer %d's turn.\n", player_number);
 }
 
-void display_error_message(char* message) {
+void display_error_message(const char* message) {
   printf("\n%s\n", message);
 }
 
-void print_player_stats(Player players[], int count) {
+static void print_player_stats(const Player players[], int count) {
   printf("id\t| name\t| score\n");
   for (int i = 0; i < count; i++) {
     printf("%d\t| %s\t| %d\n", players[i].id, players[i].name, players[i].points);
   }
 }
 
-void update_game_state_display(Board* board, Player players[], int player_count) {
+void update_game_state_display(const Board* board, const Player players[], int player_count) {
   system("clear");
   print_player_stats(players, player_count);
   print_board(board);
@@ -96,7 +96,7 @@ void clear_screen() {
 #endif
 }
 
-void print_end_placement_phase(Board* board, Player players[], int player_count) {
+void print_end_placement_phase(const Board* board, const Player players[], int player_count) {
   clear_screen();
   printf("No more penguins can be placed, placement phase ended!\n");
   print_board(board);

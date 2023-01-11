@@ -28,9 +28,9 @@ void free_board(Board* board);
 
 void generate_random_board(Board* board);
 
-bool placeable_spot_exists(Board* board);
+bool placeable_spot_exists(const Board* board);
 
-bool is_spot_valid_for_placement(Board* board, Coords coords);
+bool is_spot_valid_for_placement(const Board* board, Coords coords);
 
 #ifdef __cplusplus
 }
