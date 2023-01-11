@@ -44,9 +44,6 @@ add_library(penguins-lib
 target_include_directories(penguins-lib PUBLIC include)
 target_link_libraries(penguins-lib PRIVATE penguins-common)
 
-add_library(munit munit/munit.c)
-target_include_directories(munit PUBLIC munit)
-
 # add executables (implementations of the files defined in the header files)
 add_executable(penguins
   src/main.c
@@ -56,9 +53,14 @@ add_executable(penguins
 target_link_libraries(penguins PRIVATE penguins-common)
 target_link_libraries(penguins PUBLIC penguins-lib)
 
-add_executable(penguins-tests src/tests.c)
-# add all of the libraries defined in penguins-lib
-target_link_libraries(penguins-tests PUBLIC munit penguins-lib)
+if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/munit)
+  add_library(munit munit/munit.c)
+  target_include_directories(munit PUBLIC munit)
+
+  add_executable(penguins-tests src/tests.c)
+  # add all of the libraries defined in penguins-lib
+  target_link_libraries(penguins-tests PUBLIC munit penguins-lib)
+endif()
 
 find_package(wxWidgets COMPONENTS core base)
 if(wxWidgets_FOUND)
