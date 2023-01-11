@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gamestate.h"
+#include "utils.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus

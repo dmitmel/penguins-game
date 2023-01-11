@@ -1,9 +1,7 @@
+#include "board.h"
+#include "random.h"
 #include <stdbool.h>
 #include <stdlib.h>
-
-#include "board.h"
-#include "gamestate.h"
-#include "random.h"
 
 Board init_board(int width, int height) {
   int** grid = calloc(height, sizeof(int*));

@@ -27,6 +27,13 @@ function(embed_resource res_path)
   )
 endfunction()
 
+add_library(penguins-common INTERFACE)
+if(MSVC)
+  target_compile_options(penguins-common INTERFACE /W4 /WX)
+else()
+  target_compile_options(penguins-common INTERFACE -Wall -Wextra -Wpedantic)
+endif()
+
 add_library(penguins-lib
   src/io.c
   src/board.c
@@ -34,6 +41,7 @@ add_library(penguins-lib
   src/placement.c
 )
 target_include_directories(penguins-lib PUBLIC include)
+target_link_libraries(penguins-lib PRIVATE penguins-common)
 
 add_library(munit munit/munit.c)
 target_include_directories(munit PUBLIC munit)
@@ -44,6 +52,7 @@ add_executable(penguins
   src/random.c
 )
 # link all the
+target_link_libraries(penguins PRIVATE penguins-common)
 target_link_libraries(penguins PUBLIC penguins-lib)
 
 add_executable(penguins-tests src/tests.c)
@@ -60,6 +69,7 @@ if(wxWidgets_FOUND)
     src/gui/new_game_dialog.cc
     resources_tileset_png.c
   )
+  target_link_libraries(penguins-gui PRIVATE penguins-common)
   target_link_libraries(penguins-gui PUBLIC penguins-lib)
   target_include_directories(penguins-gui PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 

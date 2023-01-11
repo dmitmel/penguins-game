@@ -36,9 +36,7 @@ typedef struct PossibleMoves {
 
 PossibleMoves calculate_all_possible_moves(const Board* board, Coords start);
 
-void handle_movement_input(
-  Coords* penguin, Coords* target, Board* board, Player* current_player, int player_count
-);
+void handle_movement_input(Coords* penguin, Coords* target, Board* board, Player* current_player);
 
 int move_penguin(Board* board, Coords start, Coords target, int player_id);
 

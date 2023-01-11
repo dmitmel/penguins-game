@@ -14,6 +14,7 @@
 #include <wx/dc.h>
 #include <wx/dcclient.h>
 #include <wx/dcmemory.h>
+#include <wx/defs.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/geometry.h>
@@ -89,15 +90,15 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
   this->SetStatusText("Welcome to wxWidgets!");
 }
 
-void GameFrame::on_new_game(wxCommandEvent& event) {
+void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
   this->start_new_game();
 }
 
-void GameFrame::on_exit(wxCommandEvent& event) {
+void GameFrame::on_exit(wxCommandEvent& WXUNUSED(event)) {
   this->Close(true);
 }
 
-void GameFrame::on_about(wxCommandEvent& event) {
+void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
   wxMessageBox(
     "This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION
   );
@@ -163,10 +164,10 @@ void CanvasPanel::load_tileset() {
     return get_sub_image(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   };
 
-  for (int i = 0; i < WXSIZEOF(this->ice_tiles); i++) {
+  for (int i = 0; i < int(WXSIZEOF(this->ice_tiles)); i++) {
     this->ice_tiles[i] = get_tile(0 + i % 3, 0 + i / 3);
   }
-  for (int i = 0; i < WXSIZEOF(this->water_tiles); i++) {
+  for (int i = 0; i < int(WXSIZEOF(this->water_tiles)); i++) {
     this->water_tiles[i] = get_tile(0 + i % 3, 2 + i / 3);
   }
   this->tile_edges[EDGE_TOP] = get_tile(4, 2);
@@ -183,10 +184,10 @@ void CanvasPanel::load_tileset() {
   this->tile_convex_corners[CORNER_TOP_LEFT] = get_tile(6, 1);
   this->blocked_tile = get_tile(7, 0);
   this->grid_tile = get_tile(6, 0);
-  for (int i = 0; i < WXSIZEOF(this->fish_sprites); i++) {
+  for (int i = 0; i < int(WXSIZEOF(this->fish_sprites)); i++) {
     this->fish_sprites[i] = get_tile(5 + i, 3);
   }
-  for (int i = 0; i < WXSIZEOF(this->penguin_sprites); i++) {
+  for (int i = 0; i < int(WXSIZEOF(this->penguin_sprites)); i++) {
     wxImage tile = get_tile(0 + i, 3);
     this->penguin_sprites[i] = tile;
     this->penguin_sprites_flipped[i] = tile.Mirror(/* horizontally */ true);
@@ -300,7 +301,7 @@ wxSize CanvasPanel::DoGetBestClientSize() const {
   return size;
 }
 
-void CanvasPanel::on_paint(wxPaintEvent& event) {
+void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   wxPaintDC win_dc(this);
   wxSize size = this->get_canvas_size();
   if (!(size.x > 0 && size.y > 0)) {
@@ -354,7 +355,6 @@ void CanvasPanel::paint_board(wxDC& dc) {
       int cell_value = *this->cell_ptr(cell);
       wxRect cell_rect = this->get_cell_rect(cell);
       wxPoint cell_pos = cell_rect.GetPosition();
-      wxPoint cell_centre = this->get_cell_centre(cell);
 
       bool is_blocked = should_block_cells && this->is_cell_blocked(cell);
 
@@ -545,14 +545,14 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
   }
 }
 
-void CanvasPanel::on_mouse_down(wxMouseEvent& event) {
+void CanvasPanel::on_mouse_down(wxMouseEvent& WXUNUSED(event)) {
   if (state.game_phase == PHASE_MOVEMENT) {
     this->update_blocked_cells();
     this->Refresh();
   }
 }
 
-void CanvasPanel::on_mouse_move(wxMouseEvent& event) {
+void CanvasPanel::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
   wxPoint prev_cell = this->get_cell_by_coords(this->prev_mouse_pos);
   wxPoint curr_cell = this->get_cell_by_coords(this->mouse_pos);
   if (curr_cell != prev_cell) {
@@ -563,7 +563,7 @@ void CanvasPanel::on_mouse_move(wxMouseEvent& event) {
   }
 }
 
-void CanvasPanel::on_mouse_up(wxMouseEvent& event) {
+void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
   wxPoint prev_cell = this->get_cell_by_coords(this->mouse_drag_pos);
   wxPoint curr_cell = this->get_cell_by_coords(this->mouse_pos);
   if (state.game_phase == PHASE_PLACEMENT) {
@@ -600,7 +600,7 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& event) {
   }
 }
 
-void CanvasPanel::on_mouse_enter_leave(wxMouseEvent& event) {
+void CanvasPanel::on_mouse_enter_leave(wxMouseEvent& WXUNUSED(event)) {
   this->mark_board_dirty();
   this->Refresh();
 }

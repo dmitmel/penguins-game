@@ -1,16 +1,14 @@
-#include "stdbool.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "board.h"
 #include "gamestate.h"
 #include "io.h"
 #include "movement.h"
 #include "placement.h"
 #include "random.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-int main(int argc, char* argv[]) {
+int main(int UNUSED(argc), char* argv[] UNUSED_ATTR) {
   random_init();
 
   clear_screen();

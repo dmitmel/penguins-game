@@ -3,6 +3,7 @@
 #include "board.h"
 #include "gamestate.h"
 #include "movement.h"
+#include "utils.h"
 #include <memory>
 #include <wx/app.h>
 #include <wx/bitmap.h>

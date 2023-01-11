@@ -1,9 +1,8 @@
 #include "io.h"
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "board.h"
 #include "gamestate.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 void print_board(const Board* board) {
   printf("   ");

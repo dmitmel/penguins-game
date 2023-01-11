@@ -2,6 +2,7 @@
 
 #include "board.h"
 #include "gamestate.h"
+#include "utils.h"
 
 #ifdef __cplusplus
 extern "C" {

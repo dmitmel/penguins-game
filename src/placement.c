@@ -2,6 +2,7 @@
 #include "board.h"
 #include "gamestate.h"
 #include "io.h"
+#include "utils.h"
 
 TileType get_player_input_tile(Coords* target, const Board* board, const Player* current_player) {
   get_penguin_coordinates(target);
@@ -25,9 +26,7 @@ TileType get_player_input_tile(Coords* target, const Board* board, const Player*
   return FISH_MULTIPLE;
 }
 
-void handle_placement_input(
-  Coords* selected, Board* board, const Player* current_player, int player_count
-) {
+void handle_placement_input(Coords* selected, Board* board, const Player* current_player) {
   while (true) {
     TileType tile = get_player_input_tile(selected, board, current_player);
     switch (tile) {
@@ -67,10 +66,10 @@ void interactive_placement(Board* board, GameState* state) {
       display_error_message("No more penguins are placeable!");
       break;
     }
-    int x, y;
+    int x = 0, y = 0;
     Player* current_player = &state->players[current_player_idx];
     display_new_turn_message(current_player->id);
-    handle_placement_input(&target, board, current_player, state->player_count);
+    handle_placement_input(&target, board, current_player);
     current_player->points += board->grid[y][x];
     board->grid[y][x] = -current_player->id;
     penguins_to_place--;

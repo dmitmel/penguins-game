@@ -2,6 +2,7 @@
 #include "board.h"
 #include "gamestate.h"
 #include "io.h"
+#include "utils.h"
 #include <stdio.h>
 
 bool any_valid_player_move_exists(const Board* board, int player_id) {
@@ -106,9 +107,7 @@ int move_penguin(Board* board, Coords start, Coords target, int player_id) {
   return points_gained;
 }
 
-void handle_movement_input(
-  Coords* penguin, Coords* target, Board* board, Player* current_player, int player_count
-) {
+void handle_movement_input(Coords* penguin, Coords* target, Board* board, Player* current_player) {
   while (true) {
     get_data_for_movement(penguin, target);
     MovementError input = validate_movement(board, *penguin, *target, current_player->id, NULL);
@@ -154,7 +153,7 @@ void interactive_movement(Board* board, GameState* state) {
     }
     Player* current_player = &state->players[current_player_idx];
     display_new_turn_message(current_player->id);
-    handle_movement_input(&penguin, &target, board, current_player, state->player_count);
+    handle_movement_input(&penguin, &target, board, current_player);
     // after this function call we have:
     // the x and y of the target tile and penguin_x and penguin_y of the penguin moving
     // and know that the movement is valid

@@ -163,7 +163,7 @@ void NewGameDialog::delete_player_row(size_t index) {
   this->player_rows.erase(&row);
 }
 
-void NewGameDialog::on_ok(wxCommandEvent& event) {
+void NewGameDialog::on_ok(wxCommandEvent& WXUNUSED(event)) {
   if (this->player_rows.empty()) {
     return;
   }
@@ -176,7 +176,7 @@ void NewGameDialog::on_ok(wxCommandEvent& event) {
   this->EndModal(wxID_OK);
 }
 
-void NewGameDialog::on_close(wxCommandEvent& event) {
+void NewGameDialog::on_close(wxCommandEvent& WXUNUSED(event)) {
   this->EndModal(wxID_CANCEL);
 }
 
@@ -205,14 +205,14 @@ void NewGameDialog::on_player_name_enter_pressed(wxCommandEvent& event) {
   event.Skip();
 }
 
-void NewGameDialog::on_board_width_input(wxSpinEvent& event) {
+void NewGameDialog::on_board_width_input(wxSpinEvent& WXUNUSED(event)) {
   width_was_changed = true;
   if (!height_was_changed) {
     this->height_input->SetValue(this->width_input->GetValue());
   }
 }
 
-void NewGameDialog::on_board_height_input(wxSpinEvent& event) {
+void NewGameDialog::on_board_height_input(wxSpinEvent& WXUNUSED(event)) {
   height_was_changed = true;
   if (!width_was_changed) {
     this->width_input->SetValue(this->height_input->GetValue());
@@ -236,7 +236,7 @@ void NewGameDialog::on_player_delete_clicked(wxCommandEvent& event) {
   event.Skip();
 }
 
-void NewGameDialog::on_players_number_input(wxSpinEvent& event) {
+void NewGameDialog::on_players_number_input(wxSpinEvent& WXUNUSED(event)) {
   size_t prev_len = this->player_rows.size();
   size_t next_len = this->players_number_input->GetValue();
   if (next_len < prev_len) {

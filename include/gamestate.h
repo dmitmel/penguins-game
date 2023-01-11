@@ -21,11 +21,6 @@ typedef struct GameState {
   int penguin_count;
 } GameState;
 
-typedef struct Coords {
-  int x;
-  int y;
-} Coords;
-
 #ifdef __cplusplus
 }
 #endif

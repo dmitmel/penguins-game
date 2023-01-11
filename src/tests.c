@@ -2,19 +2,19 @@
 // information on using our testing library.
 #define MUNIT_ENABLE_ASSERT_ALIASES
 
-#include <munit.h>
-#include <stdio.h>
-
 #include "board.h"
 #include "movement.h"
 #include "random.h"
+#include <munit.h>
+#include <stdio.h>
 
 // an implementation of the function defined in random.h and used in board.c
 int random_range(int min, int max) {
   return munit_rand_int_range(min, max);
 }
 
-static MunitResult test_placeable_spot_exists(const MunitParameter* params, void* data) {
+static MunitResult
+test_placeable_spot_exists(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
   int* grid[2] = { (int[3]){ 0, 1, 2 }, (int[3]){ -1, 2, 1 } };
   Board board = { .height = 2, .width = 3, .grid = grid };
 
@@ -22,7 +22,8 @@ static MunitResult test_placeable_spot_exists(const MunitParameter* params, void
   return MUNIT_OK;
 }
 
-static MunitResult test_placeable_spot_does_not_exist(const MunitParameter* params, void* data) {
+static MunitResult
+test_placeable_spot_does_not_exist(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
   int* grid[2] = { (int[3]){ 0, 0, 2 }, (int[3]){ -1, -2, 3 } };
   Board board = { .height = 2, .width = 3, .grid = grid };
 
@@ -31,7 +32,7 @@ static MunitResult test_placeable_spot_does_not_exist(const MunitParameter* para
 }
 
 static MunitResult
-test_valid_movement_exists_for_player(const MunitParameter* params, void* data) {
+test_valid_movement_exists_for_player(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
   int* grid[2] = { (int[3]){ -1, 0, -2 }, (int[3]){ 0, 1, 3 } };
   Board board = { .height = 2, .width = 3, .grid = grid };
 
@@ -39,8 +40,9 @@ test_valid_movement_exists_for_player(const MunitParameter* params, void* data) 
   return MUNIT_OK;
 }
 
-static MunitResult
-test_no_valid_movement_exists_for_player(const MunitParameter* params, void* data) {
+static MunitResult test_no_valid_movement_exists_for_player(
+  const MunitParameter* UNUSED(params), void* UNUSED(data)
+) {
   int* grid[2] = { (int[3]){ -1, 0, -2 }, (int[3]){ 0, 1, 3 } };
   Board board = { .height = 2, .width = 3, .grid = grid };
 
@@ -48,7 +50,8 @@ test_no_valid_movement_exists_for_player(const MunitParameter* params, void* dat
   return MUNIT_OK;
 }
 
-static MunitResult test_detect_valid_movement(const MunitParameter* params, void* data) {
+static MunitResult
+test_detect_valid_movement(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
   int* grid[1] = { (int[3]){ -1, 1, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
@@ -59,7 +62,7 @@ static MunitResult test_detect_valid_movement(const MunitParameter* params, void
 }
 
 static MunitResult
-test_movement_over_empty_space_invalid(const MunitParameter* params, void* data) {
+test_movement_over_empty_space_invalid(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
   int* grid[1] = { (int[3]){ -1, 0, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
@@ -69,7 +72,8 @@ test_movement_over_empty_space_invalid(const MunitParameter* params, void* data)
   return MUNIT_OK;
 }
 
-static MunitResult test_movement_over_penguin_invalid(const MunitParameter* params, void* data) {
+static MunitResult
+test_movement_over_penguin_invalid(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
   int* grid[1] = { (int[3]){ -1, -2, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
@@ -80,7 +84,7 @@ static MunitResult test_movement_over_penguin_invalid(const MunitParameter* para
 }
 
 static MunitResult
-test_move_penguin_and_calculate_points(const MunitParameter* params, void* data) {
+test_move_penguin_and_calculate_points(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
   int* grid[1] = { (int[3]){ -1, 1, 3 } };
   Board board = { .height = 1, .width = 3, .grid = grid };
 
