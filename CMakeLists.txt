@@ -64,7 +64,7 @@ find_package(wxWidgets COMPONENTS core base)
 if(wxWidgets_FOUND)
   # include(${wxWidgets_USE_FILE})
   embed_resource(resources/tileset.png)
-  add_executable(penguins-gui
+  add_executable(penguins-gui WIN32
     src/gui/main.cc
     src/gui/better_random.cc
     src/gui/new_game_dialog.cc
