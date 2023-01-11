@@ -1,5 +1,6 @@
 #include "gui/new_game_dialog.hh"
 
+#include <cstddef>
 #include <wx/artprov.h>
 #include <wx/button.h>
 #include <wx/event.h>
@@ -64,14 +65,14 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   grid->Add(penguins_number_label, wxSizerFlags().Centre().Left());
   this->penguins_input = new wxSpinCtrl(this, ID_PENGUINS_NUMBER);
   this->penguins_input->SetValue(DEFAULT_PENGUINS_PER_PLAYER);
-  this->penguins_input->SetRange(1, 5);
+  this->penguins_input->SetRange(1, 10);
   grid->Add(this->penguins_input, wxSizerFlags().Expand());
 
   auto players_number_label = new wxStaticText(this, ID_PLAYERS_NUMBER, "Number of players:");
   grid->Add(players_number_label, wxSizerFlags().Centre().Left());
   this->players_number_input = new wxSpinCtrl(this, ID_PLAYERS_NUMBER);
   this->players_number_input->SetValue(DEFAULT_NUMBER_OF_PLAYERS);
-  this->players_number_input->SetRange(1, 10);
+  this->players_number_input->SetRange(2, 5);
   grid->Add(this->players_number_input, wxSizerFlags().Expand());
 
   this->players_grid = new wxFlexGridSizer(
@@ -128,6 +129,26 @@ wxString NewGameDialog::get_player_name(size_t index) const {
   return this->player_rows.at(index).name_input->GetValue();
 }
 
+void NewGameDialog::set_player_rows_count(size_t count) {
+  size_t len = this->player_rows.size();
+  if (count < len) {
+    for (size_t i = len - 1; i >= count; i--) {
+      this->delete_player_row(i);
+    }
+  } else if (count > len) {
+    for (size_t i = len; i < count; i++) {
+      this->add_new_player_row();
+    }
+  }
+  this->update_new_player_row();
+}
+
+void NewGameDialog::update_new_player_row() {
+  this->new_player_row.name_input->Show(
+    this->player_rows.size() < size_t(this->players_number_input->GetMax())
+  );
+}
+
 void NewGameDialog::add_new_player_row(bool initial) {
   auto grid = this->players_grid;
 
@@ -152,7 +173,9 @@ void NewGameDialog::add_new_player_row(bool initial) {
 
 void NewGameDialog::realize_player_row(size_t index) {
   PlayerRowWidgets& row = this->player_rows.at(index);
-  row.name_input->SetHint(wxString::Format("Name of player %ld", index + 1));
+  wxString hint("Name of player ");
+  hint << (index + 1);
+  row.name_input->SetHint(hint);
   row.delete_btn->Show();
 }
 
@@ -182,8 +205,9 @@ void NewGameDialog::on_close(wxCommandEvent& WXUNUSED(event)) {
 
 void NewGameDialog::on_player_name_input(wxCommandEvent& event) {
   if (event.GetEventObject() == this->new_player_row.name_input) {
-    this->add_new_player_row();
-    this->players_number_input->SetValue(this->player_rows.size());
+    // Try to set the input value first, this will perform the range checks.
+    this->players_number_input->SetValue(this->player_rows.size() + 1);
+    this->set_player_rows_count(this->players_number_input->GetValue());
     this->update_layout();
   }
 }
@@ -222,12 +246,13 @@ void NewGameDialog::on_board_height_input(wxSpinEvent& WXUNUSED(event)) {
 void NewGameDialog::on_player_delete_clicked(wxCommandEvent& event) {
   for (size_t i = 0; i < this->player_rows.size(); i++) {
     if (this->player_rows.at(i).delete_btn == event.GetEventObject()) {
-      if (this->player_rows.size() > 1) {
+      if (this->player_rows.size() > size_t(this->players_number_input->GetMin())) {
         this->delete_player_row(i);
         this->players_number_input->SetValue(this->player_rows.size());
         for (size_t j = 0; j < this->player_rows.size(); j++) {
           this->realize_player_row(j);
         }
+        this->update_new_player_row();
         this->update_layout();
       }
       return;
@@ -237,18 +262,6 @@ void NewGameDialog::on_player_delete_clicked(wxCommandEvent& event) {
 }
 
 void NewGameDialog::on_players_number_input(wxSpinEvent& WXUNUSED(event)) {
-  size_t prev_len = this->player_rows.size();
-  size_t next_len = this->players_number_input->GetValue();
-  if (next_len < prev_len) {
-    for (size_t i = prev_len - 1; i >= next_len; i--) {
-      this->delete_player_row(i);
-    }
-  } else if (next_len > prev_len) {
-    for (size_t i = prev_len; i < next_len; i++) {
-      this->add_new_player_row();
-    }
-  } else {
-    return;
-  }
+  this->set_player_rows_count(this->players_number_input->GetValue());
   this->update_layout();
 }

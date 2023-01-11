@@ -44,6 +44,8 @@ protected:
 
   void update_layout();
 
+  void set_player_rows_count(size_t count);
+  void update_new_player_row();
   void add_new_player_row(bool initial = false);
   void realize_player_row(size_t index);
   void delete_player_row(size_t index);
