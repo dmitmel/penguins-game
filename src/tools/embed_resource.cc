@@ -15,17 +15,17 @@ int main(int argc, char* argv[]) {
 
   std::ifstream input(input_path, std::ios::binary);
   if (!input) {
-    std::cerr << "Error: " << input_path << ": " << strerror(errno) << std::endl;
+    std::cerr << "open(" << input_path << ") failed: " << strerror(errno) << std::endl;
     return 1;
   }
   std::ofstream out_source(output_source_path);
   if (!out_source) {
-    std::cerr << "Error: " << output_source_path << ": " << strerror(errno) << std::endl;
+    std::cerr << "open(" << output_source_path << ") failed: " << strerror(errno) << std::endl;
     return 1;
   }
   std::ofstream out_header(output_header_path);
   if (!out_header) {
-    std::cerr << "Error: " << output_header_path << ": " << strerror(errno) << std::endl;
+    std::cerr << "open(" << output_header_path << ") failed: " << strerror(errno) << std::endl;
     return 1;
   }
 
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
   out_source << "#include \"" << output_header_path << "\"" << std::endl;
   out_source << "const unsigned char " << variable_name << "[] = {";
   char c;
-  unsigned long long length;
+  unsigned long long length = 0;
   while (input.get(c)) {
     if (length > 0) {
       out_source << ",";

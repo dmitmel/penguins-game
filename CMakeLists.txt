@@ -9,7 +9,15 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_library(penguins-common INTERFACE)
+if(MSVC)
+  target_compile_options(penguins-common INTERFACE /W4)
+else()
+  target_compile_options(penguins-common INTERFACE -Wall -Wextra -Wpedantic -Werror=return-type)
+endif()
+
 add_executable(embed_resource src/tools/embed_resource.cc)
+target_link_libraries(embed_resource PRIVATE penguins-common)
 
 function(embed_resource res_path)
   set(var_name ${res_path})
@@ -26,13 +34,6 @@ function(embed_resource res_path)
     VERBATIM
   )
 endfunction()
-
-add_library(penguins-common INTERFACE)
-if(MSVC)
-  target_compile_options(penguins-common INTERFACE /W4)
-else()
-  target_compile_options(penguins-common INTERFACE -Wall -Wextra -Wpedantic -Werror=return-type)
-endif()
 
 add_library(penguins-lib
   src/io.c
