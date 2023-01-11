@@ -29,9 +29,9 @@ endfunction()
 
 add_library(penguins-common INTERFACE)
 if(MSVC)
-  target_compile_options(penguins-common INTERFACE /W4 /WX)
+  target_compile_options(penguins-common INTERFACE /W4)
 else()
-  target_compile_options(penguins-common INTERFACE -Wall -Wextra -Wpedantic)
+  target_compile_options(penguins-common INTERFACE -Wall -Wextra -Wpedantic -Werror=return-type)
 endif()
 
 add_library(penguins-lib
