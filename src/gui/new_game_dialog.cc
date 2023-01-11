@@ -64,14 +64,14 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   grid->Add(penguins_number_label, wxSizerFlags().Centre().Left());
   this->penguins_input = new wxSpinCtrl(this, ID_PENGUINS_NUMBER);
   this->penguins_input->SetValue(DEFAULT_PENGUINS_PER_PLAYER);
-  this->penguins_input->SetRange(1, 100);
+  this->penguins_input->SetRange(1, 5);
   grid->Add(this->penguins_input, wxSizerFlags().Expand());
 
   auto players_number_label = new wxStaticText(this, ID_PLAYERS_NUMBER, "Number of players:");
   grid->Add(players_number_label, wxSizerFlags().Centre().Left());
   this->players_number_input = new wxSpinCtrl(this, ID_PLAYERS_NUMBER);
   this->players_number_input->SetValue(DEFAULT_NUMBER_OF_PLAYERS);
-  this->players_number_input->SetRange(1, 100);
+  this->players_number_input->SetRange(1, 10);
   grid->Add(this->players_number_input, wxSizerFlags().Expand());
 
   this->players_grid = new wxFlexGridSizer(

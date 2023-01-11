@@ -117,6 +117,7 @@ protected:
   wxBitmap blocked_tile;
   wxBitmap grid_tile;
   wxBitmap fish_sprites[3];
+  wxBitmap penguin_sprites[5];
 
   bool mouse_within_window = false;
   bool mouse_is_down;

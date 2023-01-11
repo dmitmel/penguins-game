@@ -181,10 +181,13 @@ void CanvasPanel::load_tileset() {
   this->tile_convex_corners[CORNER_BOTTOM_RIGHT] = get_tile(7, 2);
   this->tile_convex_corners[CORNER_BOTTOM_LEFT] = get_tile(6, 2);
   this->tile_convex_corners[CORNER_TOP_LEFT] = get_tile(6, 1);
-  this->blocked_tile = get_tile(4, 3);
-  this->grid_tile = get_tile(3, 3);
+  this->blocked_tile = get_tile(7, 0);
+  this->grid_tile = get_tile(6, 0);
   for (int i = 0; i < WXSIZEOF(this->fish_sprites); i++) {
     this->fish_sprites[i] = get_tile(5 + i, 3);
+  }
+  for (int i = 0; i < WXSIZEOF(this->penguin_sprites); i++) {
+    this->penguin_sprites[i] = get_tile(0 + i, 3);
   }
 }
 
@@ -246,9 +249,6 @@ void CanvasPanel::update_blocked_cells() {
           state.blocked_cells[x + y * board->width] = true;
         }
       }
-      if (!this->mouse_is_down) {
-        state.blocked_cells[curr_cell.x + curr_cell.y * board->width] = false;
-      }
       PossibleMoves moves =
         calculate_all_possible_moves(board, *reinterpret_cast<Coords*>(&curr_cell));
       auto unblock_steps = [&](int steps, int dx, int dy) -> void {
@@ -259,10 +259,15 @@ void CanvasPanel::update_blocked_cells() {
           steps--;
         }
       };
-      unblock_steps(moves.steps_up, 0, -1);
-      unblock_steps(moves.steps_right, 1, 0);
-      unblock_steps(moves.steps_down, 0, 1);
-      unblock_steps(moves.steps_left, -1, 0);
+      if (moves.steps_up != 0 || moves.steps_right != 0 || moves.steps_down != 0 || moves.steps_left != 0) {
+        unblock_steps(moves.steps_up, 0, -1);
+        unblock_steps(moves.steps_right, 1, 0);
+        unblock_steps(moves.steps_down, 0, 1);
+        unblock_steps(moves.steps_left, -1, 0);
+        if (!this->mouse_is_down) {
+          state.blocked_cells[curr_cell.x + curr_cell.y * board->width] = false;
+        }
+      }
     } else {
       for (int y = 0; y < board->height; y++) {
         for (int x = 0; x < board->width; x++) {
@@ -397,12 +402,10 @@ void CanvasPanel::paint_board(wxDC& dc) {
             dc.DrawBitmap(this->blocked_tile, cell_pos);
           }
         } else if (cell_value < 0) {
-          // a penguin
           int player = -cell_value;
-          dc.SetPen(*wxBLACK);
-          dc.SetBrush(*wxYELLOW);
-          dc.DrawRectangle(cell_rect);
-          dc.DrawLabel(wxString::Format("%d", player), cell_rect, wxALIGN_CENTRE);
+          dc.DrawBitmap(
+            this->penguin_sprites[(player - 1) % WXSIZEOF(this->penguin_sprites)], cell_pos
+          );
         }
       }
 
