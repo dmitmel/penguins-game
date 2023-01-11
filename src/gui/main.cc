@@ -187,7 +187,9 @@ void CanvasPanel::load_tileset() {
     this->fish_sprites[i] = get_tile(5 + i, 3);
   }
   for (int i = 0; i < WXSIZEOF(this->penguin_sprites); i++) {
-    this->penguin_sprites[i] = get_tile(0 + i, 3);
+    wxImage tile = get_tile(0 + i, 3);
+    this->penguin_sprites[i] = tile;
+    this->penguin_sprites_flipped[i] = tile.Mirror(/* horizontally */ true);
   }
 }
 
@@ -335,11 +337,14 @@ void CanvasPanel::paint_board(wxDC& dc) {
   dc.SetFont(cell_font);
 
   bool should_block_cells = this->mouse_within_window;
+  wxPoint selected_penguin_cell;
+  wxPoint mouse_cell = this->get_cell_by_coords(this->mouse_pos);
   if (state.game_phase == PHASE_MOVEMENT) {
     wxPoint curr_cell =
       this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
     if (this->is_cell_in_bounds(curr_cell)) {
       should_block_cells = *this->cell_ptr(curr_cell) == -(state.current_player + 1);
+      selected_penguin_cell = curr_cell;
     }
   }
 
@@ -403,9 +408,12 @@ void CanvasPanel::paint_board(wxDC& dc) {
           }
         } else if (cell_value < 0) {
           int player = -cell_value;
-          dc.DrawBitmap(
-            this->penguin_sprites[(player - 1) % WXSIZEOF(this->penguin_sprites)], cell_pos
-          );
+          int sprite_idx = (player - 1) % WXSIZEOF(this->penguin_sprites);
+          auto sprite = this->penguin_sprites[sprite_idx];
+          if (cell == selected_penguin_cell && mouse_cell.x < selected_penguin_cell.x) {
+            sprite = this->penguin_sprites_flipped[sprite_idx];
+          }
+          dc.DrawBitmap(sprite, cell_pos);
         }
       }
 

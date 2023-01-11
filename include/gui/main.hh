@@ -118,6 +118,7 @@ protected:
   wxBitmap grid_tile;
   wxBitmap fish_sprites[3];
   wxBitmap penguin_sprites[5];
+  wxBitmap penguin_sprites_flipped[WXSIZEOF(penguin_sprites)];
 
   bool mouse_within_window = false;
   bool mouse_is_down;
