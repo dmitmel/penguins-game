@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wx/bmpbuttn.h>
+#include <wx/choice.h>
 #include <wx/dialog.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
@@ -20,8 +21,15 @@ public:
   static const int DEFAULT_PENGUINS_PER_PLAYER = 2;
   static const int DEFAULT_NUMBER_OF_PLAYERS = 2;
 
+  enum BoardGenType {
+    BOARD_GEN_RANDOM,
+    BOARD_GEN_ISLAND,
+    BOARD_GEN_MAX,
+  };
+
   int get_board_width() const;
   int get_board_height() const;
+  BoardGenType get_board_gen_type() const;
   int get_penguins_per_player() const;
   size_t get_number_of_players() const;
   wxString get_player_name(size_t index) const;
@@ -30,6 +38,7 @@ protected:
   wxSpinCtrl* width_input;
   bool width_was_changed = false;
   wxSpinCtrl* height_input;
+  wxChoice* board_gen_input;
   bool height_was_changed = false;
   wxSpinCtrl* penguins_input;
   wxSpinCtrl* players_number_input;

@@ -28,12 +28,34 @@ void set_tile(Game* game, Coords coords, int value) {
   game->board_grid[coords.x + game->board_width * coords.y] = value;
 }
 
-void generate_random_board(Game* game) {
-  assert(game->phase == GAME_PHASE_SETUP);
+void generate_board_random(Game* game) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
       set_tile(game, coords, random_range(0, 3));
+    }
+  }
+}
+
+void generate_board_island(Game* game) {
+  int w = game->board_width, h = game->board_height;
+  for (int i = 0; i < w + h; i++) {
+    Coords coords = { w / 2, h / 2 };
+    for (int j = 0; j < w + h; j++) {
+      // clang-format off
+      switch (random_range(0, 3)) {
+        case 0: coords.x += 1; break;
+        case 1: coords.y += 1; break;
+        case 2: coords.x -= 1; break;
+        case 3: coords.y -= 1; break;
+      }
+      // clang-format on
+      if (is_tile_in_bounds(game, coords)) {
+        int fish = random_range(1, 3);
+        set_tile(game, coords, fish);
+      } else {
+        break;
+      }
     }
   }
 }

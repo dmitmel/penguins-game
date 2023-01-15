@@ -13,7 +13,8 @@ bool is_tile_in_bounds(const Game* game, Coords coords);
 int get_tile(const Game* game, Coords coords);
 void set_tile(Game* game, Coords coords, int value);
 
-void generate_random_board(Game* game);
+void generate_board_random(Game* game);
+void generate_board_island(Game* game);
 
 #ifdef __cplusplus
 }

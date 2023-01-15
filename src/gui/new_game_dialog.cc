@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <wx/artprov.h>
 #include <wx/button.h>
+#include <wx/choice.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/panel.h>
@@ -13,6 +14,7 @@
 enum {
   ID_BOARD_WIDTH = wxID_HIGHEST + 1,
   ID_BOARD_HEIGHT,
+  ID_BOARD_GEN,
   ID_PENGUINS_NUMBER,
   ID_PLAYERS_NUMBER,
   ID_PLAYER_NAME,
@@ -59,6 +61,16 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   this->height_input->SetValue(DEFAULT_BOARD_HEIGHT);
   this->height_input->SetRange(1, 1000);
   grid->Add(this->height_input, wxSizerFlags().Expand());
+
+  auto board_gen_label = new wxStaticText(this, ID_BOARD_GEN, "Board generation type:");
+  grid->Add(board_gen_label, wxSizerFlags().Centre().Left());
+  this->board_gen_input = new wxChoice(this, ID_BOARD_GEN);
+  wxString board_gen_types[BOARD_GEN_MAX] = {};
+  board_gen_types[BOARD_GEN_RANDOM] = "Random";
+  board_gen_types[BOARD_GEN_ISLAND] = "Island";
+  this->board_gen_input->Set(WXSIZEOF(board_gen_types), board_gen_types);
+  this->board_gen_input->Select(BOARD_GEN_ISLAND);
+  grid->Add(this->board_gen_input, wxSizerFlags().Expand());
 
   auto penguins_number_label = new wxStaticText(this, ID_PENGUINS_NUMBER, "Penguins per player:");
   grid->Add(penguins_number_label, wxSizerFlags().Centre().Left());
@@ -114,6 +126,10 @@ int NewGameDialog::get_board_width() const {
 
 int NewGameDialog::get_board_height() const {
   return this->height_input->GetValue();
+}
+
+NewGameDialog::BoardGenType NewGameDialog::get_board_gen_type() const {
+  return static_cast<BoardGenType>(this->board_gen_input->GetSelection());
 }
 
 int NewGameDialog::get_penguins_per_player() const {

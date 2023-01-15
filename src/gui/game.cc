@@ -110,7 +110,13 @@ void GameFrame::start_new_game() {
     game_set_player_name(game, i, dialog->get_player_name(i).c_str());
   }
   setup_board(game, dialog->get_board_width(), dialog->get_board_height());
-  generate_random_board(game);
+  // clang-format off
+  switch (dialog->get_board_gen_type()) {
+    case NewGameDialog::BOARD_GEN_RANDOM: generate_board_random(game); break;
+    case NewGameDialog::BOARD_GEN_ISLAND: generate_board_island(game); break;
+    default: break;
+  }
+  // clang-format on
   game_end_setup(game);
 
   game_advance_state(game);

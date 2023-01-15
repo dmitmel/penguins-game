@@ -29,7 +29,7 @@ int run_interactive_mode(void) {
   int board_height;
   get_board_dimensions(&board_width, &board_height);
   setup_board(game, board_width, board_height);
-  generate_random_board(game);
+  generate_board_random(game);
 
   game_end_setup(game);
 

@@ -120,4 +120,5 @@ void game_advance_state(Game* self) {
 void game_end(Game* self) {
   assert(self->phase >= GAME_PHASE_SETUP_DONE);
   self->phase = GAME_PHASE_END;
+  self->current_player_index = -1;
 }
