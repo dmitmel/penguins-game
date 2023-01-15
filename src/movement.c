@@ -1,7 +1,6 @@
 #include "movement.h"
 #include "board.h"
 #include "game.h"
-#include "io.h"
 #include "utils.h"
 #include <assert.h>
 #include <stdio.h>
@@ -115,54 +114,4 @@ void move_penguin(Game* game, Coords start, Coords target) {
   set_tile(game, target, -player->id);
   player->points += fish;
   set_tile(game, start, 0);
-}
-
-void handle_movement_input(Game* game, Coords* penguin, Coords* target) {
-  while (true) {
-    get_data_for_movement(penguin, target);
-    MovementError input = validate_movement(game, *penguin, *target, NULL);
-    switch (input) {
-    case VALID_INPUT:
-      return;
-    case OUT_OF_BOUNDS_MOVEMENT:
-      display_error_message("You cant move oustide the board!");
-      break;
-    case CURRENT_LOCATION:
-      display_error_message("Thats your current location");
-      break;
-    case DIAGONAL_MOVE:
-      display_error_message("You cant move diagonaly!");
-      break;
-    case NOT_YOUR_PENGUIN:
-      display_error_message("Chose YOUR PENGUIN for movement");
-      break;
-    case MOVE_ONTO_EMPTY_TILE:
-      display_error_message("Can't move onto an empty tile");
-      break;
-    case MOVE_ONTO_PENGUIN:
-      display_error_message("Can't move onto another penguin!");
-      break;
-    case MOVE_OVER_EMPTY_TILE:
-      display_error_message("You cant move over an empty tile!");
-      break;
-    case MOVE_OVER_PENGUIN:
-      display_error_message("You cant move over another penguin!");
-      break;
-    }
-  }
-}
-
-void interactive_movement(Game* game) {
-  Coords target = { 0, 0 };
-  Coords penguin = { 0, 0 };
-  movement_begin(game);
-  while (true) {
-    int result = movement_switch_player(game);
-    if (result < 0) break;
-    display_new_turn_message(game->current_player_index + 1);
-    handle_movement_input(game, &penguin, &target);
-    move_penguin(game, penguin, target);
-    update_game_state_display(game);
-  }
-  movement_end(game);
 }

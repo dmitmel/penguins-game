@@ -41,7 +41,6 @@ endfunction()
 add_library(penguins-lib
   src/board.c
   src/game.c
-  src/io.c
   src/movement.c
   src/placement.c
 )
@@ -50,6 +49,8 @@ target_link_libraries(penguins-lib PRIVATE penguins-common)
 
 # add executables (implementations of the files defined in the header files)
 add_executable(penguins
+  src/interactive.c
+  src/io.c
   src/main.c
   src/random.c
 )

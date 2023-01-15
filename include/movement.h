@@ -35,9 +35,6 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
 PossibleMoves calculate_all_possible_moves(const Game* game, Coords start);
 void move_penguin(Game* game, Coords start, Coords target);
 
-void handle_movement_input(Game* game, Coords* penguin, Coords* target);
-void interactive_movement(Game* game);
-
 #ifdef __cplusplus
 }
 #endif

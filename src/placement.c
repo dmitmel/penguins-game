@@ -1,7 +1,6 @@
 #include "placement.h"
 #include "board.h"
 #include "game.h"
-#include "io.h"
 #include "utils.h"
 #include <assert.h>
 
@@ -76,48 +75,4 @@ void place_penguin(Game* game, Coords target) {
   set_tile(game, target, -player->id);
   player->penguins++;
   player->points += fish;
-}
-
-void handle_placement_input(Game* game, Coords* selected) {
-  while (true) {
-    get_penguin_coordinates(selected);
-    switch (validate_placement(game, *selected)) {
-    case PLACEMENT_VALID:
-      return;
-    case PLACEMENT_OUT_OF_BOUNDS:
-      display_error_message("Inputted coordinates are outside the bounds of the board");
-      break;
-    case PLACEMENT_EMPTY_TILE:
-      display_error_message("This tile is empty, you can't select an empty(water) tile");
-      break;
-    case PLACEMENT_ENEMY_PENGUIN:
-      display_error_message("This tile is already occupied by a penguin");
-      break;
-    case PLACEMENT_OWN_PENGUIN:
-      display_error_message("This tile is already occupied by a penguin");
-      break;
-    case PLACEMENT_MULTIPLE_FISH:
-      display_error_message("Only a tile with just one fish can be selected");
-      break;
-    default:
-      display_error_message("ERROR: what on god's green earth did you just select???");
-      break;
-    }
-  }
-}
-
-void interactive_placement(Game* game) {
-  Coords target = { 0, 0 };
-  placement_begin(game);
-  update_game_state_display(game);
-  while (true) {
-    int result = placement_switch_player(game);
-    if (result < 0) break;
-    display_new_turn_message(game->current_player_index + 1);
-    handle_placement_input(game, &target);
-    place_penguin(game, target);
-    update_game_state_display(game);
-  }
-  placement_end(game);
-  print_end_placement_phase(game);
 }
