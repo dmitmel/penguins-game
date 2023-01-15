@@ -1,66 +1,78 @@
 #include "movement.h"
 #include "board.h"
-#include "gamestate.h"
+#include "game.h"
 #include "io.h"
 #include "utils.h"
+#include <assert.h>
 #include <stdio.h>
 
-bool any_valid_player_move_exists(const Board* board, int player_id) {
-  // TODO the selected player can move their penguin
-  // players are encoded on the board as an integer equal to -player_id
-  // so a row [0, 1, -1, -2] means that player 1 and player 2 have a penguin on the right half of
-  // the row
-  for (int y = 0; y < board->height; y++) {
-    for (int x = 0; x < board->width; x++) {
-      int tile = board->grid[y][x];
-      if (-tile == player_id) {
-        PossibleMoves moves = calculate_all_possible_moves(board, (Coords){ x, y });
-        if (moves.steps_up != 0 || moves.steps_right != 0 || moves.steps_down != 0 || moves.steps_left != 0) {
-          return true;
-        }
+void movement_begin(Game* game) {
+  assert(game->phase == GAME_PHASE_PLACEMENT_DONE);
+  game->phase = GAME_PHASE_MOVEMENT;
+  game->current_player_index = -1;
+}
+
+void movement_end(Game* game) {
+  assert(game->phase == GAME_PHASE_MOVEMENT);
+  game->phase = GAME_PHASE_MOVEMENT_DONE;
+}
+
+int movement_switch_player(Game* game) {
+  assert(game->phase == GAME_PHASE_MOVEMENT);
+  int index = game->current_player_index;
+  int checked_players = 0;
+  while (checked_players < game->players_count) {
+    index = (index + 1) % game->players_count;
+    if (any_valid_player_move_exists(game, game_get_player(game, index)->id)) {
+      game->current_player_index = index;
+      return index;
+    }
+    checked_players++;
+  }
+  return -1;
+}
+
+bool any_valid_player_move_exists(const Game* game, int player_id) {
+  assert(game->phase == GAME_PHASE_MOVEMENT);
+  for (int y = 0; y < game->board_height; y++) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords coords = { x, y };
+      if (get_tile(game, coords) != -player_id) continue;
+      PossibleMoves moves = calculate_all_possible_moves(game, coords);
+      if (moves.steps_up != 0 || moves.steps_right != 0 || moves.steps_down != 0 || moves.steps_left != 0) {
+        return true;
       }
     }
   }
   return false;
 }
 
-bool any_valid_movement_exists(const Board* board, const Player* players, int player_count) {
-  for (int i = 0; i < player_count; i++) {
-    if (any_valid_player_move_exists(board, players[i].id)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-MovementError validate_movement(
-  const Board* board, Coords start, Coords target, int current_player_id, Coords* fail
-) {
-  int tile = board->grid[start.y][start.x];
-  if (target.x < 0 || target.x >= board->width || target.y < 0 || target.y >= board->height) {
+MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail) {
+  assert(game->phase == GAME_PHASE_MOVEMENT);
+  int tile = is_tile_in_bounds(game, start) ? get_tile(game, start) : 0;
+  if (!is_tile_in_bounds(game, target)) {
     return OUT_OF_BOUNDS_MOVEMENT;
-  } else if (-tile != current_player_id) {
+  } else if (-tile != game_get_current_player_id(game)) {
     return NOT_YOUR_PENGUIN;
   } else if (target.x == start.x && target.y == start.y) {
     return CURRENT_LOCATION;
   } else if (target.x != start.x && target.y != start.y) {
     return DIAGONAL_MOVE;
-  } else if (board->grid[target.y][target.x] == 0) {
+  } else if (get_tile(game, target) == 0) {
     return MOVE_ONTO_EMPTY_TILE;
-  } else if (board->grid[target.y][target.x] < 0) {
+  } else if (get_tile(game, target) < 0) {
     return MOVE_ONTO_PENGUIN;
   }
 
-  int x = start.x, y = start.y;
+  Coords coords = start;
   int dx = target.x > start.x ? 1 : target.x < start.x ? -1 : 0;
   int dy = target.y > start.y ? 1 : target.y < start.y ? -1 : 0;
-  while (x != target.x || y != target.y) {
-    x += dx, y += dy;
+  while (coords.x != target.x || coords.y != target.y) {
+    coords.x += dx, coords.y += dy;
     if (fail) {
-      fail->x = x;
-      fail->y = y;
+      *fail = coords;
     }
-    int tile = board->grid[y][x];
+    int tile = get_tile(game, coords);
     if (tile == 0) {
       return MOVE_OVER_EMPTY_TILE;
     } else if (tile < 0) {
@@ -71,47 +83,47 @@ MovementError validate_movement(
   return VALID_INPUT;
 }
 
-static int get_possible_steps_in_direction(const Board* board, Coords start, int dx, int dy) {
-  int x = start.x, y = start.y;
+static int get_possible_steps_in_direction(const Game* game, Coords coords, int dx, int dy) {
   int steps = 0;
   while (true) {
-    x += dx, y += dy;
-    if (!(0 <= x && x < board->width && 0 <= y && y < board->height)) {
-      break;
-    }
-    int tile = board->grid[y][x];
-    if (tile <= 0) {
-      break;
-    }
+    coords.x += dx, coords.y += dy;
+    if (!is_tile_in_bounds(game, coords)) break;
+    if (get_tile(game, coords) <= 0) break;
     steps++;
   }
   return steps;
 }
 
-PossibleMoves calculate_all_possible_moves(const Board* board, Coords start) {
+PossibleMoves calculate_all_possible_moves(const Game* game, Coords start) {
+  assert(game->phase == GAME_PHASE_MOVEMENT);
+  assert(is_tile_in_bounds(game, start));
   PossibleMoves result = {
-    .steps_up = get_possible_steps_in_direction(board, start, 0, -1),
-    .steps_right = get_possible_steps_in_direction(board, start, 1, 0),
-    .steps_down = get_possible_steps_in_direction(board, start, 0, 1),
-    .steps_left = get_possible_steps_in_direction(board, start, -1, 0),
+    .steps_up = get_possible_steps_in_direction(game, start, 0, -1),
+    .steps_right = get_possible_steps_in_direction(game, start, 1, 0),
+    .steps_down = get_possible_steps_in_direction(game, start, 0, 1),
+    .steps_left = get_possible_steps_in_direction(game, start, -1, 0),
   };
   return result;
 }
 
-// returns the number of fish captured on the way
-int move_penguin(Board* board, Coords start, Coords target, int player_id) {
-  int points_gained = board->grid[target.y][target.x];
-  board->grid[target.y][target.x] = -player_id;
-  board->grid[start.y][start.x] = 0;
-
-  return points_gained;
+void move_penguin(Game* game, Coords start, Coords target) {
+  assert(game->phase == GAME_PHASE_MOVEMENT);
+  assert(validate_movement(game, start, target, NULL) == VALID_INPUT);
+  Player* player = game_get_player(game, game->current_player_index);
+  int fish = get_tile(game, target);
+  assert(fish > 0);
+  set_tile(game, target, -player->id);
+  player->points += fish;
+  set_tile(game, start, 0);
 }
 
-void handle_movement_input(Coords* penguin, Coords* target, Board* board, Player* current_player) {
+void handle_movement_input(Game* game, Coords* penguin, Coords* target) {
   while (true) {
     get_data_for_movement(penguin, target);
-    MovementError input = validate_movement(board, *penguin, *target, current_player->id, NULL);
+    MovementError input = validate_movement(game, *penguin, *target, NULL);
     switch (input) {
+    case VALID_INPUT:
+      return;
     case OUT_OF_BOUNDS_MOVEMENT:
       display_error_message("You cant move oustide the board!");
       break;
@@ -136,30 +148,21 @@ void handle_movement_input(Coords* penguin, Coords* target, Board* board, Player
     case MOVE_OVER_PENGUIN:
       display_error_message("You cant move over another penguin!");
       break;
-    case VALID_INPUT:
-      return;
     }
   }
 }
 
-void interactive_movement(Board* board, GameState* state) {
-  int current_player_idx = 0;
-  Coords target;
-  Coords penguin;
-  int points_gained;
-  while (any_valid_movement_exists(board, state->players, state->player_count)) {
-    if (!any_valid_player_move_exists(board, current_player_idx)) {
-      display_error_message("No valid moves for the player");
-    }
-    Player* current_player = &state->players[current_player_idx];
-    display_new_turn_message(current_player->id);
-    handle_movement_input(&penguin, &target, board, current_player);
-    // after this function call we have:
-    // the x and y of the target tile and penguin_x and penguin_y of the penguin moving
-    // and know that the movement is valid
-    points_gained = move_penguin(board, penguin, target, current_player->id);
-    current_player->points += points_gained;
-    update_game_state_display(board, state->players, state->player_count);
-    current_player_idx = (current_player_idx + 1) % state->player_count;
+void interactive_movement(Game* game) {
+  Coords target = { 0, 0 };
+  Coords penguin = { 0, 0 };
+  movement_begin(game);
+  while (true) {
+    int result = movement_switch_player(game);
+    if (result < 0) break;
+    display_new_turn_message(game->current_player_index + 1);
+    handle_movement_input(game, &penguin, &target);
+    move_penguin(game, penguin, target);
+    update_game_state_display(game);
   }
+  movement_end(game);
 }

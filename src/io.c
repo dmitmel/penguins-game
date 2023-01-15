@@ -1,12 +1,12 @@
 #include "io.h"
 #include "board.h"
-#include "gamestate.h"
+#include "game.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-void print_board(const Board* board) {
+void print_board(const Game* game) {
   printf("   ");
-  for (int x = 0; x < board->width; x++) {
+  for (int x = 0; x < game->board_width; x++) {
     if (x % 5 == 0) {
       printf("%3d", x);
     } else {
@@ -15,21 +15,22 @@ void print_board(const Board* board) {
   }
   printf("\n");
 
-  for (int y = 0; y < board->height; y++) {
+  for (int y = 0; y < game->board_height; y++) {
     if (y % 5 == 0) {
       printf("%3d", y);
     } else {
       printf("   ");
     }
     printf("| ");
-    for (int x = 0; x < board->width; x++) {
-      int val = board->grid[y][x];
-      if (val == 0) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords coords = { x, y };
+      int tile = get_tile(game, coords);
+      if (tile == 0) {
         printf("-  ");
-      } else if (val < 0) {
-        printf("p%d ", -val);
+      } else if (tile < 0) {
+        printf("p%d ", -tile);
       } else {
-        printf("%d  ", val);
+        printf("%d  ", tile);
       }
     }
     printf("|\n");
@@ -52,10 +53,9 @@ void get_penguin_count(int* count) {
   scanf("%d", count);
 }
 
-void get_player_name(int player_number, char* name) {
+void get_player_name(int player_number, char name[32]) {
   printf("Player %d, please input name:\n", player_number);
-  // TODO: guard against name being >15 characters
-  scanf("%s", name);
+  scanf("%31s", name);
 }
 
 void ask_player_for_input(int player_number) {
@@ -74,17 +74,18 @@ void display_error_message(const char* message) {
   printf("\n%s\n", message);
 }
 
-static void print_player_stats(const Player players[], int count) {
+static void print_player_stats(const Game* game) {
   printf("id\t| name\t| score\n");
-  for (int i = 0; i < count; i++) {
-    printf("%d\t| %s\t| %d\n", players[i].id, players[i].name, players[i].points);
+  for (int i = 0; i < game->players_count; i++) {
+    Player* player = game_get_player(game, i);
+    printf("%d\t| %s\t| %d\n", i + 1, player->name, player->points);
   }
 }
 
-void update_game_state_display(const Board* board, const Player players[], int player_count) {
+void update_game_state_display(const Game* game) {
   clear_screen();
-  print_player_stats(players, player_count);
-  print_board(board);
+  print_player_stats(game);
+  print_board(game);
 }
 
 void clear_screen(void) {
@@ -95,12 +96,12 @@ void clear_screen(void) {
 #endif
 }
 
-void print_end_placement_phase(const Board* board, const Player players[], int player_count) {
+void print_end_placement_phase(const Game* game) {
   clear_screen();
   printf("No more penguins can be placed, placement phase ended!\n");
-  print_board(board);
+  print_board(game);
   printf("\n");
-  print_player_stats(players, player_count);
+  print_player_stats(game);
 }
 
 void get_data_for_movement(Coords* start, Coords* target) {

@@ -13,7 +13,10 @@ add_library(penguins-common INTERFACE)
 if(MSVC)
   target_compile_options(penguins-common INTERFACE /W4)
 else()
-  target_compile_options(penguins-common INTERFACE -Wall -Wextra -Wpedantic -Werror=return-type)
+  target_compile_options(penguins-common INTERFACE
+    -Wall -Wextra -Wpedantic -Werror=return-type
+    $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>
+  )
 endif()
 
 add_executable(embed_resource src/tools/embed_resource.cc)
@@ -36,8 +39,9 @@ function(embed_resource res_path)
 endfunction()
 
 add_library(penguins-lib
-  src/io.c
   src/board.c
+  src/game.c
+  src/io.c
   src/movement.c
   src/placement.c
 )

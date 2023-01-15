@@ -1,7 +1,7 @@
 #pragma once
 
-#include "board.h"
-#include "gamestate.h"
+#include "game.h"
+#include "utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,14 +19,6 @@ typedef enum MovementError {
   MOVE_OVER_PENGUIN,
 } MovementError;
 
-bool any_valid_player_move_exists(const Board* board, int player_id);
-
-bool any_valid_movement_exists(const Board* board, const Player* players, int player_count);
-
-MovementError validate_movement(
-  const Board* board, Coords start, Coords target, int current_player_id, Coords* fail
-);
-
 typedef struct PossibleMoves {
   int steps_up;
   int steps_right;
@@ -34,13 +26,17 @@ typedef struct PossibleMoves {
   int steps_left;
 } PossibleMoves;
 
-PossibleMoves calculate_all_possible_moves(const Board* board, Coords start);
+void movement_begin(Game* game);
+void movement_end(Game* game);
 
-void handle_movement_input(Coords* penguin, Coords* target, Board* board, Player* current_player);
+int movement_switch_player(Game* game);
+bool any_valid_player_move_exists(const Game* game, int player_id);
+MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail);
+PossibleMoves calculate_all_possible_moves(const Game* game, Coords start);
+void move_penguin(Game* game, Coords start, Coords target);
 
-int move_penguin(Board* board, Coords start, Coords target, int player_id);
-
-void interactive_movement(Board* board, GameState* state);
+void handle_movement_input(Game* game, Coords* penguin, Coords* target);
+void interactive_movement(Game* game);
 
 #ifdef __cplusplus
 }

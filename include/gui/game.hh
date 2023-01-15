@@ -1,8 +1,9 @@
 #pragma once
 
-#include "board.h"
+#include "game.h"
+#include "gui/player_info_box.hh"
 #include "gui/tileset.hh"
-#include "movement.h"
+#include "utils.h"
 #include <cstddef>
 #include <memory>
 #include <wx/bitmap.h>
@@ -16,40 +17,22 @@
 #include <wx/vector.h>
 #include <wx/window.h>
 
-class CanvasPanel;
-#include "gui/player_info_box.hh"
-
 class GuiGameState {
   wxDECLARE_NO_COPY_CLASS(GuiGameState);
 
 public:
   GuiGameState() {}
 
-  static void free_board_ptr(Board* board) {
-    free_board(board);
-    delete board;
-  }
-
-  int players_count;
-  int penguins_per_player;
-  std::unique_ptr<wxString[]> player_names;
-  std::unique_ptr<Board, decltype(&free_board_ptr)> board{ nullptr, free_board_ptr };
-  std::unique_ptr<bool[]> blocked_cells;
-
-  GamePhase game_phase;
-  int current_player;
-  int penguins_left_to_place;
+  std::unique_ptr<Game, decltype(&game_free)> game{ nullptr, game_free };
 };
+
+class CanvasPanel;
 
 class GameFrame : public wxFrame {
 public:
   GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
 
   void start_new_game();
-
-  PlayerInfoBox* get_player_info_box(size_t idx) {
-    return this->player_info_boxes.at(idx);
-  }
 
   void update_player_info_boxes();
 
@@ -61,7 +44,7 @@ protected:
 
   CanvasPanel* canvas_panel;
   wxBoxSizer* players_box;
-  wxVector<PlayerInfoBox*> player_info_boxes;
+  std::unique_ptr<PlayerInfoBox*[]> player_info_boxes;
   GuiGameState& state;
   const TilesetHelper& tileset;
 
@@ -77,27 +60,22 @@ public:
 
   CanvasPanel(GameFrame* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
 
-  wxSize get_board_size() const;
-  bool is_cell_in_bounds(wxPoint cell) const;
-  int* cell_ptr(wxPoint cell) const;
-
-  bool is_cell_blocked(wxPoint cell) const;
+  std::unique_ptr<bool[]> blocked_cells;
+  bool* cell_blocked_ptr(Coords cell) const;
   void update_blocked_cells();
 
-  MovementError validate_movement(wxPoint start, wxPoint target, wxPoint* fail = nullptr);
-
   wxSize get_canvas_size() const;
-  wxPoint get_cell_by_coords(wxPoint point) const;
-  wxRect get_cell_rect(wxPoint cell) const;
-  wxPoint get_cell_centre(wxPoint cell) const;
+  Coords get_cell_by_coords(wxPoint point) const;
+  wxRect get_cell_rect(Coords cell) const;
+  wxPoint get_cell_centre(Coords cell) const;
+
+  Coords get_selected_penguin_cell(int player_index) const;
 
   void mark_board_dirty() {
     this->board_dirty = true;
   }
 
   const wxBitmap& get_player_penguin_sprite(int player_id, bool flipped = false) const;
-
-  void update_player_scores();
 
 protected:
   virtual wxSize DoGetBestClientSize() const override;

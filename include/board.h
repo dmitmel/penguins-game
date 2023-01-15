@@ -1,36 +1,19 @@
 #pragma once
 
+#include "game.h"
 #include "utils.h"
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct Board {
-  int width;
-  int height;
-  int** grid;
-} Board;
+void setup_board(Game* game, int width, int height);
 
-typedef enum TileType {
-  EMPTY_TILE,
-  PENGUIN_OWN,
-  PENGUIN_ENEMY,
-  FISH_MULTIPLE,
-  FISH_SINGLE,
-  OUT_OF_BOUNDS
-} TileType;
+bool is_tile_in_bounds(const Game* game, Coords coords);
+int get_tile(const Game* game, Coords coords);
+void set_tile(Game* game, Coords coords, int value);
 
-Board init_board(int width, int height);
-
-void free_board(Board* board);
-
-void generate_random_board(Board* board);
-
-bool placeable_spot_exists(const Board* board);
-
-bool is_spot_valid_for_placement(const Board* board, Coords coords);
+void generate_random_board(Game* game);
 
 #ifdef __cplusplus
 }

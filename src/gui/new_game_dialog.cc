@@ -1,5 +1,4 @@
 #include "gui/new_game_dialog.hh"
-
 #include <cstddef>
 #include <wx/artprov.h>
 #include <wx/button.h>

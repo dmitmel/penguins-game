@@ -11,9 +11,6 @@
 #include <wx/stattext.h>
 #include <wx/window.h>
 
-class PlayerInfoBox;
-#include "gui/game.hh"
-
 class PlayerPenguinWindow;
 
 class PlayerInfoBox : public SimpleStaticBox {
@@ -23,7 +20,6 @@ public:
     wxWindowID id,
     int player_id,
     wxString player_name,
-    CanvasPanel* canvas_panel,
     const TilesetHelper& tileset
   );
 
@@ -31,15 +27,13 @@ public:
   const wxString player_name;
   bool is_blocked = false;
   bool is_current = false;
-  int player_score = 0;
+  wxBitmap penguin_sprite;
 
   void set_score(int points);
 
-  const wxBitmap& get_penguin_sprite();
   void paint_penguin_window(wxDC& dc);
 
 protected:
-  CanvasPanel* canvas_panel;
   const TilesetHelper& tileset;
 
   wxStaticBoxSizer* root_hbox;

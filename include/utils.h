@@ -21,6 +21,8 @@ typedef struct Coords {
 #define UNUSED(x) UNUSED_##x
 #endif
 
+#define free_and_clear(ptr) (free(ptr), ptr = NULL)
+
 #ifdef __cplusplus
 }
 #endif

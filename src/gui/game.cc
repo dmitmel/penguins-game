@@ -1,6 +1,11 @@
 #include "gui/game.hh"
+#include "board.h"
+#include "game.h"
 #include "gui/new_game_dialog.hh"
 #include "gui/player_info_box.hh"
+#include "movement.h"
+#include "placement.h"
+#include "utils.h"
 #include <cmath>
 #include <cstddef>
 #include <cstring>
@@ -22,6 +27,10 @@
 #include <wx/sizer.h>
 #include <wx/types.h>
 #include <wx/window.h>
+
+static inline bool coords_same(const Coords& a, const Coords& b) {
+  return a.x == b.x && a.y == b.y;
+}
 
 enum {
   ID_NEW_GAME = wxID_HIGHEST + 1,
@@ -91,34 +100,35 @@ void GameFrame::start_new_game() {
     return;
   }
 
-  state.penguins_per_player = dialog->get_penguins_per_player();
-  state.players_count = dialog->get_number_of_players();
-  state.player_names.reset(new wxString[state.players_count]);
-  for (int i = 0; i < state.players_count; i++) {
-    state.player_names[i] = dialog->get_player_name(i);
+  Game* game = game_new();
+  this->state.game.reset(game);
+
+  game_begin_setup(game);
+  game_set_penguins_per_player(game, dialog->get_penguins_per_player());
+  game_set_players_count(game, dialog->get_number_of_players());
+  for (int i = 0; i < game->players_count; i++) {
+    game_set_player_name(game, i, dialog->get_player_name(i).c_str());
   }
-  state.board.reset(new Board(init_board(dialog->get_board_width(), dialog->get_board_height())));
-  state.blocked_cells.reset(new bool[state.board->width * state.board->height]);
+  setup_board(game, dialog->get_board_width(), dialog->get_board_height());
+  generate_random_board(game);
+  game_end_setup(game);
 
-  state.game_phase = PHASE_PLACEMENT;
-  state.current_player = 0;
-  state.penguins_left_to_place = state.players_count * state.penguins_per_player;
+  game_advance_state(game);
 
-  Board* board = state.board.get();
-  generate_random_board(board);
+  this->canvas_panel->blocked_cells.reset(new bool[game->board_width * game->board_height]);
   this->canvas_panel->update_blocked_cells();
 
   this->players_box->Clear(/* delete_windows */ true);
-  this->player_info_boxes.clear();
+  this->player_info_boxes.reset(new PlayerInfoBox*[game->players_count]);
 
-  for (int i = 0; i < state.players_count; i++) {
+  for (int i = 0; i < game->players_count; i++) {
     auto player_box = new PlayerInfoBox(
-      this, wxID_ANY, i + 1, dialog->get_player_name(i), this->canvas_panel, this->tileset
+      this, wxID_ANY, game_get_player(game, i)->id, dialog->get_player_name(i), this->tileset
     );
     this->players_box->Add(
       player_box->GetContainingSizer(), wxSizerFlags().Border(wxALL & ~wxDOWN)
     );
-    this->player_info_boxes.push_back(player_box);
+    this->player_info_boxes[i] = player_box;
   }
   this->update_player_info_boxes();
 
@@ -130,10 +140,15 @@ void GameFrame::start_new_game() {
 }
 
 void GameFrame::update_player_info_boxes() {
-  for (int i = 0; i < state.players_count; i++) {
-    PlayerInfoBox* player_info = this->player_info_boxes.at(i);
-    player_info->is_current = i == state.current_player;
-    player_info->Refresh();
+  Game* game = this->state.game.get();
+  if (!game) return;
+  for (int i = 0; i < game->players_count; i++) {
+    PlayerInfoBox* player_box = this->player_info_boxes[i];
+    Player* player = game_get_player(game, i);
+    player_box->is_current = i == game->current_player_index;
+    player_box->set_score(player->points);
+    player_box->penguin_sprite = this->canvas_panel->get_player_penguin_sprite(player->id);
+    player_box->Refresh();
   }
 }
 
@@ -149,71 +164,74 @@ CanvasPanel::CanvasPanel(
 )
 : wxPanel(parent, id), game_frame(parent), state(state), tileset(tileset) {}
 
-wxSize CanvasPanel::get_board_size() const {
-  Board* board = state.board.get();
-  return board ? wxSize(board->width, board->height) : wxSize(0, 0);
-}
-
-bool CanvasPanel::is_cell_in_bounds(wxPoint cell) const {
-  wxSize size = this->get_board_size();
-  return 0 <= cell.x && cell.x < size.x && 0 <= cell.y && cell.y < size.y;
-}
-
 wxSize CanvasPanel::get_canvas_size() const {
-  return CELL_SIZE * this->get_board_size();
+  if (Game* game = this->state.game.get()) {
+    return CELL_SIZE * wxSize(game->board_width, game->board_height);
+  } else {
+    return wxSize(0, 0);
+  }
 }
 
-int* CanvasPanel::cell_ptr(wxPoint cell) const {
-  wxASSERT(this->is_cell_in_bounds(cell));
-  return &state.board->grid[cell.y][cell.x];
+Coords CanvasPanel::get_cell_by_coords(wxPoint point) const {
+  return { point.x / CELL_SIZE, point.y / CELL_SIZE };
 }
 
-wxPoint CanvasPanel::get_cell_by_coords(wxPoint point) const {
-  return wxPoint(point.x / CELL_SIZE, point.y / CELL_SIZE);
-}
-
-wxRect CanvasPanel::get_cell_rect(wxPoint cell) const {
+wxRect CanvasPanel::get_cell_rect(Coords cell) const {
   return wxRect(cell.x * CELL_SIZE, cell.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
 }
 
-wxPoint CanvasPanel::get_cell_centre(wxPoint cell) const {
+wxPoint CanvasPanel::get_cell_centre(Coords cell) const {
   wxRect rect = this->get_cell_rect(cell);
   return rect.GetPosition() + rect.GetSize() / 2;
 }
 
-bool CanvasPanel::is_cell_blocked(wxPoint cell) const {
-  wxASSERT(this->is_cell_in_bounds(cell));
-  return state.blocked_cells[cell.x + cell.y * state.board->width];
+Coords CanvasPanel::get_selected_penguin_cell(int player_index) const {
+  if (Game* game = this->state.game.get()) {
+    int player_id = game_get_player(game, player_index)->id;
+    Coords curr_cell =
+      this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
+    if (is_tile_in_bounds(game, curr_cell) && get_tile(game, curr_cell) == -player_id) {
+      return curr_cell;
+    }
+  }
+  return { -1, -1 };
+}
+
+bool* CanvasPanel::cell_blocked_ptr(Coords cell) const {
+  if (Game* game = this->state.game.get()) {
+    assert(is_tile_in_bounds(game, cell));
+    return &this->blocked_cells[cell.x + cell.y * game->board_width];
+  } else {
+    return nullptr;
+  }
 }
 
 void CanvasPanel::update_blocked_cells() {
-  Board* board = state.board.get();
-  if (!board) return;
-  if (state.game_phase == PHASE_PLACEMENT) {
-    for (int y = 0; y < board->height; y++) {
-      for (int x = 0; x < board->width; x++) {
-        state.blocked_cells[x + y * board->width] =
-          !is_spot_valid_for_placement(board, Coords{ x, y });
+  Game* game = this->state.game.get();
+  if (!game) return;
+  if (game->phase == GAME_PHASE_PLACEMENT) {
+    for (int y = 0; y < game->board_height; y++) {
+      for (int x = 0; x < game->board_width; x++) {
+        Coords cell = { x, y };
+        *this->cell_blocked_ptr(cell) = validate_placement(game, cell) != PLACEMENT_VALID;
       }
     }
-  } else if (state.game_phase == PHASE_MOVEMENT) {
-    int current_player_cell = -(state.current_player + 1);
-    wxPoint curr_cell =
-      this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
-    if (this->is_cell_in_bounds(curr_cell) && *this->cell_ptr(curr_cell) == current_player_cell) {
+  } else if (game->phase == GAME_PHASE_MOVEMENT) {
+    Coords curr_cell = this->get_selected_penguin_cell(game->current_player_index);
+    if (is_tile_in_bounds(game, curr_cell)) {
       // A penguin is selected
-      for (int y = 0; y < board->height; y++) {
-        for (int x = 0; x < board->width; x++) {
-          state.blocked_cells[x + y * board->width] = true;
+      for (int y = 0; y < game->board_height; y++) {
+        for (int x = 0; x < game->board_width; x++) {
+          Coords cell = { x, y };
+          *this->cell_blocked_ptr(cell) = true;
         }
       }
-      PossibleMoves moves =
-        calculate_all_possible_moves(board, *reinterpret_cast<Coords*>(&curr_cell));
+      PossibleMoves moves = calculate_all_possible_moves(game, curr_cell);
       auto unblock_steps = [&](int steps, int dx, int dy) -> void {
-        int x = curr_cell.x, y = curr_cell.y;
+        Coords cell = curr_cell;
         while (steps > 0) {
-          x += dx, y += dy;
-          state.blocked_cells[x + y * board->width] = false;
+          cell.x += dx, cell.y += dy;
+          *this->cell_blocked_ptr(cell) = false;
           steps--;
         }
       };
@@ -223,13 +241,15 @@ void CanvasPanel::update_blocked_cells() {
         unblock_steps(moves.steps_down, 0, 1);
         unblock_steps(moves.steps_left, -1, 0);
         if (!this->mouse_is_down) {
-          state.blocked_cells[curr_cell.x + curr_cell.y * board->width] = false;
+          *this->cell_blocked_ptr(curr_cell) = false;
         }
       }
     } else {
-      for (int y = 0; y < board->height; y++) {
-        for (int x = 0; x < board->width; x++) {
-          state.blocked_cells[x + y * board->width] = board->grid[y][x] != current_player_cell;
+      int current_player_id = game_get_current_player_id(game);
+      for (int y = 0; y < game->board_height; y++) {
+        for (int x = 0; x < game->board_width; x++) {
+          Coords cell = { x, y };
+          *this->cell_blocked_ptr(cell) = get_tile(game, cell) != -current_player_id;
         }
       }
     }
@@ -237,23 +257,12 @@ void CanvasPanel::update_blocked_cells() {
   this->mark_board_dirty();
 }
 
-MovementError CanvasPanel::validate_movement(wxPoint start, wxPoint target, wxPoint* fail) {
-  return ::validate_movement(
-    state.board.get(),
-    *reinterpret_cast<Coords*>(&start),
-    *reinterpret_cast<Coords*>(&target),
-    state.current_player + 1,
-    reinterpret_cast<Coords*>(fail)
-  );
-}
-
 wxSize CanvasPanel::DoGetBestClientSize() const {
-  wxSize size = this->get_canvas_size();
-  if (!(size.x > 0 && size.y > 0)) {
+  if (!this->state.game.get()) {
     wxSize default_size(NewGameDialog::DEFAULT_BOARD_WIDTH, NewGameDialog::DEFAULT_BOARD_HEIGHT);
     return CELL_SIZE * default_size;
   }
-  return size;
+  return this->get_canvas_size();
 }
 
 void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
@@ -282,8 +291,8 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
 }
 
 void CanvasPanel::paint_board(wxDC& dc) {
-  Board* board = state.board.get();
-  if (!board) return;
+  Game* game = this->state.game.get();
+  if (!game) return;
 
   dc.SetTextForeground(*wxBLACK);
   const wxFont default_font = dc.GetFont();
@@ -292,26 +301,27 @@ void CanvasPanel::paint_board(wxDC& dc) {
   cell_font.SetPointSize(CELL_FONT_SIZE);
   dc.SetFont(cell_font);
 
-  bool should_block_cells = this->mouse_within_window;
-  wxPoint selected_penguin_cell;
-  wxPoint mouse_cell = this->get_cell_by_coords(this->mouse_pos);
-  if (state.game_phase == PHASE_MOVEMENT) {
-    wxPoint curr_cell =
-      this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
-    if (this->is_cell_in_bounds(curr_cell)) {
-      should_block_cells = *this->cell_ptr(curr_cell) == -(state.current_player + 1);
-      selected_penguin_cell = curr_cell;
-    }
+  Coords mouse_cell = this->get_cell_by_coords(this->mouse_pos);
+
+  bool is_penguin_selected;
+  Coords selected_penguin_cell = { -1, -1 };
+  if (game->phase == GAME_PHASE_MOVEMENT) {
+    selected_penguin_cell = this->get_selected_penguin_cell(game->current_player_index);
+    is_penguin_selected = is_tile_in_bounds(game, selected_penguin_cell);
   }
 
-  for (int y = 0; y < board->height; y++) {
-    for (int x = 0; x < board->width; x++) {
-      wxPoint cell(x, y);
-      int cell_value = *this->cell_ptr(cell);
+  for (int y = 0; y < game->board_height; y++) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords cell = { x, y };
+      int cell_value = get_tile(game, cell);
       wxRect cell_rect = this->get_cell_rect(cell);
       wxPoint cell_pos = cell_rect.GetPosition();
 
-      bool is_blocked = should_block_cells && this->is_cell_blocked(cell);
+      bool is_blocked = this->mouse_within_window && *this->cell_blocked_ptr(cell);
+      if (game->phase == GAME_PHASE_MOVEMENT) {
+        is_blocked =
+          is_blocked && is_penguin_selected && !coords_same(cell, selected_penguin_cell);
+      }
 
       if (cell_value == 0) {
         dc.DrawBitmap(tileset.water_tiles[(x ^ y) % WXSIZEOF(tileset.water_tiles)], cell_pos);
@@ -319,8 +329,8 @@ void CanvasPanel::paint_board(wxDC& dc) {
         dc.DrawBitmap(tileset.ice_tiles[(x ^ y) % WXSIZEOF(tileset.ice_tiles)], cell_pos);
 
         auto check_water = [&](int dx, int dy) -> bool {
-          wxPoint cell2 = cell + wxPoint(dx, dy);
-          return this->is_cell_in_bounds(cell2) && *this->cell_ptr(cell2) == 0;
+          Coords cell2 = { cell.x + dx, cell.y + dy };
+          return is_tile_in_bounds(game, cell2) && get_tile(game, cell2) == 0;
         };
 
         auto draw_edge = [&](int dx, int dy, TileEdge type) {
@@ -363,7 +373,13 @@ void CanvasPanel::paint_board(wxDC& dc) {
           }
         } else if (cell_value < 0) {
           int player = -cell_value;
-          bool flipped = cell == selected_penguin_cell && mouse_cell.x < selected_penguin_cell.x;
+          if (is_blocked) {
+            dc.DrawBitmap(tileset.blocked_tile, cell_pos);
+          }
+          bool flipped = false;
+          if (is_penguin_selected && coords_same(cell, selected_penguin_cell)) {
+            flipped = mouse_cell.x < selected_penguin_cell.x;
+          }
           dc.DrawBitmap(this->get_player_penguin_sprite(player, flipped), cell_pos);
         }
       }
@@ -407,20 +423,23 @@ static void draw_arrow_head(
 }
 
 void CanvasPanel::paint_overlay(wxDC& dc) {
-  wxPoint current_cell = this->get_cell_by_coords(this->mouse_pos);
-  if (this->mouse_within_window && this->is_cell_in_bounds(current_cell)) {
+  Game* game = this->state.game.get();
+  if (!game) return;
+
+  Coords current_cell = this->get_cell_by_coords(this->mouse_pos);
+  if (this->mouse_within_window && is_tile_in_bounds(game, current_cell)) {
     dc.SetBrush(wxNullBrush);
-    dc.SetPen(wxPen(this->is_cell_blocked(current_cell) ? *wxRED : *wxGREEN, 5));
+    dc.SetPen(wxPen(*this->cell_blocked_ptr(current_cell) ? *wxRED : *wxGREEN, 5));
     dc.DrawRectangle(this->get_cell_rect(current_cell));
   }
 
-  if (this->mouse_is_down && state.game_phase == PHASE_MOVEMENT) {
-    wxPoint start_cell = this->get_cell_by_coords(this->mouse_drag_pos);
-    wxPoint dest_cell = this->get_cell_by_coords(this->mouse_pos);
-    if (this->is_cell_in_bounds(start_cell) && this->is_cell_in_bounds(dest_cell)) {
-      if (start_cell != dest_cell && *this->cell_ptr(start_cell) == -(state.current_player + 1)) {
-        wxPoint move_fail_cell(start_cell);
-        MovementError result = this->validate_movement(start_cell, dest_cell, &move_fail_cell);
+  if (this->mouse_is_down && game->phase == GAME_PHASE_MOVEMENT) {
+    Coords start_cell = this->get_selected_penguin_cell(game->current_player_index);
+    Coords dest_cell = this->get_cell_by_coords(this->mouse_pos);
+    if (is_tile_in_bounds(game, start_cell) && is_tile_in_bounds(game, dest_cell)) {
+      if (!coords_same(start_cell, dest_cell)) {
+        Coords move_fail_cell(start_cell);
+        MovementError result = validate_movement(game, start_cell, dest_cell, &move_fail_cell);
         wxPoint arrow_start = this->get_cell_centre(start_cell);
         wxPoint arrow_fail = this->get_cell_centre(move_fail_cell);
         wxPoint arrow_end = this->get_cell_centre(dest_cell);
@@ -431,7 +450,7 @@ void CanvasPanel::paint_overlay(wxDC& dc) {
         wxPen red_pen((*wxRED).ChangeLightness(75), 4);
         dc.SetBrush(wxNullBrush);
 
-        if (result != VALID_INPUT && move_fail_cell != start_cell) {
+        if (result != VALID_INPUT && !coords_same(move_fail_cell, start_cell)) {
           dc.SetPen(bg_pen);
           dc.DrawLine(arrow_start, arrow_fail);
           dc.SetPen(green_pen);
@@ -477,7 +496,7 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
     this->mouse_within_window = false;
   }
 
-  if (!state.board) {
+  if (!this->state.game.get()) {
     event.Skip();
     return;
   }
@@ -502,17 +521,19 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
 }
 
 void CanvasPanel::on_mouse_down(wxMouseEvent& WXUNUSED(event)) {
-  if (state.game_phase == PHASE_MOVEMENT) {
+  Game* game = this->state.game.get();
+  if (game->phase == GAME_PHASE_MOVEMENT) {
     this->update_blocked_cells();
     this->Refresh();
   }
 }
 
 void CanvasPanel::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
-  wxPoint prev_cell = this->get_cell_by_coords(this->prev_mouse_pos);
-  wxPoint curr_cell = this->get_cell_by_coords(this->mouse_pos);
-  if (curr_cell != prev_cell) {
-    if (this->is_cell_in_bounds(curr_cell)) {
+  Game* game = this->state.game.get();
+  Coords prev_cell = this->get_cell_by_coords(this->prev_mouse_pos);
+  Coords curr_cell = this->get_cell_by_coords(this->mouse_pos);
+  if (!coords_same(curr_cell, prev_cell)) {
+    if (is_tile_in_bounds(game, curr_cell)) {
       this->update_blocked_cells();
     }
     this->Refresh();
@@ -520,44 +541,27 @@ void CanvasPanel::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
 }
 
 void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
-  wxPoint prev_cell = this->get_cell_by_coords(this->mouse_drag_pos);
-  wxPoint curr_cell = this->get_cell_by_coords(this->mouse_pos);
-  if (state.game_phase == PHASE_PLACEMENT) {
-    if (this->is_cell_in_bounds(curr_cell) && prev_cell == curr_cell) {
-      if (!this->is_cell_blocked(curr_cell)) {
-        int* cell_ptr = this->cell_ptr(curr_cell);
-        if (*cell_ptr > 0) {
-          PlayerInfoBox* player_info = this->game_frame->get_player_info_box(state.current_player);
-          player_info->set_score(player_info->player_score + *cell_ptr);
-        }
-        *cell_ptr = -(state.current_player + 1);
-        this->mark_board_dirty();
-        state.current_player = (state.current_player + 1) % state.players_count;
+  Game* game = this->state.game.get();
+  Coords prev_cell = this->get_cell_by_coords(this->mouse_drag_pos);
+  Coords curr_cell = this->get_cell_by_coords(this->mouse_pos);
+  if (game->phase == GAME_PHASE_PLACEMENT) {
+    if (is_tile_in_bounds(game, curr_cell) && coords_same(prev_cell, curr_cell)) {
+      if (validate_placement(game, curr_cell) == PLACEMENT_VALID) {
+        place_penguin(game, curr_cell);
+        game_advance_state(game);
         this->game_frame->update_player_info_boxes();
-        state.penguins_left_to_place -= 1;
-        if (state.penguins_left_to_place <= 0) {
-          state.game_phase = PHASE_MOVEMENT;
-          state.current_player = 0;
-        }
+        this->mark_board_dirty();
         this->update_blocked_cells();
         this->Refresh();
       }
     }
-  } else if (state.game_phase == PHASE_MOVEMENT) {
-    if (this->is_cell_in_bounds(curr_cell) && this->is_cell_in_bounds(prev_cell)) {
-      MovementError result = validate_movement(prev_cell, curr_cell);
-      if (result == VALID_INPUT) {
-        int points = move_penguin(
-          state.board.get(),
-          *reinterpret_cast<Coords*>(&prev_cell),
-          *reinterpret_cast<Coords*>(&curr_cell),
-          state.current_player + 1
-        );
-        this->mark_board_dirty();
-        PlayerInfoBox* player_info = this->game_frame->get_player_info_box(state.current_player);
-        player_info->set_score(player_info->player_score + points);
-        state.current_player = (state.current_player + 1) % state.players_count;
+  } else if (game->phase == GAME_PHASE_MOVEMENT) {
+    if (is_tile_in_bounds(game, curr_cell) && is_tile_in_bounds(game, prev_cell)) {
+      if (validate_movement(game, prev_cell, curr_cell, nullptr) == VALID_INPUT) {
+        move_penguin(game, prev_cell, curr_cell);
+        game_advance_state(game);
         this->game_frame->update_player_info_boxes();
+        this->mark_board_dirty();
       }
     }
     this->update_blocked_cells();
