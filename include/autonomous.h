@@ -20,7 +20,7 @@ extern const char* MY_AUTONOMOUS_PLAYER_NAME;
 
 int run_autonomous_mode(const Arguments* args);
 
-bool load_game_state(Game* game, FILE* file, int penguins_arg);
+bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_player_name);
 bool save_game_state(const Game* game, FILE* file);
 
 #ifdef __cplusplus

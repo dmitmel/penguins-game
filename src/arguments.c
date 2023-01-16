@@ -22,14 +22,15 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
   result->penguins = 0;
   result->input_board_file = NULL;
   result->output_board_file = NULL;
-  result->name = false;
+  result->print_name = false;
   result->interactive = false;
+  result->set_name = NULL;
 
   bool ok = true;
   int file_arg = 0;
   for (int i = 1; i < argc; i++) {
     const char* arg = argv[i];
-    const char* arg_value = arg;
+    const char* arg_value;
     if ((arg_value = strip_prefix(arg, "phase="))) {
       if (strcmp(arg_value, "placement") == 0) {
         result->phase = PHASE_ARG_PLACEMENT;
@@ -46,9 +47,16 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         ok = false;
       }
     } else if (strcmp(arg, "name") == 0) {
-      result->name = true;
+      result->print_name = true;
     } else if (strcmp(arg, "interactive") == 0) {
       result->interactive = true;
+    } else if ((arg_value = strip_prefix(arg, "name="))) {
+      if (arg_value[0] == '\0') {
+        ok = false;
+        fprintf(stderr, "Invalid value for the 'name' argument: '%s'\n", arg_value);
+      } else {
+        result->set_name = arg_value;
+      }
     } else if (file_arg == 0) {
       result->input_board_file = arg;
       file_arg++;
@@ -61,7 +69,7 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
     }
   }
 
-  if (!result->name && !result->interactive) {
+  if (!result->print_name && !result->interactive) {
     if (result->input_board_file == NULL) {
       fprintf(stderr, "Expected a value for the required argument 'input_board_file'\n");
       ok = false;

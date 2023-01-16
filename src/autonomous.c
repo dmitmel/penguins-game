@@ -16,6 +16,12 @@
 const char* MY_AUTONOMOUS_PLAYER_NAME = "102D";
 
 int run_autonomous_mode(const Arguments* args) {
+  const char* my_player_name = args->set_name != NULL ? args->set_name : MY_AUTONOMOUS_PLAYER_NAME;
+  if (args->print_name) {
+    printf("%s\n", my_player_name);
+    return EXIT_OK;
+  }
+
   Game* game = game_new();
   FILE *input_file, *output_file;
 
@@ -25,7 +31,7 @@ int run_autonomous_mode(const Arguments* args) {
     return EXIT_INTERNAL_ERROR;
   }
   int penguins_arg = args->phase == PHASE_ARG_PLACEMENT ? args->penguins : 0;
-  if (!load_game_state(game, input_file, penguins_arg)) {
+  if (!load_game_state(game, input_file, penguins_arg, my_player_name)) {
     return EXIT_INPUT_FILE_ERROR;
   }
   fclose(input_file);
@@ -72,7 +78,7 @@ static int read_line(FILE* file, char** buf, int* line_len) {
   return *line_len;
 }
 
-bool load_game_state(Game* game, FILE* file, int penguins_arg) {
+bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_player_name) {
   char* line_buf = NULL;
   int line_len = 0;
 
@@ -140,14 +146,14 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg) {
 
   bool my_player_found = false;
   for (int i = 0; i < players_count; i++) {
-    if (strcmp(player_names[i], MY_AUTONOMOUS_PLAYER_NAME) == 0) {
+    if (strcmp(player_names[i], my_player_name) == 0) {
       my_player_found = true;
       break;
     }
   }
   if (!my_player_found && players_count < MAX_PLAYERS) {
     int i = players_count;
-    player_names[i] = strdup(MY_AUTONOMOUS_PLAYER_NAME);
+    player_names[i] = strdup(my_player_name);
     player_scores[i] = 0;
     players_count += 1;
   }

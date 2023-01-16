@@ -17,8 +17,9 @@ typedef struct Arguments {
   int penguins;
   const char* input_board_file;
   const char* output_board_file;
-  bool name;
+  bool print_name;
   bool interactive;
+  const char* set_name;
 } Arguments;
 
 void print_usage(const char* prog_name);
