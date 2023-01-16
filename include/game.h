@@ -46,7 +46,6 @@ void game_set_penguins_per_player(Game* self, int value);
 void game_set_players_count(Game* self, int count);
 
 Player* game_get_player(const Game* self, int idx);
-Player* game_get_player_by_id(const Game* self, int id);
 int game_get_current_player_id(const Game* self);
 
 void game_set_player_name(Game* self, int idx, const char* name);

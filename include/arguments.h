@@ -6,23 +6,23 @@
 extern "C" {
 #endif
 
-enum PhaseArg {
+typedef enum PhaseArg {
   PHASE_ARG_NONE = 0,
   PHASE_ARG_PLACEMENT = 1,
   PHASE_ARG_MOVEMENT = 2,
-};
+} PhaseArg;
 
-struct Arguments {
-  enum PhaseArg phase;
+typedef struct Arguments {
+  PhaseArg phase;
   int penguins;
   const char* input_board_file;
   const char* output_board_file;
   bool name;
   bool interactive;
-};
+} Arguments;
 
 void print_usage(const char* prog_name);
-bool parse_arguments(struct Arguments* result, int argc, char* argv[]);
+bool parse_arguments(Arguments* result, int argc, char* argv[]);
 
 #ifdef __cplusplus
 }

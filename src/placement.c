@@ -5,7 +5,7 @@
 #include <assert.h>
 
 void placement_begin(Game* game) {
-  assert(game->phase == GAME_PHASE_SETUP_DONE);
+  assert(game->phase >= GAME_PHASE_SETUP_DONE);
   game->phase = GAME_PHASE_PLACEMENT;
   game->current_player_index = -1;
 }

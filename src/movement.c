@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 void movement_begin(Game* game) {
-  assert(game->phase == GAME_PHASE_PLACEMENT_DONE);
+  assert(game->phase >= GAME_PHASE_SETUP_DONE);
   game->phase = GAME_PHASE_MOVEMENT;
   game->current_player_index = -1;
 }

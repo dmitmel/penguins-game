@@ -17,7 +17,7 @@ static const char* strip_prefix(const char* str, const char* prefix) {
   return strncmp(prefix, str, prefix_len) == 0 ? str + prefix_len : NULL;
 }
 
-bool parse_arguments(struct Arguments* result, int argc, char* argv[]) {
+bool parse_arguments(Arguments* result, int argc, char* argv[]) {
   result->phase = PHASE_ARG_NONE;
   result->penguins = 0;
   result->input_board_file = NULL;
@@ -61,33 +61,22 @@ bool parse_arguments(struct Arguments* result, int argc, char* argv[]) {
     }
   }
 
+  if (!result->name && !result->interactive) {
+    if (result->input_board_file == NULL) {
+      fprintf(stderr, "Expected a value for the required argument 'input_board_file'\n");
+      ok = false;
+    }
+    if (result->output_board_file == NULL) {
+      fprintf(stderr, "Expected a value for the required argument 'output_board_file'\n");
+      ok = false;
+    }
+  }
+
   if (result->phase == PHASE_ARG_PLACEMENT) {
     if (result->penguins <= 0) {
-      fprintf(stderr, "Expected a value for the 'penguins' argument when 'phase=placement'\n");
+      fprintf(stderr, "Expected a value for the 'penguins' argument\n");
       ok = false;
     }
-    if (result->input_board_file == NULL) {
-      fprintf(stderr, "Expected a value for 'input_board_file' when 'phase=placement'\n");
-      ok = false;
-    }
-    if (result->output_board_file == NULL) {
-      fprintf(stderr, "Expected a value for 'output_board_file' when 'phase=placement'\n");
-      ok = false;
-    }
-  } else if (result->phase == PHASE_ARG_MOVEMENT) {
-    if (result->input_board_file == NULL) {
-      fprintf(stderr, "Expected a value for 'input_board_file' when 'phase=movement'\n");
-      ok = false;
-    }
-    if (result->output_board_file == NULL) {
-      fprintf(stderr, "Expected a value for 'output_board_file' when 'phase=movement'\n");
-      ok = false;
-    }
-  } else if (!result->name && !result->interactive) {
-    fprintf(
-      stderr, "Expected any of 'phase=placement' or 'phase=movement' or 'name' or 'interactive'\n"
-    );
-    ok = false;
   }
 
   return ok;

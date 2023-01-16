@@ -1,9 +1,8 @@
 #include "arguments.h"
+#include "autonomous.h"
 #include "interactive.h"
 #include "random.h"
 #include <stdio.h>
-
-static const char* MY_PLAYER_NAME = "team-d-provisional";
 
 int main(int argc, char* argv[]) {
   random_init();
@@ -12,22 +11,18 @@ int main(int argc, char* argv[]) {
     return run_interactive_mode();
   }
 
-  struct Arguments args;
+  Arguments args;
   if (!parse_arguments(&args, argc, argv)) {
     print_usage(argc > 0 ? argv[0] : "");
-    return 3;
+    return EXIT_INTERNAL_ERROR;
   }
 
   if (args.name) {
-    printf("%s\n", MY_PLAYER_NAME);
-    return 0;
+    printf("%s\n", MY_AUTONOMOUS_PLAYER_NAME);
+    return EXIT_OK;
   } else if (args.interactive) {
     return run_interactive_mode();
-  } else if (args.phase == PHASE_ARG_PLACEMENT) {
-    return 3;
-  } else if (args.phase == PHASE_ARG_MOVEMENT) {
-    return 3;
   } else {
-    return 3;
+    return run_autonomous_mode(&args);
   }
 }

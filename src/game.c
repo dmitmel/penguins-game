@@ -41,7 +41,7 @@ void game_end_setup(Game* self) {
   assert(self->phase == GAME_PHASE_SETUP);
   assert(self->players != NULL);
   assert(self->players_count > 0);
-  assert(self->penguins_per_player > 0);
+  assert(self->penguins_per_player >= 0);
   for (int i = 0; i < self->players_count; i++) {
     assert(self->players[i].name != NULL);
   }
@@ -72,11 +72,6 @@ void game_set_players_count(Game* self, int count) {
 Player* game_get_player(const Game* self, int idx) {
   assert(0 <= idx && idx < self->players_count);
   return &self->players[idx];
-}
-
-Player* game_get_player_by_id(const Game* self, int id) {
-  assert(1 <= id && id <= self->players_count);
-  return &self->players[id - 1];
 }
 
 int game_get_current_player_id(const Game* self) {
