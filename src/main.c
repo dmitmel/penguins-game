@@ -17,10 +17,7 @@ int main(int argc, char* argv[]) {
     return EXIT_INTERNAL_ERROR;
   }
 
-  if (args.name) {
-    printf("%s\n", MY_AUTONOMOUS_PLAYER_NAME);
-    return EXIT_OK;
-  } else if (args.interactive) {
+  if (args.interactive) {
     return run_interactive_mode();
   } else {
     return run_autonomous_mode(&args);

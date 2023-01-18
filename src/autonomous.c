@@ -37,10 +37,27 @@ int run_autonomous_mode(const Arguments* args) {
   fclose(input_file);
   game_end_setup(game);
 
+  int my_player_index = -1;
+  for (int i = 0; i < game->players_count; i++) {
+    if (strcmp(game_get_player(game, i)->name, my_player_name) == 0) {
+      my_player_index = i;
+      break;
+    }
+  }
+  if (my_player_index < 0) {
+    fprintf(stderr, "Failed to add our player to the game\n");
+    return EXIT_INTERNAL_ERROR;
+  }
+
+  bool move_done = false;
   if (args->phase == PHASE_ARG_PLACEMENT) {
     placement_begin(game);
+    move_done = do_autonomous_placement(game, my_player_index);
+    placement_end(game);
   } else if (args->phase == PHASE_ARG_MOVEMENT) {
     movement_begin(game);
+    move_done = do_autonomous_movement(game, my_player_index);
+    movement_end(game);
   }
 
   if ((output_file = fopen(args->output_board_file, "w")) == NULL) {
@@ -55,7 +72,61 @@ int run_autonomous_mode(const Arguments* args) {
 
   game_free(game);
 
-  return EXIT_OK;
+  return move_done ? EXIT_OK : EXIT_NO_POSSIBLE_MOVES;
+}
+
+bool do_autonomous_placement(Game* game, int my_player_index) {
+  game->current_player_index = my_player_index - 1;
+  if (placement_switch_player(game) != my_player_index) {
+    return false;
+  }
+  if (game_get_current_player(game)->penguins_count < game->penguins_per_player) {
+    for (int y = 0; y < game->board_height; y++) {
+      for (int x = 0; x < game->board_width; x++) {
+        Coords coords = { x, y };
+        if (validate_placement(game, coords) == PLACEMENT_VALID) {
+          place_penguin(game, coords);
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+bool do_autonomous_movement(Game* game, int my_player_index) {
+  game->current_player_index = my_player_index - 1;
+  if (movement_switch_player(game) != my_player_index) {
+    return false;
+  }
+  Player* player = game_get_current_player(game);
+  for (int i = 0; i < player->penguins_count; i++) {
+    Coords penguin = player->penguins[i];
+    PossibleMoves moves = calculate_all_possible_moves(game, penguin);
+    if (moves.steps_right + moves.steps_down + moves.steps_left + moves.steps_up == 0) {
+      continue;
+    }
+    int dx = 0, dy = 0, steps = 0;
+    do {
+      // clang-format off
+      switch (random_range(0, 3)) {
+        case 0: dx = 1;  dy = 0;  steps = moves.steps_right; break;
+        case 1: dx = 0;  dy = 1;  steps = moves.steps_down;  break;
+        case 2: dx = -1; dy = 0;  steps = moves.steps_left;  break;
+        case 3: dx = 0;  dy = -1; steps = moves.steps_up;    break;
+      }
+      // clang-format on
+    } while (steps == 0);
+    steps = random_range(1, steps);
+    Coords target = penguin;
+    while (steps > 0) {
+      target.x += dx, target.y += dy;
+      steps--;
+    }
+    move_penguin(game, penguin, target);
+    return true;
+  }
+  return false;
 }
 
 static int read_line(FILE* file, char** buf, int* line_len) {
@@ -84,7 +155,12 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
 
   read_line(file, &line_buf, &line_len);
   int board_width, board_height;
-  sscanf(line_buf, "%d %d", &board_height, &board_width);
+  if (sscanf(line_buf, "%d %d", &board_height, &board_width) != 2) {
+    return false;
+  }
+  if (!(board_width > 0 && board_height > 0)) {
+    return false;
+  }
   setup_board(game, board_width, board_height);
 
   static const int MAX_PLAYERS = 9; // This is specified by the file format
@@ -137,6 +213,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     if (sscanf(line_buf, "%255s %d %d", name, &id, &points) != 3) {
       break;
     }
+    // TODO: Handle non-consequential IDs
     if (id == i + 1) {
       player_names[i] = strdup(name);
       player_scores[i] = points;
@@ -156,6 +233,8 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     player_names[i] = strdup(my_player_name);
     player_scores[i] = 0;
     players_count += 1;
+  } else {
+    // Not enough place to insert our own player
   }
 
   int penguins_per_player = my_max(penguins_arg, 1);
@@ -198,10 +277,10 @@ bool save_game_state(const Game* game, FILE* file) {
       }
       if (0 <= tile && tile <= 9) {
         int fish = tile;
-        fprintf(file, "%d0", fish);
+        fprintf(file, "%c0", '0' + fish);
       } else if (-9 <= tile && tile <= -1) {
         int player_id = -tile;
-        fprintf(file, "0%d", player_id);
+        fprintf(file, "0%c", '0' + player_id);
       }
     }
     fprintf(file, "\n");
