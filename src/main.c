@@ -1,12 +1,25 @@
+#include "arguments.h"
+#include "autonomous.h"
 #include "interactive.h"
 #include "random.h"
-#include "utils.h"
-#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-int main(int UNUSED(argc), char* argv[] UNUSED_ATTR) {
+int main(int argc, char* argv[]) {
   random_init();
 
-  return run_interactive_mode();
+  if (argc <= 1) {
+    return run_interactive_mode();
+  }
+
+  Arguments args;
+  if (!parse_arguments(&args, argc, argv)) {
+    print_usage(argc > 0 ? argv[0] : "");
+    return EXIT_INTERNAL_ERROR;
+  }
+
+  if (args.action == ACTION_ARG_INTERACTIVE) {
+    return run_interactive_mode();
+  } else {
+    return run_autonomous_mode(&args);
+  }
 }

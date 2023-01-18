@@ -16,7 +16,7 @@ typedef enum PlacementError {
   PLACEMENT_MULTIPLE_FISH,
 } PlacementError;
 
-typedef enum PlacementSwitchResult {
+typedef enum PlacementSwitchError {
   PLACEMENT_ALL_PENGUINS_PLACED = -1,
   PLACEMENT_NO_MORE_FREE_TILES = -2,
 } PlacementSwitchError;

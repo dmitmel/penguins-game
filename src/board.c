@@ -1,4 +1,5 @@
 #include "board.h"
+#include "game.h"
 #include "random.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -39,6 +40,12 @@ void generate_board_random(Game* game) {
 
 void generate_board_island(Game* game) {
   int w = game->board_width, h = game->board_height;
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
+      Coords coords = { x, y };
+      set_tile(game, coords, 0);
+    }
+  }
   for (int i = 0; i < w + h; i++) {
     Coords coords = { w / 2, h / 2 };
     for (int j = 0; j < w + h; j++) {

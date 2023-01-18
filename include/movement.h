@@ -24,13 +24,14 @@ typedef struct PossibleMoves {
   int steps_right;
   int steps_down;
   int steps_left;
+  int all_steps;
 } PossibleMoves;
 
 void movement_begin(Game* game);
 void movement_end(Game* game);
 
 int movement_switch_player(Game* game);
-bool any_valid_player_move_exists(const Game* game, int player_id);
+bool any_valid_player_move_exists(const Game* game, int player_idx);
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail);
 PossibleMoves calculate_all_possible_moves(const Game* game, Coords start);
 void move_penguin(Game* game, Coords start, Coords target);

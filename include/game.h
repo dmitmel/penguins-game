@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utils.h"
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -21,7 +22,8 @@ typedef struct Player {
   int id;
   char* name;
   int points;
-  int penguins;
+  int penguins_count;
+  Coords* penguins;
 } Player;
 
 typedef struct Game {
@@ -46,11 +48,13 @@ void game_set_penguins_per_player(Game* self, int value);
 void game_set_players_count(Game* self, int count);
 
 Player* game_get_player(const Game* self, int idx);
-Player* game_get_player_by_id(const Game* self, int id);
-int game_get_current_player_id(const Game* self);
+Player* game_get_current_player(const Game* self);
 
 void game_set_player_name(Game* self, int idx, const char* name);
 void game_set_player_score(Game* self, int idx, int points);
+
+void game_add_player_penguin(Game* self, int idx, Coords coords);
+Coords* game_find_player_penguin(const Game* self, int idx, Coords coords);
 
 void game_advance_state(Game* self);
 void game_end(Game* self);

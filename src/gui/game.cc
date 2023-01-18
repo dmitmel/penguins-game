@@ -152,6 +152,17 @@ void GameFrame::update_player_info_boxes() {
     PlayerInfoBox* player_box = this->player_info_boxes[i];
     Player* player = game_get_player(game, i);
     player_box->is_current = i == game->current_player_index;
+    if (game->phase == GAME_PHASE_MOVEMENT) {
+      player_box->is_blocked = true;
+      for (int j = 0; j < player->penguins_count; j++) {
+        if (calculate_all_possible_moves(game, player->penguins[j]).all_steps != 0) {
+          player_box->is_blocked = false;
+          break;
+        }
+      }
+    } else {
+      player_box->is_blocked = false;
+    }
     player_box->set_score(player->points);
     player_box->penguin_sprite = this->canvas_panel->get_player_penguin_sprite(player->id);
     player_box->Refresh();
@@ -241,7 +252,7 @@ void CanvasPanel::update_blocked_cells() {
           steps--;
         }
       };
-      if (moves.steps_up != 0 || moves.steps_right != 0 || moves.steps_down != 0 || moves.steps_left != 0) {
+      if (moves.all_steps != 0) {
         unblock_steps(moves.steps_up, 0, -1);
         unblock_steps(moves.steps_right, 1, 0);
         unblock_steps(moves.steps_down, 0, 1);
@@ -251,7 +262,7 @@ void CanvasPanel::update_blocked_cells() {
         }
       }
     } else {
-      int current_player_id = game_get_current_player_id(game);
+      int current_player_id = game_get_current_player(game)->id;
       for (int y = 0; y < game->board_height; y++) {
         for (int x = 0; x < game->board_width; x++) {
           Coords cell = { x, y };
