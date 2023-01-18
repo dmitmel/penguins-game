@@ -33,6 +33,7 @@ int run_autonomous_mode(const Arguments* args) {
   }
   int penguins_arg = args->action == ACTION_ARG_PLACEMENT ? args->penguins : 0;
   if (!load_game_state(game, input_file, penguins_arg, my_player_name)) {
+    fprintf(stderr, "Failed to parse the input file\n");
     return EXIT_INPUT_FILE_ERROR;
   }
   fclose(input_file);
@@ -45,10 +46,7 @@ int run_autonomous_mode(const Arguments* args) {
       break;
     }
   }
-  if (my_player_index < 0) {
-    fprintf(stderr, "Failed to add our player to the game\n");
-    return EXIT_INTERNAL_ERROR;
-  }
+  assert(my_player_index >= 0);
 
   bool move_done = false;
   if (args->action == ACTION_ARG_PLACEMENT) {
@@ -157,9 +155,11 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
   read_line(file, &line_buf, &line_len);
   int board_width, board_height;
   if (sscanf(line_buf, "%d %d", &board_height, &board_width) != 2) {
+    fprintf(stderr, "Failed to parse the board size line: '%s'\n", line_buf);
     return false;
   }
   if (!(board_width > 0 && board_height > 0)) {
+    fprintf(stderr, "Invalid board size: %d %d\n", board_width, board_height);
     return false;
   }
   setup_board(game, board_width, board_height);
@@ -202,7 +202,8 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
         set_tile(game, coords, -player_id);
         player_penguins_by_id[player_id - MIN_PLAYER_ID] += 1;
       } else {
-        // Invalid
+        fprintf(stderr, "Invalid tile at x=%d y=%d: '%c%c'\n", x, y, c1, c2);
+        return false;
       }
 
       // Skip the whitespace separators
@@ -211,21 +212,28 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
   }
 
   int players_count = 0;
-  for (int line_num = 0; line_num < MAX_PLAYERS; line_num++) {
-    read_line(file, &line_buf, &line_len);
+  for (int linenr = 0; linenr < MAX_PLAYERS; linenr++) {
+    if (!read_line(file, &line_buf, &line_len)) {
+      break;
+    }
     char name[256];
     int id;
     int points;
     if (sscanf(line_buf, "%255s %d %d", name, &id, &points) != 3) {
-      break;
+      fprintf(stderr, "Failed to parse the player on line %d: '%s'\n", linenr, line_buf);
+      return false;
     }
     if (!(MIN_PLAYER_ID <= id && id <= MAX_PLAYER_ID)) {
-      // ID falls out of the acceptable range
-      break;
+      fprintf(stderr, "Player ID on line %d falls out of the acceptable range: %d\n", linenr, id);
+      return false;
     }
     if (taken_player_ids[id]) {
-      // Duplicate ID
-      break;
+      fprintf(stderr, "Player ID on line %d is a duplicate: %d\n", linenr, id);
+      return false;
+    }
+    if (*name == '\0') {
+      fprintf(stderr, "Player name on line %d is empty\n", linenr);
+      return false;
     }
     taken_player_ids[id] = true;
     int i = players_count;
@@ -257,12 +265,13 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     player_scores[i] = 0;
     players_count += 1;
   } else {
-    // Not enough space to insert our own player
+    fprintf(stderr, "No IDs left in the input file to assign to our own player");
+    return false;
   }
 
   int penguins_per_player = my_max(penguins_arg, 1);
   for (int i = 0; i < players_count; i++) {
-    penguins_per_player = my_max(penguins_per_player, player_penguins_by_id[i]);
+    penguins_per_player = my_max(penguins_per_player, player_penguins_by_id[player_ids[i]]);
   }
   game_set_penguins_per_player(game, penguins_per_player);
 
@@ -280,6 +289,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
         }
       }
     }
+    assert(player->penguins_count == player_penguins_by_id[player->id]);
   }
 
   free(line_buf);
