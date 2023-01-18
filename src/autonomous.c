@@ -17,7 +17,7 @@ const char* MY_AUTONOMOUS_PLAYER_NAME = "102D";
 
 int run_autonomous_mode(const Arguments* args) {
   const char* my_player_name = args->set_name != NULL ? args->set_name : MY_AUTONOMOUS_PLAYER_NAME;
-  if (args->print_name) {
+  if (args->action == ACTION_ARG_PRINT_NAME) {
     printf("%s\n", my_player_name);
     return EXIT_OK;
   }
@@ -30,7 +30,7 @@ int run_autonomous_mode(const Arguments* args) {
     perror("Failed to open the input board file");
     return EXIT_INTERNAL_ERROR;
   }
-  int penguins_arg = args->phase == PHASE_ARG_PLACEMENT ? args->penguins : 0;
+  int penguins_arg = args->action == ACTION_ARG_PLACEMENT ? args->penguins : 0;
   if (!load_game_state(game, input_file, penguins_arg, my_player_name)) {
     return EXIT_INPUT_FILE_ERROR;
   }
@@ -50,11 +50,11 @@ int run_autonomous_mode(const Arguments* args) {
   }
 
   bool move_done = false;
-  if (args->phase == PHASE_ARG_PLACEMENT) {
+  if (args->action == ACTION_ARG_PLACEMENT) {
     placement_begin(game);
     move_done = do_autonomous_placement(game, my_player_index);
     placement_end(game);
-  } else if (args->phase == PHASE_ARG_MOVEMENT) {
+  } else if (args->action == ACTION_ARG_MOVEMENT) {
     movement_begin(game);
     move_done = do_autonomous_movement(game, my_player_index);
     movement_end(game);

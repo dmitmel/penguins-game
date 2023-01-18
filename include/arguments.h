@@ -6,19 +6,18 @@
 extern "C" {
 #endif
 
-typedef enum PhaseArg {
-  PHASE_ARG_NONE = 0,
-  PHASE_ARG_PLACEMENT = 1,
-  PHASE_ARG_MOVEMENT = 2,
-} PhaseArg;
+typedef enum ActionArg {
+  ACTION_ARG_INTERACTIVE,
+  ACTION_ARG_PRINT_NAME,
+  ACTION_ARG_PLACEMENT,
+  ACTION_ARG_MOVEMENT,
+} ActionArg;
 
 typedef struct Arguments {
-  PhaseArg phase;
+  ActionArg action;
   int penguins;
   const char* input_board_file;
   const char* output_board_file;
-  bool print_name;
-  bool interactive;
   const char* set_name;
 } Arguments;
 

@@ -18,12 +18,10 @@ static const char* strip_prefix(const char* str, const char* prefix) {
 }
 
 bool parse_arguments(Arguments* result, int argc, char* argv[]) {
-  result->phase = PHASE_ARG_NONE;
+  result->action = ACTION_ARG_INTERACTIVE;
   result->penguins = 0;
   result->input_board_file = NULL;
   result->output_board_file = NULL;
-  result->print_name = false;
-  result->interactive = false;
   result->set_name = NULL;
 
   bool ok = true;
@@ -33,9 +31,9 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
     const char* arg_value;
     if ((arg_value = strip_prefix(arg, "phase="))) {
       if (strcmp(arg_value, "placement") == 0) {
-        result->phase = PHASE_ARG_PLACEMENT;
+        result->action = ACTION_ARG_PLACEMENT;
       } else if (strcmp(arg_value, "movement") == 0) {
-        result->phase = PHASE_ARG_MOVEMENT;
+        result->action = ACTION_ARG_MOVEMENT;
       } else {
         fprintf(stderr, "Invalid value for the 'phase' argument: '%s'\n", arg_value);
         ok = false;
@@ -47,9 +45,9 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         ok = false;
       }
     } else if (strcmp(arg, "name") == 0) {
-      result->print_name = true;
+      result->action = ACTION_ARG_PRINT_NAME;
     } else if (strcmp(arg, "interactive") == 0) {
-      result->interactive = true;
+      result->action = ACTION_ARG_INTERACTIVE;
     } else if ((arg_value = strip_prefix(arg, "name="))) {
       if (arg_value[0] == '\0') {
         ok = false;
@@ -69,7 +67,7 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
     }
   }
 
-  if (!result->print_name && !result->interactive) {
+  if (result->action == ACTION_ARG_PLACEMENT || result->action == ACTION_ARG_MOVEMENT) {
     if (result->input_board_file == NULL) {
       fprintf(stderr, "Expected a value for the required argument 'input_board_file'\n");
       ok = false;
@@ -80,7 +78,7 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
     }
   }
 
-  if (result->phase == PHASE_ARG_PLACEMENT) {
+  if (result->action == ACTION_ARG_PLACEMENT) {
     if (result->penguins <= 0) {
       fprintf(stderr, "Expected a value for the 'penguins' argument\n");
       ok = false;

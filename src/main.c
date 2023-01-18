@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     return EXIT_INTERNAL_ERROR;
   }
 
-  if (args.interactive) {
+  if (args.action == ACTION_ARG_INTERACTIVE) {
     return run_interactive_mode();
   } else {
     return run_autonomous_mode(&args);
