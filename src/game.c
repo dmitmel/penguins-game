@@ -43,7 +43,9 @@ void game_end_setup(Game* self) {
   assert(self->players_count > 0);
   assert(self->penguins_per_player >= 0);
   for (int i = 0; i < self->players_count; i++) {
-    assert(self->players[i].name != NULL);
+    Player* player = &self->players[i];
+    assert(player->name != NULL);
+    assert(player->penguins != NULL);
   }
   self->phase = GAME_PHASE_SETUP_DONE;
 }
@@ -52,6 +54,11 @@ void game_set_penguins_per_player(Game* self, int value) {
   assert(self->phase == GAME_PHASE_SETUP);
   assert(value > 0);
   self->penguins_per_player = value;
+  for (int i = 0; i < self->players_count; i++) {
+    Player* player = &self->players[i];
+    player->penguins_count = my_min(player->penguins_count, self->penguins_per_player);
+    player->penguins = realloc(player->penguins, sizeof(Coords) * self->penguins_per_player);
+  }
 }
 
 void game_set_players_count(Game* self, int count) {
@@ -65,7 +72,8 @@ void game_set_players_count(Game* self, int count) {
     player->id = i + 1;
     player->name = NULL;
     player->points = 0;
-    player->penguins = 0;
+    player->penguins_count = 0;
+    player->penguins = malloc(sizeof(Coords) * self->penguins_per_player);
   }
 }
 
@@ -74,8 +82,8 @@ Player* game_get_player(const Game* self, int idx) {
   return &self->players[idx];
 }
 
-int game_get_current_player_id(const Game* self) {
-  return game_get_player(self, self->current_player_index)->id;
+Player* game_get_current_player(const Game* self) {
+  return game_get_player(self, self->current_player_index);
 }
 
 void game_set_player_name(Game* self, int idx, const char* name) {
@@ -85,8 +93,21 @@ void game_set_player_name(Game* self, int idx, const char* name) {
   player->name = strdup(name);
 }
 
-void game_set_player_score(Game* self, int idx, int points) {
-  game_get_player(self, idx)->points = points;
+void game_add_player_penguin(Game* self, int idx, Coords coords) {
+  Player* player = game_get_player(self, idx);
+  assert(0 <= player->penguins_count && player->penguins_count < self->penguins_per_player);
+  player->penguins[player->penguins_count++] = coords;
+}
+
+Coords* game_find_player_penguin(const Game* self, int idx, Coords coords) {
+  Player* player = game_get_player(self, idx);
+  for (int i = 0; i < player->penguins_count; i++) {
+    Coords* penguin = &player->penguins[i];
+    if (penguin->x == coords.x && penguin->y == coords.y) {
+      return penguin;
+    }
+  }
+  return NULL;
 }
 
 void game_advance_state(Game* self) {

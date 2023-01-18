@@ -22,7 +22,7 @@ int movement_switch_player(Game* game) {
   int checked_players = 0;
   while (checked_players < game->players_count) {
     index = (index + 1) % game->players_count;
-    if (any_valid_player_move_exists(game, game_get_player(game, index)->id)) {
+    if (any_valid_player_move_exists(game, index)) {
       game->current_player_index = index;
       return index;
     }
@@ -31,16 +31,13 @@ int movement_switch_player(Game* game) {
   return -1;
 }
 
-bool any_valid_player_move_exists(const Game* game, int player_id) {
+bool any_valid_player_move_exists(const Game* game, int player_idx) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
-  for (int y = 0; y < game->board_height; y++) {
-    for (int x = 0; x < game->board_width; x++) {
-      Coords coords = { x, y };
-      if (get_tile(game, coords) != -player_id) continue;
-      PossibleMoves moves = calculate_all_possible_moves(game, coords);
-      if (moves.steps_up != 0 || moves.steps_right != 0 || moves.steps_down != 0 || moves.steps_left != 0) {
-        return true;
-      }
+  Player* player = game_get_player(game, player_idx);
+  for (int i = 0; i < player->penguins_count; i++) {
+    Coords penguin = player->penguins[i];
+    if (calculate_all_possible_moves(game, penguin).all_steps != 0) {
+      return true;
     }
   }
   return false;
@@ -51,7 +48,7 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
   int tile = is_tile_in_bounds(game, start) ? get_tile(game, start) : 0;
   if (!is_tile_in_bounds(game, target)) {
     return OUT_OF_BOUNDS_MOVEMENT;
-  } else if (-tile != game_get_current_player_id(game)) {
+  } else if (-tile != game_get_current_player(game)->id) {
     return NOT_YOUR_PENGUIN;
   } else if (target.x == start.x && target.y == start.y) {
     return CURRENT_LOCATION;
@@ -102,15 +99,17 @@ PossibleMoves calculate_all_possible_moves(const Game* game, Coords start) {
     .steps_down = get_possible_steps_in_direction(game, start, 0, 1),
     .steps_left = get_possible_steps_in_direction(game, start, -1, 0),
   };
+  result.all_steps = result.steps_up + result.steps_right + result.steps_down + result.steps_left;
   return result;
 }
 
 void move_penguin(Game* game, Coords start, Coords target) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   assert(validate_movement(game, start, target, NULL) == VALID_INPUT);
-  Player* player = game_get_player(game, game->current_player_index);
+  Player* player = game_get_current_player(game);
   int fish = get_tile(game, target);
   assert(fish > 0);
+  *game_find_player_penguin(game, game->current_player_index, start) = target;
   set_tile(game, target, -player->id);
   player->points += fish;
   set_tile(game, start, 0);

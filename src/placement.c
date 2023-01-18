@@ -24,7 +24,7 @@ int placement_switch_player(Game* game) {
   int checked_players = 0;
   while (checked_players < game->players_count) {
     index = (index + 1) % game->players_count;
-    if (game_get_player(game, index)->penguins < game->penguins_per_player) {
+    if (game_get_player(game, index)->penguins_count < game->penguins_per_player) {
       game->current_player_index = index;
       return index;
     }
@@ -55,7 +55,7 @@ PlacementError validate_placement(const Game* game, Coords target) {
   if (tile == 0) {
     return PLACEMENT_EMPTY_TILE;
   } else if (tile < 0) {
-    if (-tile == game_get_current_player_id(game)) {
+    if (-tile == game_get_current_player(game)->id) {
       return PLACEMENT_OWN_PENGUIN;
     } else {
       return PLACEMENT_ENEMY_PENGUIN;
@@ -69,10 +69,10 @@ PlacementError validate_placement(const Game* game, Coords target) {
 void place_penguin(Game* game, Coords target) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   assert(validate_placement(game, target) == PLACEMENT_VALID);
-  Player* player = game_get_player(game, game->current_player_index);
+  Player* player = game_get_current_player(game);
   int fish = get_tile(game, target);
   assert(fish > 0);
+  game_add_player_penguin(game, game->current_player_index, target);
   set_tile(game, target, -player->id);
-  player->penguins++;
   player->points += fish;
 }

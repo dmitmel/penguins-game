@@ -158,15 +158,26 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     players_count += 1;
   }
 
+  int penguins_per_player = my_max(penguins_arg, 1);
+  for (int i = 0; i < players_count; i++) {
+    penguins_per_player = my_max(penguins_per_player, player_penguins[i]);
+  }
+  game_set_penguins_per_player(game, penguins_per_player);
+
   game_set_players_count(game, players_count);
   for (int i = 0; i < players_count; i++) {
     game_set_player_name(game, i, player_names[i]);
     Player* player = game_get_player(game, i);
     player->points = player_scores[i];
-    player->penguins = player_penguins[i];
+    for (int y = 0; y < game->board_height; y++) {
+      for (int x = 0; x < game->board_width; x++) {
+        Coords coords = { x, y };
+        if (get_tile(game, coords) == -player->id) {
+          game_add_player_penguin(game, i, coords);
+        }
+      }
+    }
   }
-
-  game->penguins_per_player = penguins_arg > 0 ? penguins_arg : 0;
 
   free(line_buf);
   for (int i = 0; i < players_count; i++) {
