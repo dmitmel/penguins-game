@@ -38,7 +38,7 @@ function(embed_resource res_path)
   )
 endfunction()
 
-add_library(penguins-lib
+add_library(penguins-lib STATIC
   src/board.c
   src/game.c
   src/movement.c
