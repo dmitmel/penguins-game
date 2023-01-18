@@ -49,6 +49,7 @@ void game_set_players_count(Game* self, int count);
 
 Player* game_get_player(const Game* self, int idx);
 Player* game_get_current_player(const Game* self);
+int game_find_player_by_id(const Game* self, int id);
 
 void game_set_player_name(Game* self, int idx, const char* name);
 void game_set_player_score(Game* self, int idx, int points);

@@ -6,6 +6,7 @@
 #include "placement.h"
 #include "random.h"
 #include "utils.h"
+#include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -164,12 +165,17 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
   setup_board(game, board_width, board_height);
 
   static const int MAX_PLAYERS = 9; // This is specified by the file format
+  int player_ids[MAX_PLAYERS];
   char* player_names[MAX_PLAYERS];
   int player_scores[MAX_PLAYERS];
-  int player_penguins[MAX_PLAYERS];
 
-  for (int i = 0; i < MAX_PLAYERS; i++) {
-    player_penguins[i] = 0;
+  static const int MIN_PLAYER_ID = 1; // These are also defined by the format
+  static const int MAX_PLAYER_ID = 9;
+  int player_penguins_by_id[MAX_PLAYER_ID - MIN_PLAYER_ID + 1];
+  bool taken_player_ids[MAX_PLAYER_ID - MIN_PLAYER_ID + 1];
+  for (int i = MIN_PLAYER_ID; i <= MAX_PLAYER_ID; i++) {
+    player_penguins_by_id[i] = 0;
+    taken_player_ids[i] = false;
   }
 
   for (int y = 0; y < board_height; y++) {
@@ -194,7 +200,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
       } else if ('1' <= c2 && c2 <= '9' && c1 == '0') {
         int player_id = c2 - '0';
         set_tile(game, coords, -player_id);
-        player_penguins[player_id - 1] += 1;
+        player_penguins_by_id[player_id - MIN_PLAYER_ID] += 1;
       } else {
         // Invalid
       }
@@ -205,7 +211,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
   }
 
   int players_count = 0;
-  for (int i = 0; i < MAX_PLAYERS; i++) {
+  for (int line_num = 0; line_num < MAX_PLAYERS; line_num++) {
     read_line(file, &line_buf, &line_len);
     char name[256];
     int id;
@@ -213,12 +219,20 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     if (sscanf(line_buf, "%255s %d %d", name, &id, &points) != 3) {
       break;
     }
-    // TODO: Handle non-consequential IDs
-    if (id == i + 1) {
-      player_names[i] = strdup(name);
-      player_scores[i] = points;
-      players_count += 1;
+    if (!(MIN_PLAYER_ID <= id && id <= MAX_PLAYER_ID)) {
+      // ID falls out of the acceptable range
+      break;
     }
+    if (taken_player_ids[id]) {
+      // Duplicate ID
+      break;
+    }
+    taken_player_ids[id] = true;
+    int i = players_count;
+    player_ids[i] = id;
+    player_names[i] = strdup(name);
+    player_scores[i] = points;
+    players_count += 1;
   }
 
   bool my_player_found = false;
@@ -229,17 +243,26 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     }
   }
   if (!my_player_found && players_count < MAX_PLAYERS) {
+    int free_id = -1;
+    for (int id = MIN_PLAYER_ID; id <= MAX_PLAYER_ID; id++) {
+      if (!taken_player_ids[id]) {
+        free_id = id;
+        break;
+      }
+    }
+    assert(free_id > 0);
     int i = players_count;
+    player_ids[i] = free_id;
     player_names[i] = strdup(my_player_name);
     player_scores[i] = 0;
     players_count += 1;
   } else {
-    // Not enough place to insert our own player
+    // Not enough space to insert our own player
   }
 
   int penguins_per_player = my_max(penguins_arg, 1);
   for (int i = 0; i < players_count; i++) {
-    penguins_per_player = my_max(penguins_per_player, player_penguins[i]);
+    penguins_per_player = my_max(penguins_per_player, player_penguins_by_id[i]);
   }
   game_set_penguins_per_player(game, penguins_per_player);
 
@@ -247,6 +270,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
   for (int i = 0; i < players_count; i++) {
     game_set_player_name(game, i, player_names[i]);
     Player* player = game_get_player(game, i);
+    player->id = player_ids[i];
     player->points = player_scores[i];
     for (int y = 0; y < game->board_height; y++) {
       for (int x = 0; x < game->board_width; x++) {

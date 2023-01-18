@@ -86,6 +86,15 @@ Player* game_get_current_player(const Game* self) {
   return game_get_player(self, self->current_player_index);
 }
 
+int game_find_player_by_id(const Game* self, int id) {
+  for (int i = 0; i < self->players_count; i++) {
+    if (self->players[i].id == id) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 void game_set_player_name(Game* self, int idx, const char* name) {
   assert(self->phase == GAME_PHASE_SETUP);
   Player* player = game_get_player(self, idx);
