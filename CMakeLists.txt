@@ -74,14 +74,15 @@ if(wxWidgets_FOUND)
   # include(${wxWidgets_USE_FILE})
   embed_resource(resources/tileset.png)
   add_executable(penguins-gui WIN32
+    resources_tileset_png.c
     src/gui/better_random.cc
     src/gui/game.cc
+    src/gui/game_end_dialog.cc
     src/gui/main.cc
     src/gui/new_game_dialog.cc
     src/gui/player_info_box.cc
     src/gui/simple_static_box.cc
     src/gui/tileset.cc
-    resources_tileset_png.c
   )
   target_link_libraries(penguins-gui PRIVATE penguins-common)
   target_link_libraries(penguins-gui PUBLIC penguins-lib)

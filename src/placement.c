@@ -75,4 +75,5 @@ void place_penguin(Game* game, Coords target) {
   game_add_player_penguin(game, game->current_player_index, target);
   set_tile(game, target, -player->id);
   player->points += fish;
+  player->moves_count += 1;
 }

@@ -111,6 +111,7 @@ void move_penguin(Game* game, Coords start, Coords target) {
   assert(fish > 0);
   *game_find_player_penguin(game, game->current_player_index, start) = target;
   set_tile(game, target, -player->id);
-  player->points += fish;
   set_tile(game, start, 0);
+  player->points += fish;
+  player->moves_count += 1;
 }

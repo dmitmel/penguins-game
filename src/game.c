@@ -39,6 +39,9 @@ void game_begin_setup(Game* self) {
 
 void game_end_setup(Game* self) {
   assert(self->phase == GAME_PHASE_SETUP);
+  assert(self->board_width > 0);
+  assert(self->board_height > 0);
+  assert(self->board_grid != NULL);
   assert(self->players != NULL);
   assert(self->players_count > 0);
   assert(self->penguins_per_player >= 0);
@@ -74,6 +77,7 @@ void game_set_players_count(Game* self, int count) {
     player->points = 0;
     player->penguins_count = 0;
     player->penguins = malloc(sizeof(Coords) * self->penguins_per_player);
+    player->moves_count = 0;
   }
 }
 

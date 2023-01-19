@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game.h"
+#include "gui/game_state.hh"
 #include "gui/player_info_box.hh"
 #include "gui/tileset.hh"
 #include "utils.h"
@@ -17,15 +17,6 @@
 #include <wx/vector.h>
 #include <wx/window.h>
 
-class GuiGameState {
-  wxDECLARE_NO_COPY_CLASS(GuiGameState);
-
-public:
-  GuiGameState() {}
-
-  std::unique_ptr<Game, decltype(&game_free)> game{ nullptr, game_free };
-};
-
 class CanvasPanel;
 
 class GameFrame : public wxFrame {
@@ -33,6 +24,8 @@ public:
   GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
 
   void start_new_game();
+  void end_game();
+  void close_game();
 
   void update_player_info_boxes();
 
@@ -40,6 +33,7 @@ protected:
   void on_exit(wxCommandEvent& event);
   void on_about(wxCommandEvent& event);
   void on_new_game(wxCommandEvent& event);
+  void on_close_game(wxCommandEvent& event);
   void on_mouse_enter_leave(wxMouseEvent& event);
 
   CanvasPanel* canvas_panel;
@@ -60,7 +54,7 @@ public:
 
   CanvasPanel(GameFrame* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
 
-  std::unique_ptr<bool[]> blocked_cells;
+  std::unique_ptr<bool[]> blocked_cells{ nullptr };
   bool* cell_blocked_ptr(Coords cell) const;
   void update_blocked_cells();
 
