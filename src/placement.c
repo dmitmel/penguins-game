@@ -38,7 +38,8 @@ bool any_valid_placement_exists(const Game* game) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      if (get_tile(game, coords) == 1) {
+      int tile = get_tile(game, coords);
+      if (is_fish_tile(tile) && get_tile_fish(tile) == 1) {
         return true;
       }
     }
@@ -52,16 +53,18 @@ PlacementError validate_placement(const Game* game, Coords target) {
     return PLACEMENT_OUT_OF_BOUNDS;
   }
   int tile = get_tile(game, target);
-  if (tile == 0) {
+  if (is_water_tile(tile)) {
     return PLACEMENT_EMPTY_TILE;
-  } else if (tile < 0) {
-    if (-tile == game_get_current_player(game)->id) {
+  } else if (is_penguin_tile(tile)) {
+    if (get_tile_player_id(tile) == game_get_current_player(game)->id) {
       return PLACEMENT_OWN_PENGUIN;
     } else {
       return PLACEMENT_ENEMY_PENGUIN;
     }
-  } else if (tile > 1) {
-    return PLACEMENT_MULTIPLE_FISH;
+  } else if (is_fish_tile(tile)) {
+    if (get_tile_fish(tile) > 1) {
+      return PLACEMENT_MULTIPLE_FISH;
+    }
   }
   return PLACEMENT_VALID;
 }
@@ -70,10 +73,10 @@ void place_penguin(Game* game, Coords target) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   assert(validate_placement(game, target) == PLACEMENT_VALID);
   Player* player = game_get_current_player(game);
-  int fish = get_tile(game, target);
-  assert(fish > 0);
+  int tile = get_tile(game, target);
+  assert(is_fish_tile(tile));
   game_add_player_penguin(game, game->current_player_index, target);
-  set_tile(game, target, -player->id);
-  player->points += fish;
+  set_tile(game, target, PENGUIN_TILE(player->id));
+  player->points += get_tile_fish(tile);
   player->moves_count += 1;
 }

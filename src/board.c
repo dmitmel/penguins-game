@@ -33,7 +33,7 @@ void generate_board_random(Game* game) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      set_tile(game, coords, random_range(0, 3));
+      set_tile(game, coords, FISH_TILE(random_range(0, 3)));
     }
   }
 }
@@ -43,7 +43,7 @@ void generate_board_island(Game* game) {
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
       Coords coords = { x, y };
-      set_tile(game, coords, 0);
+      set_tile(game, coords, WATER_TILE);
     }
   }
   for (int i = 0; i < w + h; i++) {
@@ -59,7 +59,7 @@ void generate_board_island(Game* game) {
       // clang-format on
       if (is_tile_in_bounds(game, coords)) {
         int fish = random_range(1, 3);
-        set_tile(game, coords, fish);
+        set_tile(game, coords, FISH_TILE(fish));
       } else {
         break;
       }

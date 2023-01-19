@@ -25,12 +25,14 @@ void print_board(const Game* game) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
       int tile = get_tile(game, coords);
-      if (tile == 0) {
+      if (is_water_tile(tile)) {
         printf("-  ");
-      } else if (tile < 0) {
-        printf("p%d ", -tile);
+      } else if (is_penguin_tile(tile)) {
+        printf("p%d ", get_tile_player_id(tile));
+      } else if (is_fish_tile(tile)) {
+        printf("%d  ", get_tile_fish(tile));
       } else {
-        printf("%d  ", tile);
+        printf("   ");
       }
     }
     printf("|\n");

@@ -239,8 +239,10 @@ Coords CanvasPanel::get_selected_penguin_cell(int player_index) const {
     int player_id = game_get_player(game, player_index)->id;
     Coords curr_cell =
       this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
-    if (is_tile_in_bounds(game, curr_cell) && get_tile(game, curr_cell) == -player_id) {
-      return curr_cell;
+    if (is_tile_in_bounds(game, curr_cell)) {
+      if (get_tile_player_id(get_tile(game, curr_cell)) == player_id) {
+        return curr_cell;
+      }
     }
   }
   return { -1, -1 };
@@ -298,7 +300,8 @@ void CanvasPanel::update_blocked_cells() {
       for (int y = 0; y < game->board_height; y++) {
         for (int x = 0; x < game->board_width; x++) {
           Coords cell = { x, y };
-          *this->cell_blocked_ptr(cell) = get_tile(game, cell) != -current_player_id;
+          *this->cell_blocked_ptr(cell) =
+            get_tile_player_id(get_tile(game, cell)) != current_player_id;
         }
       }
     }
@@ -382,14 +385,14 @@ void CanvasPanel::paint_board(wxDC& dc) {
           is_blocked && is_penguin_selected && !coords_same(cell, selected_penguin_cell);
       }
 
-      if (cell_value == 0) {
+      if (is_water_tile(cell_value)) {
         dc.DrawBitmap(tileset.water_tiles[(x ^ y) % WXSIZEOF(tileset.water_tiles)], cell_pos);
       } else {
         dc.DrawBitmap(tileset.ice_tiles[(x ^ y) % WXSIZEOF(tileset.ice_tiles)], cell_pos);
 
         auto check_water = [&](int dx, int dy) -> bool {
           Coords cell2 = { cell.x + dx, cell.y + dy };
-          return is_tile_in_bounds(game, cell2) && get_tile(game, cell2) == 0;
+          return is_tile_in_bounds(game, cell2) && is_water_tile(get_tile(game, cell2));
         };
 
         auto draw_edge = [&](int dx, int dy, TileEdge type) {
@@ -422,16 +425,16 @@ void CanvasPanel::paint_board(wxDC& dc) {
         draw_convex_corner(-1, 1, CORNER_BOTTOM_LEFT);
         draw_convex_corner(-1, -1, CORNER_TOP_LEFT);
 
-        if (cell_value > 0) {
-          int fish_count = cell_value;
+        if (is_fish_tile(cell_value)) {
+          int fish_count = get_tile_fish(cell_value);
           dc.DrawBitmap(
             tileset.fish_sprites[(fish_count - 1) % WXSIZEOF(tileset.fish_sprites)], cell_pos
           );
           if (is_blocked) {
             dc.DrawBitmap(tileset.blocked_tile, cell_pos);
           }
-        } else if (cell_value < 0) {
-          int player = -cell_value;
+        } else if (is_penguin_tile(cell_value)) {
+          int player = get_tile_player_id(cell_value);
           if (is_blocked) {
             dc.DrawBitmap(tileset.blocked_tile, cell_pos);
           }

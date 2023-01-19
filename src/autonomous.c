@@ -188,7 +188,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
 
       if (str[0] == '\0' || str[1] == '\0') {
         // Reached the end of the string prematurely
-        set_tile(game, coords, 0);
+        set_tile(game, coords, WATER_TILE);
         continue;
       }
       char c1 = str[0], c2 = str[1];
@@ -196,10 +196,10 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
 
       if ('0' <= c1 && c1 <= '9' && c2 == '0') {
         int fish = c1 - '0';
-        set_tile(game, coords, fish);
+        set_tile(game, coords, FISH_TILE(fish));
       } else if ('1' <= c2 && c2 <= '9' && c1 == '0') {
         int player_id = c2 - '0';
-        set_tile(game, coords, -player_id);
+        set_tile(game, coords, PENGUIN_TILE(player_id));
         player_penguins_by_id[player_id - MIN_PLAYER_ID] += 1;
       } else {
         fprintf(stderr, "Invalid tile at x=%d y=%d: '%c%c'\n", x, y, c1, c2);
@@ -284,7 +284,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     for (int y = 0; y < game->board_height; y++) {
       for (int x = 0; x < game->board_width; x++) {
         Coords coords = { x, y };
-        if (get_tile(game, coords) == -player->id) {
+        if (get_tile_player_id(get_tile(game, coords)) == player->id) {
           game_add_player_penguin(game, i, coords);
         }
       }

@@ -45,18 +45,19 @@ bool any_valid_player_move_exists(const Game* game, int player_idx) {
 
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
-  int tile = is_tile_in_bounds(game, start) ? get_tile(game, start) : 0;
+  int start_tile = is_tile_in_bounds(game, start) ? get_tile(game, start) : WATER_TILE;
+  int target_tile = is_tile_in_bounds(game, target) ? get_tile(game, target) : WATER_TILE;
   if (!is_tile_in_bounds(game, target)) {
     return OUT_OF_BOUNDS_MOVEMENT;
-  } else if (-tile != game_get_current_player(game)->id) {
+  } else if (get_tile_player_id(start_tile) != game_get_current_player(game)->id) {
     return NOT_YOUR_PENGUIN;
   } else if (target.x == start.x && target.y == start.y) {
     return CURRENT_LOCATION;
   } else if (target.x != start.x && target.y != start.y) {
     return DIAGONAL_MOVE;
-  } else if (get_tile(game, target) == 0) {
+  } else if (is_water_tile(target_tile)) {
     return MOVE_ONTO_EMPTY_TILE;
-  } else if (get_tile(game, target) < 0) {
+  } else if (is_penguin_tile(target_tile)) {
     return MOVE_ONTO_PENGUIN;
   }
 
@@ -69,9 +70,9 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
       *fail = coords;
     }
     int tile = get_tile(game, coords);
-    if (tile == 0) {
+    if (is_water_tile(tile)) {
       return MOVE_OVER_EMPTY_TILE;
-    } else if (tile < 0) {
+    } else if (is_penguin_tile(tile)) {
       return MOVE_OVER_PENGUIN;
     }
   }
@@ -84,7 +85,7 @@ static int get_possible_steps_in_direction(const Game* game, Coords coords, int 
   while (true) {
     coords.x += dx, coords.y += dy;
     if (!is_tile_in_bounds(game, coords)) break;
-    if (get_tile(game, coords) <= 0) break;
+    if (!is_fish_tile(get_tile(game, coords))) break;
     steps++;
   }
   return steps;
@@ -107,11 +108,11 @@ void move_penguin(Game* game, Coords start, Coords target) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   assert(validate_movement(game, start, target, NULL) == VALID_INPUT);
   Player* player = game_get_current_player(game);
-  int fish = get_tile(game, target);
-  assert(fish > 0);
+  int tile = get_tile(game, target);
+  assert(is_fish_tile(tile));
   *game_find_player_penguin(game, game->current_player_index, start) = target;
-  set_tile(game, target, -player->id);
-  set_tile(game, start, 0);
-  player->points += fish;
+  set_tile(game, target, PENGUIN_TILE(player->id));
+  set_tile(game, start, WATER_TILE);
+  player->points += get_tile_fish(tile);
   player->moves_count += 1;
 }
