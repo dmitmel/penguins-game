@@ -42,49 +42,31 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   float spacing = wxSizerFlags::GetDefaultBorder();
 #endif
 
-  auto grid = new wxFlexGridSizer(
+  this->options_grid = new wxFlexGridSizer(
     /* cols */ 2,
     /* vgap */ wxRound(spacing),
     /* hgap */ wxRound(spacing * 3)
   );
 
-  auto width_label = new wxStaticText(this, ID_BOARD_WIDTH, "Board width:");
-  grid->Add(width_label, wxSizerFlags().Centre().Left());
-  this->width_input = new wxSpinCtrl(this, ID_BOARD_WIDTH);
-  this->width_input->SetValue(DEFAULT_BOARD_WIDTH);
-  this->width_input->SetRange(1, 1000);
-  grid->Add(this->width_input, wxSizerFlags().Expand());
+  this->width_input =
+    this->create_number_option("Board width:", ID_BOARD_WIDTH, 1, 1000, DEFAULT_BOARD_WIDTH);
+  this->height_input =
+    this->create_number_option("Board height:", ID_BOARD_HEIGHT, 1, 1000, DEFAULT_BOARD_HEIGHT);
 
-  auto height_label = new wxStaticText(this, ID_BOARD_HEIGHT, "Board height:");
-  grid->Add(height_label, wxSizerFlags().Centre().Left());
-  this->height_input = new wxSpinCtrl(this, ID_BOARD_HEIGHT);
-  this->height_input->SetValue(DEFAULT_BOARD_HEIGHT);
-  this->height_input->SetRange(1, 1000);
-  grid->Add(this->height_input, wxSizerFlags().Expand());
-
-  auto board_gen_label = new wxStaticText(this, ID_BOARD_GEN, "Board generation type:");
-  grid->Add(board_gen_label, wxSizerFlags().Centre().Left());
   this->board_gen_input = new wxChoice(this, ID_BOARD_GEN);
+  this->create_option("Board generation type:", this->board_gen_input);
   wxString board_gen_types[BOARD_GEN_MAX] = {};
   board_gen_types[BOARD_GEN_RANDOM] = "Random";
   board_gen_types[BOARD_GEN_ISLAND] = "Island";
   this->board_gen_input->Set(WXSIZEOF(board_gen_types), board_gen_types);
   this->board_gen_input->Select(BOARD_GEN_ISLAND);
-  grid->Add(this->board_gen_input, wxSizerFlags().Expand());
 
-  auto penguins_number_label = new wxStaticText(this, ID_PENGUINS_NUMBER, "Penguins per player:");
-  grid->Add(penguins_number_label, wxSizerFlags().Centre().Left());
-  this->penguins_input = new wxSpinCtrl(this, ID_PENGUINS_NUMBER);
-  this->penguins_input->SetValue(DEFAULT_PENGUINS_PER_PLAYER);
-  this->penguins_input->SetRange(1, 10);
-  grid->Add(this->penguins_input, wxSizerFlags().Expand());
-
-  auto players_number_label = new wxStaticText(this, ID_PLAYERS_NUMBER, "Number of players:");
-  grid->Add(players_number_label, wxSizerFlags().Centre().Left());
-  this->players_number_input = new wxSpinCtrl(this, ID_PLAYERS_NUMBER);
-  this->players_number_input->SetValue(DEFAULT_NUMBER_OF_PLAYERS);
-  this->players_number_input->SetRange(2, 5);
-  grid->Add(this->players_number_input, wxSizerFlags().Expand());
+  this->penguins_input = this->create_number_option(
+    "Penguins per player:", ID_PENGUINS_NUMBER, 1, 10, DEFAULT_PENGUINS_PER_PLAYER
+  );
+  this->players_number_input = this->create_number_option(
+    "Number of players:", ID_PLAYERS_NUMBER, 2, 5, DEFAULT_NUMBER_OF_PLAYERS
+  );
 
   this->players_grid = new wxFlexGridSizer(
     /* cols */ 2,
@@ -98,11 +80,12 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
     this->add_new_player_row();
   }
 
+  // TODO: Delete this
   this->player_rows.at(0).name_input->SetValue("A");
   this->player_rows.at(1).name_input->SetValue("B");
 
   auto grids_vbox = new wxBoxSizer(wxVERTICAL);
-  grids_vbox->Add(grid, wxSizerFlags().Expand().DoubleBorder(wxBOTTOM));
+  grids_vbox->Add(this->options_grid, wxSizerFlags().Expand().DoubleBorder(wxBOTTOM));
   grids_vbox->Add(this->players_grid, wxSizerFlags().Expand());
 
   auto outer_vbox = new wxBoxSizer(wxVERTICAL);
@@ -114,6 +97,23 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   this->SetSizerAndFit(outer_vbox);
 
   this->width_input->SetFocus();
+}
+
+wxWindow* NewGameDialog::create_option(const wxString& label_str, wxWindow* input) {
+  auto label = new wxStaticText(this, input->GetId(), label_str);
+  this->options_grid->Add(label, wxSizerFlags().Centre().Left());
+  this->options_grid->Add(input, wxSizerFlags().Expand());
+  return input;
+}
+
+wxSpinCtrl* NewGameDialog::create_number_option(
+  const wxString& label, wxWindowID id, int min, int max, int initial
+) {
+  auto input = new wxSpinCtrl(
+    this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, min, max, initial
+  );
+  this->create_option(label, input);
+  return input;
 }
 
 void NewGameDialog::update_layout() {
@@ -215,7 +215,7 @@ void NewGameDialog::on_ok(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void NewGameDialog::on_close(wxCommandEvent& WXUNUSED(event)) {
-  this->EndModal(wxID_CANCEL);
+  this->EndModal(wxID_CLOSE);
 }
 
 void NewGameDialog::on_player_name_input(wxCommandEvent& event) {

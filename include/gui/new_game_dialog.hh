@@ -35,6 +35,7 @@ public:
   wxString get_player_name(size_t index) const;
 
 protected:
+  wxFlexGridSizer* options_grid;
   wxSpinCtrl* width_input;
   bool width_was_changed = false;
   wxSpinCtrl* height_input;
@@ -50,6 +51,10 @@ protected:
   wxVector<PlayerRowWidgets> player_rows;
   PlayerRowWidgets new_player_row;
   wxStdDialogButtonSizer* buttons_sizer;
+
+  wxWindow* create_option(const wxString& label, wxWindow* input);
+  wxSpinCtrl*
+  create_number_option(const wxString& label, wxWindowID id, int min, int max, int initial);
 
   void update_layout();
 
