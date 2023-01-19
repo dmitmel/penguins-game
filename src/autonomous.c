@@ -250,7 +250,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
       break;
     }
   }
-  if (!my_player_found && players_count < MAX_PLAYERS) {
+  if (!my_player_found) {
     int free_id = -1;
     for (int id = MIN_PLAYER_ID; id <= MAX_PLAYER_ID; id++) {
       if (!taken_player_ids[id]) {
@@ -258,15 +258,15 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
         break;
       }
     }
-    assert(free_id > 0);
+    if (free_id <= 0 || players_count >= MAX_PLAYERS) {
+      fprintf(stderr, "No IDs left in the input file to assign to our own player\n");
+      return false;
+    }
     int i = players_count;
     player_ids[i] = free_id;
     player_names[i] = strdup(my_player_name);
     player_scores[i] = 0;
     players_count += 1;
-  } else {
-    fprintf(stderr, "No IDs left in the input file to assign to our own player");
-    return false;
   }
 
   int penguins_per_player = my_max(penguins_arg, 1);
@@ -289,7 +289,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
         }
       }
     }
-    assert(player->penguins_count == player_penguins_by_id[player->id]);
+    assert(player->penguins_count == player_penguins_by_id[player->id - MIN_PLAYER_ID]);
   }
 
   free(line_buf);
