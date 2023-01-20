@@ -262,7 +262,7 @@ void CanvasPanel::update_blocked_cells() {
     for (int y = 0; y < game->board_height; y++) {
       for (int x = 0; x < game->board_width; x++) {
         Coords cell = { x, y };
-        *this->cell_blocked_ptr(cell) = validate_placement_simple(game, cell);
+        *this->cell_blocked_ptr(cell) = !validate_placement_simple(game, cell);
       }
     }
   } else if (game->phase == GAME_PHASE_MOVEMENT) {
