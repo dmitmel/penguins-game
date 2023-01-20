@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.4)
 project(penguins C CXX)
 
+option(USE_SANITIZERS "Enable sanitizers" OFF)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_STANDARD 99)
@@ -17,6 +19,11 @@ else()
     -Wall -Wextra -Wpedantic -Werror=return-type
     $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>
   )
+endif()
+
+if(USE_SANITIZERS AND NOT MSVC)
+  target_compile_options(penguins-common INTERFACE -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all)
+  target_link_options(penguins-common INTERFACE -fsanitize=address -fsanitize=undefined)
 endif()
 
 add_executable(embed_resource src/tools/embed_resource.cc)

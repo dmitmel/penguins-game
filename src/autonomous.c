@@ -174,8 +174,8 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
   int player_penguins_by_id[MAX_PLAYER_ID - MIN_PLAYER_ID + 1];
   bool taken_player_ids[MAX_PLAYER_ID - MIN_PLAYER_ID + 1];
   for (int i = MIN_PLAYER_ID; i <= MAX_PLAYER_ID; i++) {
-    player_penguins_by_id[i] = 0;
-    taken_player_ids[i] = false;
+    player_penguins_by_id[i - MIN_PLAYER_ID] = 0;
+    taken_player_ids[i - MIN_PLAYER_ID] = false;
   }
 
   for (int y = 0; y < board_height; y++) {

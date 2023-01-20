@@ -25,6 +25,7 @@ void game_free(Game* self) {
   if (self->players) {
     for (int i = 0; i < self->players_count; i++) {
       free_and_clear(self->players[i].name);
+      free_and_clear(self->players[i].penguins);
     }
     free_and_clear(self->players);
   }
@@ -76,7 +77,7 @@ void game_set_players_count(Game* self, int count) {
     player->name = NULL;
     player->points = 0;
     player->penguins_count = 0;
-    player->penguins = malloc(sizeof(Coords) * self->penguins_per_player);
+    player->penguins = malloc(sizeof(Coords) * my_max(0, self->penguins_per_player));
     player->moves_count = 0;
   }
 }
