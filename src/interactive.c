@@ -62,26 +62,25 @@ void handle_placement_input(Game* game, Coords* selected) {
   while (true) {
     get_penguin_coordinates(selected);
     switch (validate_placement(game, *selected)) {
-    case PLACEMENT_VALID:
-      return;
-    case PLACEMENT_OUT_OF_BOUNDS:
-      display_error_message("Inputted coordinates are outside the bounds of the board");
-      break;
-    case PLACEMENT_EMPTY_TILE:
-      display_error_message("This tile is empty, you can't select an empty(water) tile");
-      break;
-    case PLACEMENT_ENEMY_PENGUIN:
-      display_error_message("This tile is already occupied by a penguin");
-      break;
-    case PLACEMENT_OWN_PENGUIN:
-      display_error_message("This tile is already occupied by a penguin");
-      break;
-    case PLACEMENT_MULTIPLE_FISH:
-      display_error_message("Only a tile with just one fish can be selected");
-      break;
-    default:
-      display_error_message("ERROR: what on god's green earth did you just select???");
-      break;
+      case PLACEMENT_VALID: return;
+      case PLACEMENT_OUT_OF_BOUNDS:
+        display_error_message("Inputted coordinates are outside the bounds of the board");
+        break;
+      case PLACEMENT_EMPTY_TILE:
+        display_error_message("This tile is empty, you can't select an empty(water) tile");
+        break;
+      case PLACEMENT_ENEMY_PENGUIN:
+        display_error_message("This tile is already occupied by a penguin");
+        break;
+      case PLACEMENT_OWN_PENGUIN:
+        display_error_message("This tile is already occupied by a penguin");
+        break;
+      case PLACEMENT_MULTIPLE_FISH:
+        display_error_message("Only a tile with just one fish can be selected");
+        break;
+      default:
+        display_error_message("ERROR: what on god's green earth did you just select???");
+        break;
     }
   }
 }
@@ -106,32 +105,17 @@ void handle_movement_input(Game* game, Coords* penguin, Coords* target) {
     get_data_for_movement(penguin, target);
     MovementError input = validate_movement(game, *penguin, *target, NULL);
     switch (input) {
-    case VALID_INPUT:
-      return;
-    case OUT_OF_BOUNDS_MOVEMENT:
-      display_error_message("You cant move oustide the board!");
-      break;
-    case CURRENT_LOCATION:
-      display_error_message("Thats your current location");
-      break;
-    case DIAGONAL_MOVE:
-      display_error_message("You cant move diagonaly!");
-      break;
-    case NOT_YOUR_PENGUIN:
-      display_error_message("Chose YOUR PENGUIN for movement");
-      break;
-    case MOVE_ONTO_EMPTY_TILE:
-      display_error_message("Can't move onto an empty tile");
-      break;
-    case MOVE_ONTO_PENGUIN:
-      display_error_message("Can't move onto another penguin!");
-      break;
-    case MOVE_OVER_EMPTY_TILE:
-      display_error_message("You cant move over an empty tile!");
-      break;
-    case MOVE_OVER_PENGUIN:
-      display_error_message("You cant move over another penguin!");
-      break;
+      case VALID_INPUT: return;
+      case OUT_OF_BOUNDS_MOVEMENT:
+        display_error_message("You cant move oustide the board!");
+        break;
+      case CURRENT_LOCATION: display_error_message("Thats your current location"); break;
+      case DIAGONAL_MOVE: display_error_message("You cant move diagonaly!"); break;
+      case NOT_YOUR_PENGUIN: display_error_message("Chose YOUR PENGUIN for movement"); break;
+      case MOVE_ONTO_EMPTY_TILE: display_error_message("Can't move onto an empty tile"); break;
+      case MOVE_ONTO_PENGUIN: display_error_message("Can't move onto another penguin!"); break;
+      case MOVE_OVER_EMPTY_TILE: display_error_message("You cant move over an empty tile!"); break;
+      case MOVE_OVER_PENGUIN: display_error_message("You cant move over another penguin!"); break;
     }
   }
 }

@@ -15,4 +15,6 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortBlocksOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortLoopsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+IndentCaseLabels: true
 ReflowComments: false

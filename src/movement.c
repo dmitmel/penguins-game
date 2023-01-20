@@ -32,7 +32,6 @@ int movement_switch_player(Game* game) {
 }
 
 bool any_valid_player_move_exists(const Game* game, int player_idx) {
-  assert(game->phase == GAME_PHASE_MOVEMENT);
   Player* player = game_get_player(game, player_idx);
   for (int i = 0; i < player->penguins_count; i++) {
     Coords penguin = player->penguins[i];
@@ -44,7 +43,6 @@ bool any_valid_player_move_exists(const Game* game, int player_idx) {
 }
 
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail) {
-  assert(game->phase == GAME_PHASE_MOVEMENT);
   int start_tile = is_tile_in_bounds(game, start) ? get_tile(game, start) : WATER_TILE;
   int target_tile = is_tile_in_bounds(game, target) ? get_tile(game, target) : WATER_TILE;
   if (!is_tile_in_bounds(game, target)) {
@@ -92,7 +90,6 @@ static int get_possible_steps_in_direction(const Game* game, Coords coords, int 
 }
 
 PossibleMoves calculate_all_possible_moves(const Game* game, Coords start) {
-  assert(game->phase == GAME_PHASE_MOVEMENT);
   assert(is_tile_in_bounds(game, start));
   PossibleMoves result = {
     .steps_up = get_possible_steps_in_direction(game, start, 0, -1),

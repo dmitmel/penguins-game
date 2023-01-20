@@ -47,6 +47,7 @@ endfunction()
 
 add_library(penguins-lib STATIC
   src/board.c
+  src/bot.c
   src/game.c
   src/movement.c
   src/placement.c

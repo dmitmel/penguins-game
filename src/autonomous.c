@@ -1,10 +1,10 @@
 #include "autonomous.h"
 #include "arguments.h"
 #include "board.h"
+#include "bot.h"
 #include "game.h"
 #include "movement.h"
 #include "placement.h"
-#include "random.h"
 #include "utils.h"
 #include <assert.h>
 #include <ctype.h>
@@ -48,14 +48,20 @@ int run_autonomous_mode(const Arguments* args) {
   }
   assert(my_player_index >= 0);
 
-  bool move_done = false;
+  bool move_ok = false;
   if (args->action == ACTION_ARG_PLACEMENT) {
     placement_begin(game);
-    move_done = do_autonomous_placement(game, my_player_index);
+    game->current_player_index = my_player_index - 1;
+    if (placement_switch_player(game) == my_player_index) {
+      move_ok = bot_make_placement(game);
+    }
     placement_end(game);
   } else if (args->action == ACTION_ARG_MOVEMENT) {
     movement_begin(game);
-    move_done = do_autonomous_movement(game, my_player_index);
+    game->current_player_index = my_player_index - 1;
+    if (movement_switch_player(game) == my_player_index) {
+      move_ok = bot_make_move(game);
+    }
     movement_end(game);
   }
 
@@ -71,61 +77,7 @@ int run_autonomous_mode(const Arguments* args) {
 
   game_free(game);
 
-  return move_done ? EXIT_OK : EXIT_NO_POSSIBLE_MOVES;
-}
-
-bool do_autonomous_placement(Game* game, int my_player_index) {
-  game->current_player_index = my_player_index - 1;
-  if (placement_switch_player(game) != my_player_index) {
-    return false;
-  }
-  if (game_get_current_player(game)->penguins_count < game->penguins_per_player) {
-    for (int y = 0; y < game->board_height; y++) {
-      for (int x = 0; x < game->board_width; x++) {
-        Coords coords = { x, y };
-        if (validate_placement(game, coords) == PLACEMENT_VALID) {
-          place_penguin(game, coords);
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-bool do_autonomous_movement(Game* game, int my_player_index) {
-  game->current_player_index = my_player_index - 1;
-  if (movement_switch_player(game) != my_player_index) {
-    return false;
-  }
-  Player* player = game_get_current_player(game);
-  for (int i = 0; i < player->penguins_count; i++) {
-    Coords penguin = player->penguins[i];
-    PossibleMoves moves = calculate_all_possible_moves(game, penguin);
-    if (moves.steps_right + moves.steps_down + moves.steps_left + moves.steps_up == 0) {
-      continue;
-    }
-    int dx = 0, dy = 0, steps = 0;
-    do {
-      // clang-format off
-      switch (random_range(0, 3)) {
-        case 0: dx = 1;  dy = 0;  steps = moves.steps_right; break;
-        case 1: dx = 0;  dy = 1;  steps = moves.steps_down;  break;
-        case 2: dx = -1; dy = 0;  steps = moves.steps_left;  break;
-        case 3: dx = 0;  dy = -1; steps = moves.steps_up;    break;
-      }
-      // clang-format on
-    } while (steps == 0);
-    steps = random_range(1, steps);
-    Coords target = penguin;
-    while (steps > 0) {
-      target.x += dx, target.y += dy;
-      steps--;
-    }
-    move_penguin(game, penguin, target);
-    return true;
-  }
-  return false;
+  return move_ok ? EXIT_OK : EXIT_NO_POSSIBLE_MOVES;
 }
 
 static int read_line(FILE* file, char** buf, int* line_len) {

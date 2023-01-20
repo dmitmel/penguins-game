@@ -124,13 +124,11 @@ void GameFrame::start_new_game() {
     this->state.player_names[i] = dialog->get_player_name(i);
   }
   setup_board(game, dialog->get_board_width(), dialog->get_board_height());
-  // clang-format off
   switch (dialog->get_board_gen_type()) {
     case NewGameDialog::BOARD_GEN_RANDOM: generate_board_random(game); break;
     case NewGameDialog::BOARD_GEN_ISLAND: generate_board_island(game); break;
     default: break;
   }
-  // clang-format on
   game_end_setup(game);
 
   game_advance_state(game);
@@ -264,7 +262,7 @@ void CanvasPanel::update_blocked_cells() {
     for (int y = 0; y < game->board_height; y++) {
       for (int x = 0; x < game->board_width; x++) {
         Coords cell = { x, y };
-        *this->cell_blocked_ptr(cell) = validate_placement(game, cell) != PLACEMENT_VALID;
+        *this->cell_blocked_ptr(cell) = validate_placement_simple(game, cell);
       }
     }
   } else if (game->phase == GAME_PHASE_MOVEMENT) {
@@ -287,10 +285,10 @@ void CanvasPanel::update_blocked_cells() {
         }
       };
       if (moves.all_steps != 0) {
-        unblock_steps(moves.steps_up, 0, -1);
         unblock_steps(moves.steps_right, 1, 0);
         unblock_steps(moves.steps_down, 0, 1);
         unblock_steps(moves.steps_left, -1, 0);
+        unblock_steps(moves.steps_up, 0, -1);
         if (!this->mouse_is_down) {
           *this->cell_blocked_ptr(curr_cell) = false;
         }

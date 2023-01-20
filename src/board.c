@@ -1,6 +1,7 @@
 #include "board.h"
 #include "game.h"
 #include "random.h"
+#include "utils.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -49,14 +50,12 @@ void generate_board_island(Game* game) {
   for (int i = 0; i < w + h; i++) {
     Coords coords = { w / 2, h / 2 };
     for (int j = 0; j < w + h; j++) {
-      // clang-format off
       switch (random_range(0, 3)) {
         case 0: coords.x += 1; break;
         case 1: coords.y += 1; break;
         case 2: coords.x -= 1; break;
         case 3: coords.y -= 1; break;
       }
-      // clang-format on
       if (is_tile_in_bounds(game, coords)) {
         int fish = random_range(1, 3);
         set_tile(game, coords, FISH_TILE(fish));

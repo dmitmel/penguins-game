@@ -1,11 +1,12 @@
 #pragma once
 
+#include "game.h"
+#include "utils.h"
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "game.h"
-#include "utils.h"
 
 typedef enum PlacementError {
   PLACEMENT_VALID = 0,
@@ -27,6 +28,7 @@ void placement_end(Game* game);
 int placement_switch_player(Game* game);
 bool any_valid_placement_exists(const Game* game);
 
+bool validate_placement_simple(const Game* game, Coords target);
 PlacementError validate_placement(const Game* game, Coords target);
 void place_penguin(Game* game, Coords target);
 

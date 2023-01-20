@@ -34,12 +34,10 @@ int placement_switch_player(Game* game) {
 }
 
 bool any_valid_placement_exists(const Game* game) {
-  assert(game->phase == GAME_PHASE_PLACEMENT);
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      int tile = get_tile(game, coords);
-      if (is_fish_tile(tile) && get_tile_fish(tile) == 1) {
+      if (validate_placement_simple(game, coords)) {
         return true;
       }
     }
@@ -47,8 +45,11 @@ bool any_valid_placement_exists(const Game* game) {
   return false;
 }
 
+bool validate_placement_simple(const Game* game, Coords target) {
+  return get_tile_fish(get_tile(game, target)) == 1;
+}
+
 PlacementError validate_placement(const Game* game, Coords target) {
-  assert(game->phase == GAME_PHASE_PLACEMENT);
   if (!is_tile_in_bounds(game, target)) {
     return PLACEMENT_OUT_OF_BOUNDS;
   }

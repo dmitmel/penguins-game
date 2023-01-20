@@ -23,9 +23,6 @@ int run_autonomous_mode(const Arguments* args);
 bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_player_name);
 bool save_game_state(const Game* game, FILE* file);
 
-bool do_autonomous_movement(Game* game, int my_player_index);
-bool do_autonomous_placement(Game* game, int my_player_index);
-
 #ifdef __cplusplus
 }
 #endif
