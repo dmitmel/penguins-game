@@ -34,7 +34,8 @@ void generate_board_random(Game* game) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      set_tile(game, coords, FISH_TILE(random_range(0, 3)));
+      int fish = random_range(0, 3);
+      set_tile(game, coords, FISH_TILE(fish));
     }
   }
 }
