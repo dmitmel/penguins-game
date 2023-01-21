@@ -5,6 +5,8 @@
 #include <wx/dialog.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
+#include <wx/persist.h>
+#include <wx/persist/window.h>
 #include <wx/sizer.h>
 #include <wx/spinbutt.h>
 #include <wx/spinctrl.h>
@@ -15,6 +17,7 @@
 class NewGameDialog : public wxDialog {
 public:
   NewGameDialog(wxWindow* parent, wxWindowID id);
+  ~NewGameDialog();
 
   static const int DEFAULT_BOARD_WIDTH = 16;
   static const int DEFAULT_BOARD_HEIGHT = 16;
@@ -52,9 +55,11 @@ protected:
   PlayerRowWidgets new_player_row;
   wxStdDialogButtonSizer* buttons_sizer;
 
-  wxWindow* create_option(const wxString& label, wxWindow* input);
+  wxWindow* add_option(const wxString& label, wxWindow* input);
   wxSpinCtrl*
   create_number_option(const wxString& label, wxWindowID id, int min, int max, int initial);
+  wxChoice*
+  create_choice_option(const wxString& label, wxWindowID id, int n, const wxString choices[]);
 
   void update_layout();
 
@@ -74,4 +79,19 @@ protected:
   void on_players_number_input(wxSpinEvent& event);
 
   wxDECLARE_EVENT_TABLE();
+
+public:
+  class Persistence : public wxPersistentWindow<NewGameDialog> {
+  public:
+    Persistence(NewGameDialog* dialog) : wxPersistentWindow<NewGameDialog>(dialog) {}
+    virtual wxString GetKind() const override {
+      return "NewGameDialog";
+    }
+    virtual bool Restore() override;
+    virtual void Save() const override;
+  };
 };
+
+inline wxPersistentObject* wxCreatePersistentObject(NewGameDialog* dialog) {
+  return new NewGameDialog::Persistence(dialog);
+}

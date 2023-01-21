@@ -27,6 +27,7 @@
 #include <wx/msgdlg.h>
 #include <wx/pen.h>
 #include <wx/peninfobase.h>
+#include <wx/persist.h>
 #include <wx/sizer.h>
 #include <wx/string.h>
 #include <wx/types.h>
@@ -106,6 +107,7 @@ void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
 
 void GameFrame::start_new_game() {
   std::unique_ptr<NewGameDialog> dialog(new NewGameDialog(this, wxID_ANY));
+  wxPersistentRegisterAndRestore(dialog.get());
   int result = dialog->ShowModal();
   if (result != wxID_OK) {
     return;

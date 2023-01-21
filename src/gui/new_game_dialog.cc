@@ -53,13 +53,13 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   this->height_input =
     this->create_number_option("Board height:", ID_BOARD_HEIGHT, 1, 1000, DEFAULT_BOARD_HEIGHT);
 
-  this->board_gen_input = new wxChoice(this, ID_BOARD_GEN);
-  this->create_option("Board generation type:", this->board_gen_input);
   wxString board_gen_types[BOARD_GEN_MAX] = {};
   board_gen_types[BOARD_GEN_RANDOM] = "Random";
   board_gen_types[BOARD_GEN_ISLAND] = "Island";
-  this->board_gen_input->Set(WXSIZEOF(board_gen_types), board_gen_types);
-  this->board_gen_input->Select(BOARD_GEN_ISLAND);
+  this->board_gen_input = this->create_choice_option(
+    "Board generation type:", ID_BOARD_GEN, WXSIZEOF(board_gen_types), board_gen_types
+  );
+  this->board_gen_input->Select(0);
 
   this->penguins_input = this->create_number_option(
     "Penguins per player:", ID_PENGUINS_NUMBER, 1, 10, DEFAULT_PENGUINS_PER_PLAYER
@@ -80,10 +80,6 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
     this->add_new_player_row();
   }
 
-  // TODO: Delete this
-  this->player_rows.at(0).name_input->SetValue("A");
-  this->player_rows.at(1).name_input->SetValue("B");
-
   auto grids_vbox = new wxBoxSizer(wxVERTICAL);
   grids_vbox->Add(this->options_grid, wxSizerFlags().Expand().DoubleBorder(wxBOTTOM));
   grids_vbox->Add(this->players_grid, wxSizerFlags().Expand());
@@ -99,7 +95,12 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   this->width_input->SetFocus();
 }
 
-wxWindow* NewGameDialog::create_option(const wxString& label_str, wxWindow* input) {
+NewGameDialog::~NewGameDialog() {
+  // <https://docs.wxwidgets.org/3.0/classwx_window_destroy_event.html#details>
+  this->SendDestroyEvent();
+}
+
+wxWindow* NewGameDialog::add_option(const wxString& label_str, wxWindow* input) {
   auto label = new wxStaticText(this, input->GetId(), label_str);
   this->options_grid->Add(label, wxSizerFlags().Centre().Left());
   this->options_grid->Add(input, wxSizerFlags().Expand());
@@ -112,7 +113,15 @@ wxSpinCtrl* NewGameDialog::create_number_option(
   auto input = new wxSpinCtrl(
     this, id, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, min, max, initial
   );
-  this->create_option(label, input);
+  this->add_option(label, input);
+  return input;
+}
+
+wxChoice* NewGameDialog::create_choice_option(
+  const wxString& label, wxWindowID id, int n, const wxString choices[]
+) {
+  auto input = new wxChoice(this, id, wxDefaultPosition, wxDefaultSize, n, choices);
+  this->add_option(label, input);
   return input;
 }
 
@@ -279,4 +288,39 @@ void NewGameDialog::on_player_delete_clicked(wxCommandEvent& event) {
 void NewGameDialog::on_players_number_input(wxSpinEvent& WXUNUSED(event)) {
   this->set_player_rows_count(this->players_number_input->GetValue());
   this->update_layout();
+}
+
+bool NewGameDialog::Persistence::Restore() {
+  NewGameDialog* dialog = this->Get();
+  int value;
+  wxString str_value;
+  if (this->RestoreValue("board_width", &value)) dialog->width_input->SetValue(value);
+  if (this->RestoreValue("board_height", &value)) dialog->height_input->SetValue(value);
+  if (this->RestoreValue("board_gen_type", &value) && 0 <= value && value < BOARD_GEN_MAX) {
+    dialog->board_gen_input->Select(value);
+  }
+  if (this->RestoreValue("penguins_per_player", &value)) dialog->penguins_input->SetValue(value);
+  if (this->RestoreValue("players_count", &value)) {
+    dialog->players_number_input->SetValue(value);
+    dialog->set_player_rows_count(dialog->players_number_input->GetValue());
+    for (int i = 0; i < int(dialog->player_rows.size()); i++) {
+      PlayerRowWidgets& row = dialog->player_rows.at(i);
+      if (!this->RestoreValue(wxString::Format("player_%d_name", i), &str_value)) continue;
+      row.name_input->SetValue(str_value);
+    }
+  }
+  return true;
+}
+
+void NewGameDialog::Persistence::Save() const {
+  NewGameDialog* dialog = this->Get();
+  this->SaveValue("board_width", dialog->width_input->GetValue());
+  this->SaveValue("board_height", dialog->height_input->GetValue());
+  this->SaveValue("board_gen_type", dialog->board_gen_input->GetSelection());
+  this->SaveValue("penguins_per_player", dialog->penguins_input->GetValue());
+  this->SaveValue("players_count", dialog->players_number_input->GetValue());
+  for (int i = 0; i < int(dialog->player_rows.size()); i++) {
+    PlayerRowWidgets& row = dialog->player_rows.at(i);
+    this->SaveValue(wxString::Format("player_%d_name", i), row.name_input->GetValue());
+  }
 }
