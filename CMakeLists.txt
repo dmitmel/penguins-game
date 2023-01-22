@@ -51,6 +51,7 @@ add_library(penguins-lib STATIC
   src/game.c
   src/movement.c
   src/placement.c
+  src/utils.c
 )
 target_include_directories(penguins-lib PUBLIC include)
 target_link_libraries(penguins-lib PRIVATE penguins-common)

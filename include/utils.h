@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,6 +28,9 @@ typedef struct Coords {
 // Taken from <https://stackoverflow.com/a/21338744/12005228>
 #define my_max(x, y) (((x) > (y)) ? (x) : (y))
 #define my_min(x, y) (((x) < (y)) ? (x) : (y))
+
+const char* strip_prefix(const char* str, const char* prefix);
+bool parse_number(const char* str, long* result);
 
 #ifdef __cplusplus
 }

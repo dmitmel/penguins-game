@@ -1,4 +1,5 @@
 #include "bot.h"
+#include "arguments.h"
 #include "board.h"
 #include "game.h"
 #include "movement.h"
@@ -40,24 +41,46 @@ static int pick_best_scores(int scores_length, int* scores, int best_length, int
   return i;
 }
 
-bool bot_make_placement(Game* game) {
+bool bot_make_placement(const BotParameters* params, Game* game) {
+  BotPlacementStrategy strategy = params->placement_strategy;
+
   Coords* tile_coords = malloc(sizeof(int) * game->board_width * game->board_height);
-  int* tile_scores = malloc(sizeof(int) * game->board_width * game->board_height);
   int tiles_count = 0;
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
       if (validate_placement_simple(game, coords)) {
         tile_coords[tiles_count] = coords;
-        tile_scores[tiles_count] = bot_rate_placement(game, coords);
         tiles_count += 1;
       }
     }
   }
   if (tiles_count == 0) {
     free(tile_coords);
-    free(tile_scores);
     return false;
+  }
+
+  if (strategy == BOT_PLACEMENT_FIRST_POSSIBLE || strategy == BOT_PLACEMENT_RANDOM) {
+    int picked_tile_idx = strategy == BOT_PLACEMENT_RANDOM ? random_range(0, tiles_count - 1) : 0;
+    Coords picked_tile = tile_coords[picked_tile_idx];
+    free(tile_coords);
+    place_penguin(game, picked_tile);
+    return true;
+  }
+
+  int* tile_scores = malloc(sizeof(int) * tiles_count);
+  for (int i = 0; i < tiles_count; i++) {
+    tile_scores[i] = bot_rate_placement(params, game, tile_coords[i]);
+  }
+
+  if (strategy == BOT_PLACEMENT_MOST_FISH) {
+    int best_tile_idx;
+    assert(pick_best_scores(tiles_count, tile_scores, 1, &best_tile_idx) == 1);
+    Coords picked_tile = tile_coords[best_tile_idx];
+    free(tile_coords);
+    free(tile_scores);
+    place_penguin(game, picked_tile);
+    return true;
   }
 
   printf("Tile scores:");
@@ -103,14 +126,28 @@ bool bot_make_placement(Game* game) {
   return true;
 }
 
-int bot_rate_placement(const Game* game, Coords penguin) {
+int bot_rate_placement(const BotParameters* params, const Game* game, Coords penguin) {
+  Player* my_player = game_get_current_player(game);
   int score = 0;
 
-  static const int AREA_SIZE = 6;
-  int area_start_x = penguin.x - AREA_SIZE;
-  int area_start_y = penguin.y - AREA_SIZE;
-  int area_end_x = penguin.x + AREA_SIZE;
-  int area_end_y = penguin.y + AREA_SIZE;
+  int area_start_x = penguin.x - params->placement_scan_area;
+  int area_start_y = penguin.y - params->placement_scan_area;
+  int area_end_x = penguin.x + params->placement_scan_area;
+  int area_end_y = penguin.y + params->placement_scan_area;
+
+  if (params->placement_strategy == BOT_PLACEMENT_MOST_FISH) {
+    int total_fish = 0;
+    for (int y = area_start_y; y <= area_end_y; y++) {
+      for (int x = area_start_x; x <= area_end_x; x++) {
+        Coords coords = { x, y };
+        if (is_tile_in_bounds(game, coords)) {
+          int tile = get_tile(game, coords);
+          total_fish += get_tile_fish(tile);
+        }
+      }
+    }
+    return total_fish;
+  }
 
   for (int y = area_start_y; y <= area_end_y; y++) {
     for (int x = area_start_x; x <= area_end_x; x++) {
@@ -123,7 +160,7 @@ int bot_rate_placement(const Game* game, Coords penguin) {
         if ((fish = get_tile_fish(tile))) {
           tile_score += 10 * fish;
         } else if ((player_id = get_tile_player_id(tile))) {
-          tile_score += player_id == game->current_player_index ? -500 : -600;
+          tile_score += player_id == my_player->id ? -500 : -600;
         } else if (is_water_tile(tile)) {
           tile_score += -40;
         }
@@ -155,34 +192,28 @@ int bot_rate_placement(const Game* game, Coords penguin) {
   return score;
 }
 
-bool bot_make_move(Game* game) {
-  Player* player = game_get_current_player(game);
+bool bot_make_move(const BotParameters* params, Game* game) {
+  BotMovementStrategy strategy = params->movement_strategy;
 
-  PossibleMoves* possible_moves_structs = malloc(sizeof(PossibleMoves) * player->penguins_count);
   int moves_count = 0;
-  for (int i = 0; i < player->penguins_count; i++) {
-    PossibleMoves moves = calculate_all_possible_moves(game, player->penguins[i]);
-    moves_count += moves.all_steps;
-    possible_moves_structs[i] = moves;
-  }
+  BotMove* all_moves =
+    generate_all_possible_moves_list(params, game, game->current_player_index, &moves_count);
   if (moves_count == 0) {
-    free(possible_moves_structs);
+    free(all_moves);
     return false;
   }
 
-  BotMove* all_moves = malloc(sizeof(BotMove) * moves_count);
-  BotMove* current_penguin_moves = all_moves;
-  for (int i = 0; i < player->penguins_count; i++) {
-    current_penguin_moves += iterate_possible_moves_struct(
-      player->penguins[i], possible_moves_structs[i], current_penguin_moves
-    );
+  if (strategy == BOT_MOVEMENT_FIRST_POSSIBLE || strategy == BOT_MOVEMENT_RANDOM) {
+    int picked_move_idx = strategy == BOT_MOVEMENT_RANDOM ? random_range(0, moves_count - 1) : 0;
+    BotMove picked_move = all_moves[picked_move_idx];
+    free(all_moves);
+    move_penguin(game, picked_move.penguin, picked_move.target);
+    return true;
   }
-  assert(current_penguin_moves == all_moves + moves_count);
-  free(possible_moves_structs);
 
   int* move_scores = malloc(sizeof(int) * moves_count);
   for (int i = 0; i < moves_count; i++) {
-    move_scores[i] = bot_rate_move(game, all_moves[i]);
+    move_scores[i] = bot_rate_move(params, game, all_moves[i]);
   }
 
   static const int BEST_MOVES_COUNT = 5;
@@ -221,17 +252,7 @@ bool bot_make_move(Game* game) {
   return true;
 }
 
-int iterate_possible_moves_struct(Coords penguin, PossibleMoves moves, BotMove* list) {
-  int count = 0;
-  count += iterate_possible_moves_steps(penguin, moves.steps_right, 1, 0, list + count);
-  count += iterate_possible_moves_steps(penguin, moves.steps_down, 0, 1, list + count);
-  count += iterate_possible_moves_steps(penguin, moves.steps_left, -1, 0, list + count);
-  count += iterate_possible_moves_steps(penguin, moves.steps_up, 0, -1, list + count);
-  assert(count == moves.all_steps);
-  return count;
-}
-
-int iterate_possible_moves_steps(Coords penguin, int steps, int dx, int dy, BotMove* list) {
+static int iterate_possible_moves_steps(Coords penguin, int steps, int dx, int dy, BotMove* list) {
   Coords target = penguin;
   int i;
   for (i = 0; i < steps; i++) {
@@ -242,7 +263,33 @@ int iterate_possible_moves_steps(Coords penguin, int steps, int dx, int dy, BotM
   return i;
 }
 
-int bot_rate_move(const Game* game, BotMove move) {
+BotMove* generate_all_possible_moves_list(
+  const BotParameters* params, Game* game, int player_idx, int* moves_count
+) {
+  Player* player = game_get_player(game, player_idx);
+  PossibleMoves* possible_moves_structs = malloc(sizeof(PossibleMoves) * player->penguins_count);
+  for (int i = 0; i < player->penguins_count; i++) {
+    PossibleMoves moves = calculate_penguin_possible_moves(game, player->penguins[i]);
+    constrain_possible_moves_by_max_steps(&moves, params->max_move_length);
+    *moves_count += moves.all_steps;
+    possible_moves_structs[i] = moves;
+  }
+  BotMove* all_moves = malloc(sizeof(BotMove) * *moves_count);
+  BotMove* moves_ptr = all_moves;
+  for (int i = 0; i < player->penguins_count; i++) {
+    Coords penguin = player->penguins[i];
+    PossibleMoves moves = possible_moves_structs[i];
+    moves_ptr += iterate_possible_moves_steps(penguin, moves.steps_right, 1, 0, moves_ptr);
+    moves_ptr += iterate_possible_moves_steps(penguin, moves.steps_down, 0, 1, moves_ptr);
+    moves_ptr += iterate_possible_moves_steps(penguin, moves.steps_left, -1, 0, moves_ptr);
+    moves_ptr += iterate_possible_moves_steps(penguin, moves.steps_up, 0, -1, moves_ptr);
+  }
+  assert(moves_ptr == all_moves + *moves_count);
+  free(possible_moves_structs);
+  return all_moves;
+}
+
+int bot_rate_move(const BotParameters* UNUSED(params), const Game* game, BotMove move) {
   int score = 0;
 
   score += 100 / distance(move.penguin, move.target) - 10;

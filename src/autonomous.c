@@ -53,14 +53,14 @@ int run_autonomous_mode(const Arguments* args) {
     placement_begin(game);
     game->current_player_index = my_player_index - 1;
     if (placement_switch_player(game) == my_player_index) {
-      move_ok = bot_make_placement(game);
+      move_ok = bot_make_placement(&args->bot, game);
     }
     placement_end(game);
   } else if (args->action == ACTION_ARG_MOVEMENT) {
     movement_begin(game);
     game->current_player_index = my_player_index - 1;
     if (movement_switch_player(game) == my_player_index) {
-      move_ok = bot_make_move(game);
+      move_ok = bot_make_move(&args->bot, game);
     }
     movement_end(game);
   }

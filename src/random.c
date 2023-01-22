@@ -1,4 +1,5 @@
 #include "random.h"
+#include <assert.h>
 #include <stdlib.h>
 
 #ifdef _WIN32
@@ -31,6 +32,7 @@ void random_init(void) {
 
 // Taken from <https://cplusplus.com/faq/beginners/random-numbers/#random_int_in_range>.
 int random_range(int min, int max) {
+  assert(min <= max);
   unsigned int n = (max - min <= RAND_MAX) ? (max - min + 1U) : (RAND_MAX + 1U);
   unsigned int x = (RAND_MAX + 1U) / n;
   unsigned int y = x * n;

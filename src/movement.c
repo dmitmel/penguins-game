@@ -35,7 +35,7 @@ bool any_valid_player_move_exists(const Game* game, int player_idx) {
   Player* player = game_get_player(game, player_idx);
   for (int i = 0; i < player->penguins_count; i++) {
     Coords penguin = player->penguins[i];
-    if (calculate_all_possible_moves(game, penguin).all_steps != 0) {
+    if (calculate_penguin_possible_moves(game, penguin).all_steps != 0) {
       return true;
     }
   }
@@ -89,16 +89,24 @@ static int get_possible_steps_in_direction(const Game* game, Coords coords, int 
   return steps;
 }
 
-PossibleMoves calculate_all_possible_moves(const Game* game, Coords start) {
+PossibleMoves calculate_penguin_possible_moves(const Game* game, Coords start) {
   assert(is_tile_in_bounds(game, start));
-  PossibleMoves result = {
+  PossibleMoves moves = {
     .steps_up = get_possible_steps_in_direction(game, start, 0, -1),
     .steps_right = get_possible_steps_in_direction(game, start, 1, 0),
     .steps_down = get_possible_steps_in_direction(game, start, 0, 1),
     .steps_left = get_possible_steps_in_direction(game, start, -1, 0),
   };
-  result.all_steps = result.steps_up + result.steps_right + result.steps_down + result.steps_left;
-  return result;
+  moves.all_steps = moves.steps_up + moves.steps_right + moves.steps_down + moves.steps_left;
+  return moves;
+}
+
+void constrain_possible_moves_by_max_steps(PossibleMoves* moves, int max_move_length) {
+  moves->steps_right = my_min(moves->steps_right, max_move_length);
+  moves->steps_down = my_min(moves->steps_down, max_move_length);
+  moves->steps_left = my_min(moves->steps_left, max_move_length);
+  moves->steps_up = my_min(moves->steps_up, max_move_length);
+  moves->all_steps = moves->steps_right + moves->steps_down + moves->steps_left + moves->steps_up;
 }
 
 void move_penguin(Game* game, Coords start, Coords target) {

@@ -187,7 +187,7 @@ void GameFrame::update_player_info_boxes() {
     if (game->phase == GAME_PHASE_MOVEMENT) {
       player_box->is_blocked = true;
       for (int j = 0; j < player->penguins_count; j++) {
-        if (calculate_all_possible_moves(game, player->penguins[j]).all_steps != 0) {
+        if (calculate_penguin_possible_moves(game, player->penguins[j]).all_steps != 0) {
           player_box->is_blocked = false;
           break;
         }
@@ -277,7 +277,7 @@ void CanvasPanel::update_blocked_cells() {
           *this->cell_blocked_ptr(cell) = true;
         }
       }
-      PossibleMoves moves = calculate_all_possible_moves(game, curr_cell);
+      PossibleMoves moves = calculate_penguin_possible_moves(game, curr_cell);
       auto unblock_steps = [&](int steps, int dx, int dy) -> void {
         Coords cell = curr_cell;
         while (steps > 0) {

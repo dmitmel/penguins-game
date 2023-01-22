@@ -47,9 +47,8 @@ void game_end_setup(Game* self) {
   assert(self->players_count > 0);
   assert(self->penguins_per_player >= 0);
   for (int i = 0; i < self->players_count; i++) {
-    Player* player = &self->players[i];
-    assert(player->name != NULL);
-    assert(player->penguins != NULL);
+    assert(self->players[i].name != NULL);
+    assert(self->players[i].penguins != NULL);
   }
   self->phase = GAME_PHASE_SETUP_DONE;
 }
