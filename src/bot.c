@@ -235,7 +235,8 @@ bool bot_make_move(const BotParameters* params, Game* game) {
     );
   }
 
-  BotMove picked_move = all_moves[best_indexes[random_range(0, available_moves - 1)]];
+  // BotMove picked_move = all_moves[best_indexes[random_range(0, available_moves - 1)]];
+  BotMove picked_move = all_moves[best_indexes[0]];
   printf(
     "Picked (%d, %d) -> (%d, %d)\n",
     picked_move.penguin.x,
@@ -290,11 +291,36 @@ BotMove* generate_all_possible_moves_list(
 }
 
 int bot_rate_move(const BotParameters* UNUSED(params), const Game* game, BotMove move) {
+  Coords penguin = move.penguin, target = move.target;
+  Player* my_player = game_get_current_player(game);
   int score = 0;
 
-  score += 100 / distance(move.penguin, move.target) - 10;
-  int fish = get_tile_fish(get_tile(game, move.target));
+  score += 100 / distance(penguin, target) - 10;
+  int target_tile = get_tile(game, target);
+  int fish = get_tile_fish(target_tile);
   score += 10 * fish * fish;
+
+  for (int i = 0; i < 4; i++) {
+    Coords neighbor = target;
+    int dx = 0, dy = 0;
+    switch (i) {
+      case 0: dx = 1; break;
+      case 1: dy = 1; break;
+      case 2: dx = -1; break;
+      case 3: dy = -1; break;
+    }
+    neighbor.x += dx, neighbor.y += dy;
+    if (!is_tile_in_bounds(game, neighbor)) continue;
+    if (neighbor.x == penguin.x && neighbor.y == penguin.y) continue;
+
+    int other_tile = get_tile(game, neighbor);
+    int other_player_id;
+    if ((other_player_id = get_tile_player_id(other_tile))) {
+      score += other_player_id == my_player->id ? -500 : 500;
+    } else if (!is_fish_tile(other_tile)) {
+      score += -100;
+    }
+  }
 
   return score;
 }
