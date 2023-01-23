@@ -187,7 +187,12 @@ void GameFrame::update_player_info_boxes() {
     if (game->phase == GAME_PHASE_MOVEMENT) {
       player_box->is_blocked = true;
       for (int j = 0; j < player->penguins_count; j++) {
-        if (calculate_penguin_possible_moves(game, player->penguins[j]).all_steps != 0) {
+        PossibleSteps moves = calculate_penguin_possible_moves(game, player->penguins[j]);
+        int steps_sum = 0;
+        for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+          steps_sum += moves.steps[dir];
+        }
+        if (steps_sum != 0) {
           player_box->is_blocked = false;
           break;
         }
@@ -277,23 +282,19 @@ void CanvasPanel::update_blocked_cells() {
           *this->cell_blocked_ptr(cell) = true;
         }
       }
-      PossibleMoves moves = calculate_penguin_possible_moves(game, curr_cell);
-      auto unblock_steps = [&](int steps, int dx, int dy) -> void {
+      PossibleSteps moves = calculate_penguin_possible_moves(game, curr_cell);
+      int steps_sum = 0;
+      for (int dir = 0; dir < DIRECTION_MAX; dir++) {
         Coords cell = curr_cell;
-        while (steps > 0) {
-          cell.x += dx, cell.y += dy;
+        Coords d = DIRECTION_TO_COORDS[dir];
+        steps_sum += moves.steps[dir];
+        for (int steps = moves.steps[dir]; steps > 0; steps--) {
+          cell.x += d.x, cell.y += d.y;
           *this->cell_blocked_ptr(cell) = false;
-          steps--;
         }
-      };
-      if (moves.all_steps != 0) {
-        unblock_steps(moves.steps_right, 1, 0);
-        unblock_steps(moves.steps_down, 0, 1);
-        unblock_steps(moves.steps_left, -1, 0);
-        unblock_steps(moves.steps_up, 0, -1);
-        if (!this->mouse_is_down) {
-          *this->cell_blocked_ptr(curr_cell) = false;
-        }
+      }
+      if (steps_sum != 0 && !this->mouse_is_down) {
+        *this->cell_blocked_ptr(curr_cell) = false;
       }
     } else {
       int current_player_id = game_get_current_player(game)->id;

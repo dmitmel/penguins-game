@@ -11,6 +11,16 @@ typedef struct Coords {
   int y;
 } Coords;
 
+typedef enum Direction {
+  DIRECTION_RIGHT,
+  DIRECTION_DOWN,
+  DIRECTION_LEFT,
+  DIRECTION_UP,
+  DIRECTION_MAX,
+} Direction;
+
+extern Coords DIRECTION_TO_COORDS[DIRECTION_MAX];
+
 // Generally several approaches are possible for implementing this macro:
 // <https://stackoverflow.com/a/3599170/12005228>
 // <https://stackoverflow.com/a/3599203/12005228>

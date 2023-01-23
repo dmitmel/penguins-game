@@ -74,7 +74,7 @@ bool bot_make_placement(const BotParameters* params, Game* game) {
   }
 
   if (strategy == BOT_PLACEMENT_MOST_FISH) {
-    int best_tile_idx;
+    int best_tile_idx = 0;
     assert(pick_best_scores(tiles_count, tile_scores, 1, &best_tile_idx) == 1);
     Coords picked_tile = tile_coords[best_tile_idx];
     free(tile_coords);
@@ -173,16 +173,9 @@ int bot_rate_placement(const BotParameters* params, const Game* game, Coords pen
     }
   }
 
-  for (int i = 0; i < 4; i++) {
-    Coords neighbor = penguin;
-    int dx = 0, dy = 0;
-    switch (i) {
-      case 0: dx = 1; break;
-      case 1: dy = 1; break;
-      case 2: dx = -1; break;
-      case 3: dy = -1; break;
-    }
-    neighbor.x += dx, neighbor.y += dy;
+  for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+    Coords neighbor = DIRECTION_TO_COORDS[dir];
+    neighbor.x += penguin.x, neighbor.y += penguin.y;
     if (!(is_tile_in_bounds(game, neighbor) && is_fish_tile(get_tile(game, neighbor)))) {
       // The side is obstructed
       score += -1000;
@@ -253,40 +246,36 @@ bool bot_make_move(const BotParameters* params, Game* game) {
   return true;
 }
 
-static int iterate_possible_moves_steps(Coords penguin, int steps, int dx, int dy, BotMove* list) {
-  Coords target = penguin;
-  int i;
-  for (i = 0; i < steps; i++) {
-    target.x += dx, target.y += dy;
-    BotMove move = { penguin, target };
-    list[i] = move;
-  }
-  return i;
-}
-
 BotMove* generate_all_possible_moves_list(
   const BotParameters* params, Game* game, int player_idx, int* moves_count
 ) {
   Player* player = game_get_player(game, player_idx);
-  PossibleMoves* possible_moves_structs = malloc(sizeof(PossibleMoves) * player->penguins_count);
+  PossibleSteps* possible_steps = malloc(sizeof(PossibleSteps) * player->penguins_count);
   for (int i = 0; i < player->penguins_count; i++) {
-    PossibleMoves moves = calculate_penguin_possible_moves(game, player->penguins[i]);
-    constrain_possible_moves_by_max_steps(&moves, params->max_move_length);
-    *moves_count += moves.all_steps;
-    possible_moves_structs[i] = moves;
+    PossibleSteps moves = calculate_penguin_possible_moves(game, player->penguins[i]);
+    for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+      moves.steps[dir] = my_min(moves.steps[dir], params->max_move_length);
+      *moves_count += moves.steps[dir];
+    }
+    possible_steps[i] = moves;
   }
   BotMove* all_moves = malloc(sizeof(BotMove) * *moves_count);
-  BotMove* moves_ptr = all_moves;
+  int move_idx = 0;
   for (int i = 0; i < player->penguins_count; i++) {
     Coords penguin = player->penguins[i];
-    PossibleMoves moves = possible_moves_structs[i];
-    moves_ptr += iterate_possible_moves_steps(penguin, moves.steps_right, 1, 0, moves_ptr);
-    moves_ptr += iterate_possible_moves_steps(penguin, moves.steps_down, 0, 1, moves_ptr);
-    moves_ptr += iterate_possible_moves_steps(penguin, moves.steps_left, -1, 0, moves_ptr);
-    moves_ptr += iterate_possible_moves_steps(penguin, moves.steps_up, 0, -1, moves_ptr);
+    PossibleSteps moves = possible_steps[i];
+    for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+      Coords d = DIRECTION_TO_COORDS[dir];
+      Coords target = penguin;
+      for (int steps = moves.steps[dir]; steps > 0; steps--) {
+        target.x += d.x, target.y += d.y;
+        BotMove move = { penguin, target };
+        all_moves[move_idx++] = move;
+      }
+    }
   }
-  assert(moves_ptr == all_moves + *moves_count);
-  free(possible_moves_structs);
+  assert(move_idx == *moves_count);
+  free(possible_steps);
   return all_moves;
 }
 
@@ -300,16 +289,9 @@ int bot_rate_move(const BotParameters* UNUSED(params), const Game* game, BotMove
   int fish = get_tile_fish(target_tile);
   score += 10 * fish * fish;
 
-  for (int i = 0; i < 4; i++) {
-    Coords neighbor = target;
-    int dx = 0, dy = 0;
-    switch (i) {
-      case 0: dx = 1; break;
-      case 1: dy = 1; break;
-      case 2: dx = -1; break;
-      case 3: dy = -1; break;
-    }
-    neighbor.x += dx, neighbor.y += dy;
+  for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+    Coords neighbor = DIRECTION_TO_COORDS[dir];
+    neighbor.x += target.x, neighbor.y += target.y;
     if (!is_tile_in_bounds(game, neighbor)) continue;
     if (neighbor.x == penguin.x && neighbor.y == penguin.y) continue;
 

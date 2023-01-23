@@ -35,8 +35,11 @@ bool any_valid_player_move_exists(const Game* game, int player_idx) {
   Player* player = game_get_player(game, player_idx);
   for (int i = 0; i < player->penguins_count; i++) {
     Coords penguin = player->penguins[i];
-    if (calculate_penguin_possible_moves(game, penguin).all_steps != 0) {
-      return true;
+    PossibleSteps moves = calculate_penguin_possible_moves(game, penguin);
+    for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+      if (moves.steps[dir] != 0) {
+        return true;
+      }
     }
   }
   return false;
@@ -78,35 +81,22 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
   return VALID_INPUT;
 }
 
-static int get_possible_steps_in_direction(const Game* game, Coords coords, int dx, int dy) {
-  int steps = 0;
-  while (true) {
-    coords.x += dx, coords.y += dy;
-    if (!is_tile_in_bounds(game, coords)) break;
-    if (!is_fish_tile(get_tile(game, coords))) break;
-    steps++;
-  }
-  return steps;
-}
-
-PossibleMoves calculate_penguin_possible_moves(const Game* game, Coords start) {
+PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start) {
   assert(is_tile_in_bounds(game, start));
-  PossibleMoves moves = {
-    .steps_up = get_possible_steps_in_direction(game, start, 0, -1),
-    .steps_right = get_possible_steps_in_direction(game, start, 1, 0),
-    .steps_down = get_possible_steps_in_direction(game, start, 0, 1),
-    .steps_left = get_possible_steps_in_direction(game, start, -1, 0),
-  };
-  moves.all_steps = moves.steps_up + moves.steps_right + moves.steps_down + moves.steps_left;
+  PossibleSteps moves;
+  for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+    Coords d = DIRECTION_TO_COORDS[dir];
+    Coords target = start;
+    int steps = 0;
+    while (true) {
+      target.x += d.x, target.y += d.y;
+      if (!is_tile_in_bounds(game, target)) break;
+      if (!is_fish_tile(get_tile(game, target))) break;
+      steps++;
+    }
+    moves.steps[dir] = steps;
+  }
   return moves;
-}
-
-void constrain_possible_moves_by_max_steps(PossibleMoves* moves, int max_move_length) {
-  moves->steps_right = my_min(moves->steps_right, max_move_length);
-  moves->steps_down = my_min(moves->steps_down, max_move_length);
-  moves->steps_left = my_min(moves->steps_left, max_move_length);
-  moves->steps_up = my_min(moves->steps_up, max_move_length);
-  moves->all_steps = moves->steps_right + moves->steps_down + moves->steps_left + moves->steps_up;
 }
 
 void move_penguin(Game* game, Coords start, Coords target) {

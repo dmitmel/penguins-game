@@ -19,13 +19,9 @@ typedef enum MovementError {
   MOVE_OVER_PENGUIN,
 } MovementError;
 
-typedef struct PossibleMoves {
-  int steps_up;
-  int steps_right;
-  int steps_down;
-  int steps_left;
-  int all_steps;
-} PossibleMoves;
+typedef struct PossibleSteps {
+  int steps[DIRECTION_MAX];
+} PossibleSteps;
 
 void movement_begin(Game* game);
 void movement_end(Game* game);
@@ -33,8 +29,7 @@ void movement_end(Game* game);
 int movement_switch_player(Game* game);
 bool any_valid_player_move_exists(const Game* game, int player_idx);
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail);
-PossibleMoves calculate_penguin_possible_moves(const Game* game, Coords start);
-void constrain_possible_moves_by_max_steps(PossibleMoves* moves, int max_move_length);
+PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start);
 void move_penguin(Game* game, Coords start, Coords target);
 
 #ifdef __cplusplus

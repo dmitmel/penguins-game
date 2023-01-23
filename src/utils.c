@@ -5,6 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+Coords DIRECTION_TO_COORDS[DIRECTION_MAX] = {
+  [DIRECTION_RIGHT] = { 1, 0 },
+  [DIRECTION_DOWN] = { 0, 1 },
+  [DIRECTION_LEFT] = { -1, 0 },
+  [DIRECTION_UP] = { 0, -1 },
+};
+
 const char* strip_prefix(const char* str, const char* prefix) {
   // Based on <https://stackoverflow.com/a/4770992>
   int prefix_len = strlen(prefix);
