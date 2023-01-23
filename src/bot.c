@@ -1,5 +1,4 @@
 #include "bot.h"
-#include "arguments.h"
 #include "board.h"
 #include "game.h"
 #include "movement.h"
@@ -12,6 +11,14 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+void init_bot_parameters(BotParameters* self) {
+  self->placement_strategy = BOT_PLACEMENT_SMART;
+  self->placement_scan_area = 6;
+  self->movement_strategy = BOT_MOVEMENT_SMART;
+  self->max_move_length = INT_MAX;
+  self->recursion_limit = 3;
+}
 
 BotState* bot_state_new(const BotParameters* params, Game* game) {
   BotState* self = malloc(sizeof(BotState));

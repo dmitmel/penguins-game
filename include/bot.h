@@ -1,6 +1,5 @@
 #pragma once
 
-#include "arguments.h"
 #include "game.h"
 #include "movement.h"
 #include "utils.h"
@@ -10,6 +9,29 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef enum BotPlacementStrategy {
+  BOT_PLACEMENT_SMART,
+  BOT_PLACEMENT_RANDOM,
+  BOT_PLACEMENT_FIRST_POSSIBLE,
+  BOT_PLACEMENT_MOST_FISH,
+} BotPlacementStrategy;
+
+typedef enum BotMovementStrategy {
+  BOT_MOVEMENT_SMART,
+  BOT_MOVEMENT_RANDOM,
+  BOT_MOVEMENT_FIRST_POSSIBLE,
+} BotMovementStrategy;
+
+typedef struct BotParameters {
+  BotPlacementStrategy placement_strategy;
+  int placement_scan_area;
+  BotMovementStrategy movement_strategy;
+  int max_move_length;
+  int recursion_limit;
+} BotParameters;
+
+void init_bot_parameters(BotParameters* self);
 
 typedef struct BotMove {
   Coords penguin;

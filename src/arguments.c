@@ -1,10 +1,19 @@
 #include "arguments.h"
+#include "bot.h"
 #include "utils.h"
-#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+void init_arguments(Arguments* self) {
+  self->action = ACTION_ARG_INTERACTIVE;
+  self->penguins = 0;
+  self->input_board_file = NULL;
+  self->output_board_file = NULL;
+  self->set_name = NULL;
+  init_bot_parameters(&self->bot);
+}
 
 void print_usage(const char* prog_name) {
   fprintf(stderr, "Usage:\n");
@@ -15,16 +24,7 @@ void print_usage(const char* prog_name) {
 }
 
 bool parse_arguments(Arguments* result, int argc, char* argv[]) {
-  result->action = ACTION_ARG_INTERACTIVE;
-  result->penguins = 0;
-  result->input_board_file = NULL;
-  result->output_board_file = NULL;
-  result->set_name = NULL;
-  result->bot.placement_strategy = BOT_PLACEMENT_SMART;
-  result->bot.placement_scan_area = 6;
-  result->bot.movement_strategy = BOT_MOVEMENT_SMART;
-  result->bot.max_move_length = INT_MAX;
-  result->bot.recursion_limit = 3;
+  init_arguments(result);
 
   bool ok = true;
   int file_arg = 0;
