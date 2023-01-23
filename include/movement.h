@@ -30,7 +30,8 @@ int movement_switch_player(Game* game);
 bool any_valid_player_move_exists(const Game* game, int player_idx);
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail);
 PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start);
-void move_penguin(Game* game, Coords start, Coords target);
+int move_penguin(Game* game, Coords start, Coords target);
+void undo_move_penguin(Game* game, Coords start, Coords target, int prev_target_tile);
 
 #ifdef __cplusplus
 }

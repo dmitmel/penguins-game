@@ -99,7 +99,7 @@ PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start) {
   return moves;
 }
 
-void move_penguin(Game* game, Coords start, Coords target) {
+int move_penguin(Game* game, Coords start, Coords target) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   assert(validate_movement(game, start, target, NULL) == VALID_INPUT);
   Player* player = game_get_current_player(game);
@@ -110,4 +110,19 @@ void move_penguin(Game* game, Coords start, Coords target) {
   set_tile(game, start, WATER_TILE);
   player->points += get_tile_fish(tile);
   player->moves_count += 1;
+  return tile;
+}
+
+void undo_move_penguin(Game* game, Coords start, Coords target, int prev_target_tile) {
+  assert(game->phase == GAME_PHASE_MOVEMENT);
+  int start_tile = get_tile(game, start);
+  assert(is_water_tile(start_tile));
+  Player* player = game_get_current_player(game);
+  int target_tile = get_tile(game, target);
+  assert(get_tile_player_id(target_tile) == player->id);
+  *game_find_player_penguin(game, game->current_player_index, target) = start;
+  set_tile(game, start, PENGUIN_TILE(player->id));
+  set_tile(game, target, prev_target_tile);
+  player->points -= get_tile_fish(prev_target_tile);
+  player->moves_count -= 1;
 }

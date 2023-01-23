@@ -24,6 +24,7 @@ typedef struct BotParameters {
   int placement_scan_area;
   BotMovementStrategy movement_strategy;
   int max_move_length;
+  int recursion_limit;
 } BotParameters;
 
 typedef enum ActionArg {

@@ -49,21 +49,23 @@ int run_autonomous_mode(const Arguments* args) {
   assert(my_player_index >= 0);
 
   bool move_ok = false;
+  BotState* bot = bot_state_new(&args->bot, game);
   if (args->action == ACTION_ARG_PLACEMENT) {
     placement_begin(game);
     game->current_player_index = my_player_index - 1;
     if (placement_switch_player(game) == my_player_index) {
-      move_ok = bot_make_placement(&args->bot, game);
+      move_ok = bot_make_placement(bot);
     }
     placement_end(game);
   } else if (args->action == ACTION_ARG_MOVEMENT) {
     movement_begin(game);
     game->current_player_index = my_player_index - 1;
     if (movement_switch_player(game) == my_player_index) {
-      move_ok = bot_make_move(&args->bot, game);
+      move_ok = bot_make_move(bot);
     }
     movement_end(game);
   }
+  bot_state_free(bot);
 
   if ((output_file = fopen(args->output_board_file, "w")) == NULL) {
     perror("Failed to open the output board file");

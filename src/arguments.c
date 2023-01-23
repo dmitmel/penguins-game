@@ -24,6 +24,7 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
   result->bot.placement_scan_area = 6;
   result->bot.movement_strategy = BOT_MOVEMENT_SMART;
   result->bot.max_move_length = INT_MAX;
+  result->bot.recursion_limit = 3;
 
   bool ok = true;
   int file_arg = 0;
@@ -98,6 +99,14 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         result->bot.max_move_length = (int)value;
       } else {
         fprintf(stderr, "Invalid value for the 'bot-max-move-steps' option: '%s'\n", arg_value);
+        ok = false;
+      }
+    } else if ((arg_value = strip_prefix(arg, "bot-recursion="))) {
+      long value;
+      if (parse_number(arg_value, &value) && value >= 0) {
+        result->bot.recursion_limit = (int)value;
+      } else {
+        fprintf(stderr, "Invalid value for the 'bot-recursion' option: '%s'\n", arg_value);
         ok = false;
       }
     } else if (file_arg == 0) {

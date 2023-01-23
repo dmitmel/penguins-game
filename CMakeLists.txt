@@ -76,6 +76,7 @@ if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/munit)
   add_executable(penguins-tests src/tests.c)
   # add all of the libraries defined in penguins-lib
   target_link_libraries(penguins-tests PUBLIC munit penguins-lib)
+  target_link_libraries(penguins-tests PRIVATE penguins-common)
 endif()
 
 find_package(wxWidgets COMPONENTS core base)
