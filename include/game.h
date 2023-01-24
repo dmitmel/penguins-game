@@ -25,6 +25,7 @@ typedef struct Player {
   int penguins_count;
   Coords* penguins;
   int moves_count;
+  int color;
 } Player;
 
 typedef struct Game {

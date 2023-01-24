@@ -1,6 +1,7 @@
 #include "io.h"
 #include "board.h"
 #include "game.h"
+#include "color.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -26,11 +27,18 @@ void print_board(const Game* game) {
       Coords coords = { x, y };
       int tile = get_tile(game, coords);
       if (is_water_tile(tile)) {
-        printf("-  ");
+        water_color();
+        printf(" 0 ");
+        reset_color();
       } else if (is_penguin_tile(tile)) {
+        Player* current_player=game_get_player(game, get_tile_player_id(tile)-1);
+        player_color(current_player);
         printf("p%d ", get_tile_player_id(tile));
+        reset_color();
       } else if (is_fish_tile(tile)) {
-        printf("%d  ", get_tile_fish(tile));
+        ice_color();
+        printf(" %d ", get_tile_fish(tile));
+        reset_color();
       } else {
         printf("   ");
       }
@@ -58,6 +66,14 @@ void get_penguin_count(int* count) {
 void get_player_name(int player_number, char name[32]) {
   printf("Player %d, please input name:\n", player_number);
   scanf("%31s", name);
+}
+
+void get_player_color(int player_number, int* color_choice)
+{
+  printf("Player %d select your color:\n\033[31m1 - red\n\033[32m2 - green\n\033[33m3 - yellow\n\033[34m4 - blue\n\033[35m5 - magenta\033[0m\n", player_number);
+  do{
+    scanf("%d", color_choice);
+  }while(*color_choice<1||*color_choice>5);
 }
 
 void ask_player_for_input(int player_number) {

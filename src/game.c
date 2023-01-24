@@ -78,6 +78,7 @@ void game_set_players_count(Game* self, int count) {
     player->penguins_count = 0;
     player->penguins = malloc(sizeof(Coords) * my_max(0, self->penguins_per_player));
     player->moves_count = 0;
+    player->color = 0;
   }
 }
 
@@ -104,6 +105,12 @@ void game_set_player_name(Game* self, int idx, const char* name) {
   Player* player = game_get_player(self, idx);
   free_and_clear(player->name);
   player->name = strdup(name);
+}
+
+void game_set_player_color(Game* self, int idx, const int color) {
+  assert(self->phase == GAME_PHASE_SETUP);
+  Player* player = game_get_player(self, idx);
+  player->color = color;
 }
 
 void game_add_player_penguin(Game* self, int idx, Coords coords) {
