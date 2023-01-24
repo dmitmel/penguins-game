@@ -46,7 +46,8 @@ bool any_valid_placement_exists(const Game* game) {
 }
 
 bool validate_placement_simple(const Game* game, Coords target) {
-  return get_tile_fish(get_tile(game, target)) == 1;
+  int tile = get_tile(game, target);
+  return get_tile_fish(tile) == 1;
 }
 
 PlacementError validate_placement(const Game* game, Coords target) {

@@ -362,7 +362,7 @@ int bot_rate_move(BotState* self, BotMove move) {
         score += -1000;
       }
     } else if (!is_fish_tile(other_tile)) {
-      // score += -100; // Makes the bot be very ineffective at gathering fish.
+      // score += -100; // Makes the bot very ineffective at gathering fish.
     }
   }
 

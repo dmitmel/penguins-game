@@ -238,7 +238,8 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     for (int y = 0; y < game->board_height; y++) {
       for (int x = 0; x < game->board_width; x++) {
         Coords coords = { x, y };
-        if (get_tile_player_id(get_tile(game, coords)) == player->id) {
+        int tile = get_tile(game, coords);
+        if (get_tile_player_id(tile) == player->id) {
           game_add_player_penguin(game, i, coords);
         }
       }

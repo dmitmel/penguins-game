@@ -245,7 +245,8 @@ Coords CanvasPanel::get_selected_penguin_cell(int player_index) const {
     Coords curr_cell =
       this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
     if (is_tile_in_bounds(game, curr_cell)) {
-      if (get_tile_player_id(get_tile(game, curr_cell)) == player_id) {
+      int tile = get_tile(game, curr_cell);
+      if (get_tile_player_id(tile) == player_id) {
         return curr_cell;
       }
     }
@@ -301,8 +302,8 @@ void CanvasPanel::update_blocked_cells() {
       for (int y = 0; y < game->board_height; y++) {
         for (int x = 0; x < game->board_width; x++) {
           Coords cell = { x, y };
-          *this->cell_blocked_ptr(cell) =
-            get_tile_player_id(get_tile(game, cell)) != current_player_id;
+          int tile = get_tile(game, cell);
+          *this->cell_blocked_ptr(cell) = get_tile_player_id(tile) != current_player_id;
         }
       }
     }
