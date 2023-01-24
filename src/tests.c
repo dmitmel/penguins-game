@@ -17,8 +17,8 @@ int random_range(int min, int max) {
 
 static MunitResult
 test_placeable_spot_exists(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
-  int grid[] = { 0, 1, 2, 
-                -1, 2, 1 };
+  int grid[] = { 0,  1, 2, //
+                 -1, 2, 1 };
   Game game = { .phase = GAME_PHASE_PLACEMENT,
                 .players = NULL,
                 .players_count = 1,
@@ -33,8 +33,8 @@ test_placeable_spot_exists(const MunitParameter* UNUSED(params), void* UNUSED(da
 
 static MunitResult
 test_placeable_spot_does_not_exist(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
-  int grid[] = { 0, 0, 2, 
-                -1, -2, 3 };
+  int grid[] = { 0,  0,  2, //
+                 -1, -2, 3 };
   Game game = { .phase = GAME_PHASE_PLACEMENT,
                 .players = NULL,
                 .players_count = 1,
@@ -50,8 +50,8 @@ test_placeable_spot_does_not_exist(const MunitParameter* UNUSED(params), void* U
 
 static MunitResult
 test_valid_movement_exists_for_player(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
-  int grid[] = { -2, 0, -1, 
-                0, 1, 3 };
+  int grid[] = { -2, 0, -1, //
+                 0,  1, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -80,8 +80,8 @@ test_valid_movement_exists_for_player(const MunitParameter* UNUSED(params), void
 static MunitResult test_no_valid_movement_exists_for_player(
   const MunitParameter* UNUSED(params), void* UNUSED(data)
 ) {
-  int grid[] = { -2, 0, -1, 
-                0, 1, 3 };
+  int grid[] = { -2, 0, -1, //
+                 0,  1, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -157,7 +157,7 @@ test_movement_over_empty_space_invalid(const MunitParameter* UNUSED(params), voi
 
 static MunitResult
 test_movement_over_penguin_invalid(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
-  int* grid[] = { -1, -2, 3 };
+  int grid[] = { -1, -2, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -182,7 +182,7 @@ test_movement_over_penguin_invalid(const MunitParameter* UNUSED(params), void* U
 
 static MunitResult
 test_move_penguin_and_calculate_points(const MunitParameter* UNUSED(params), void* UNUSED(data)) {
-  int* grid[] = { -1, 1, 3 };
+  int grid[] = { -1, 1, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -197,7 +197,6 @@ test_move_penguin_and_calculate_points(const MunitParameter* UNUSED(params), voi
                 .board_height = 1,
                 .board_grid = grid,
                 .current_player_index = 0 };
-  Coords fail = { -1, -1 };
 
   assert_int(move_penguin(&game, (Coords){ 0, 0 }, (Coords){ 2, 0 }), ==, 3);
   assert_int(game.board_grid[0], ==, 0);
