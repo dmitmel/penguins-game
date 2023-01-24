@@ -149,25 +149,25 @@ bool bot_make_placement(BotState* self) {
     return true;
   }
 
-  printf("Tile scores:");
+  fprintf(stderr, "Tile scores:");
   int row = 0;
   Coords prev_coords = { -1, -1 };
   for (int i = 0; i < tiles_count; i++) {
     Coords coords = self->tile_coords[i];
     if (coords.y != prev_coords.y) {
-      printf("\nRow %2d: ", coords.y);
+      fprintf(stderr, "\nRow %2d: ", coords.y);
       row = 0;
     }
     row++;
     if (row > 8) {
-      printf("\n");
+      fprintf(stderr, "\n");
       row = 0;
     }
-    printf("(%2d, %2d) = %5d   ", coords.x, coords.y, self->tile_scores[i]);
+    fprintf(stderr, "(%2d, %2d) = %5d   ", coords.x, coords.y, self->tile_scores[i]);
     prev_coords = coords;
   }
   if (row > 0) {
-    printf("\n");
+    fprintf(stderr, "\n");
   }
 
   static const int BEST_MOVES_COUNT = 5;
@@ -176,15 +176,15 @@ bool bot_make_placement(BotState* self) {
     pick_best_scores(tiles_count, self->tile_scores, BEST_MOVES_COUNT, best_indexes);
   assert(available_tiles > 0);
 
-  printf("Best tiles:\n");
+  fprintf(stderr, "Best tiles:\n");
   for (int i = 0; i < available_tiles; i++) {
     Coords coords = self->tile_coords[best_indexes[i]];
     int score = self->tile_scores[best_indexes[i]];
-    printf("(%d, %d) = %d\n", coords.x, coords.y, score);
+    fprintf(stderr, "(%d, %d) = %d\n", coords.x, coords.y, score);
   }
 
   Coords picked_tile = self->tile_coords[best_indexes[random_range(0, available_tiles - 1)]];
-  printf("Picked (%d, %d)\n", picked_tile.x, picked_tile.y);
+  fprintf(stderr, "Picked (%d, %d)\n", picked_tile.x, picked_tile.y);
 
   place_penguin(game, picked_tile);
   return true;
@@ -267,11 +267,12 @@ bool bot_make_move(BotState* self) {
   int available_moves = pick_best_scores(moves_count, move_scores, BEST_MOVES_COUNT, best_indexes);
   assert(available_moves > 0);
 
-  printf("Best moves:\n");
+  fprintf(stderr, "Best moves:\n");
   for (int i = 0; i < available_moves; i++) {
     BotMove move = moves_list[best_indexes[i]];
     int score = move_scores[best_indexes[i]];
-    printf(
+    fprintf(
+      stderr,
       "(%d, %d) -> (%d, %d) = %d\n",
       move.penguin.x,
       move.penguin.y,
@@ -282,7 +283,8 @@ bool bot_make_move(BotState* self) {
   }
 
   BotMove picked_move = moves_list[best_indexes[0]];
-  printf(
+  fprintf(
+    stderr,
     "Picked (%d, %d) -> (%d, %d)\n",
     picked_move.penguin.x,
     picked_move.penguin.y,
