@@ -60,6 +60,7 @@ target_link_libraries(penguins-lib PRIVATE penguins-common)
 add_executable(penguins
   src/arguments.c
   src/autonomous.c
+  src/color.c
   src/interactive.c
   src/io.c
   src/main.c

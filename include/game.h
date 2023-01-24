@@ -54,6 +54,7 @@ Player* game_get_current_player(const Game* self);
 int game_find_player_by_id(const Game* self, int id);
 
 void game_set_player_name(Game* self, int idx, const char* name);
+void game_set_player_color(Game* self, int idx, int color);
 void game_set_player_score(Game* self, int idx, int points);
 
 void game_add_player_penguin(Game* self, int idx, Coords coords);

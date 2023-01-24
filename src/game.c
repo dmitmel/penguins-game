@@ -107,7 +107,7 @@ void game_set_player_name(Game* self, int idx, const char* name) {
   player->name = strdup(name);
 }
 
-void game_set_player_color(Game* self, int idx, const int color) {
+void game_set_player_color(Game* self, int idx, int color) {
   assert(self->phase == GAME_PHASE_SETUP);
   Player* player = game_get_player(self, idx);
   player->color = color;

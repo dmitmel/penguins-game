@@ -17,6 +17,8 @@ void get_penguin_count(int* count);
 
 void get_player_name(int player_number, char name[32]);
 
+void get_player_color(int player_number, int* color_choice);
+
 void ask_player_for_input(int player_number);
 
 void get_penguin_coordinates(Coords* coords);

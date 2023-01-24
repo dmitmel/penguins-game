@@ -1,24 +1,23 @@
 #include "game.h"
 
-
-typedef enum Colors{
+typedef enum Colors {
+  NONE,
   RED,
   GREEN,
   YELLOW,
   BLUE,
   MAGENTA,
-}Colors;
+} Colors;
 
+void red(void);
+void yellow(void);
+void green(void);
+void blue(void);
+void magenta(void);
 
-void red();
-void yellow();
-void green();
-void blue();
-void magenta();
-
-void water_color();
-void ice_color();
-void reset_color();
+void water_color(void);
+void ice_color(void);
+void reset_color(void);
 
 Colors check_color(Player* current_player);
 void player_color(Player* current_player);
