@@ -396,7 +396,8 @@ int bot_rate_move(BotState* self, BotMove move) {
   Player* my_player = game_get_current_player(self->game);
   int score = 0;
 
-  score += 64 / distance(penguin, target) - 8;
+  int move_len = distance(penguin, target);
+  score += 64 / move_len - 8;
   int target_tile = get_tile(self->game, target);
   int fish = get_tile_fish(target_tile);
   score += 10 * fish * fish;
@@ -412,17 +413,39 @@ int bot_rate_move(BotState* self, BotMove move) {
 
   for (int dir = 0; dir < DIRECTION_MAX; dir++) {
     Coords neighbor = DIRECTION_TO_COORDS[dir];
+    neighbor.x += penguin.x, neighbor.y += penguin.y;
+    if (!is_tile_in_bounds(self->game, neighbor)) continue;
+    int other_tile = get_tile(self->game, neighbor);
+    int other_player_id;
+    if ((other_player_id = get_tile_player_id(other_tile))) {
+      for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+        Coords neighbor = DIRECTION_TO_COORDS[dir];
+        neighbor.x += penguin.x, neighbor.y += penguin.y;
+        if (!is_tile_in_bounds(self->game, neighbor)) continue;
+        if (!is_fish_tile(get_tile(self->game, neighbor))) continue;
+        if (neighbor.x == target.x && neighbor.y == target.y) {
+          score += -1000;
+        }
+      }
+    }
+  }
+
+  for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+    Coords neighbor = DIRECTION_TO_COORDS[dir];
     neighbor.x += target.x, neighbor.y += target.y;
     if (!is_tile_in_bounds(self->game, neighbor)) continue;
     if (neighbor.x == penguin.x && neighbor.y == penguin.y) continue;
-
     int other_tile = get_tile(self->game, neighbor);
     int other_player_id;
     if ((other_player_id = get_tile_player_id(other_tile))) {
       if (other_player_id != my_player->id) {
         // One side will be blocked by us, so add 1.
         int blocked = count_obstructed_directions(self->game, neighbor) + 1;
-        if (blocked > 2) score += 500 * (blocked - 2);
+        if (2 <= blocked && blocked <= 3 && move_len == 1) {
+          score += 250;
+        } else if (blocked > 2) {
+          score += 500 * (blocked - 2);
+        }
       } else {
         score += -1000;
       }
