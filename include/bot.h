@@ -29,6 +29,7 @@ typedef struct BotParameters {
   BotMovementStrategy movement_strategy;
   int max_move_length;
   int recursion_limit;
+  int bridge_check_recursion_limit;
 } BotParameters;
 
 void init_bot_parameters(BotParameters* self);
@@ -37,6 +38,10 @@ typedef struct BotMove {
   Coords penguin;
   Coords target;
 } BotMove;
+
+typedef struct FillSpan {
+  int x1, x2, y, dy;
+} FillSpan;
 
 typedef struct BotState {
   const BotParameters* params;
@@ -53,17 +58,23 @@ typedef struct BotState {
   BotMove* all_moves;
   size_t move_scores_cap;
   int* move_scores;
+  size_t fill_grid1_cap;
+  int* fill_grid1;
+  size_t fill_grid2_cap;
+  int* fill_grid2;
+  size_t fill_stack_cap;
+  FillSpan* fill_stack;
 
   struct BotState* sub_state;
   int depth;
 } BotState;
 
-bool bot_make_placement(BotState* self);
-int bot_rate_placement(BotState* self, Coords penguin);
-
 BotState* bot_state_new(const BotParameters* params, Game* game);
 void bot_state_free(BotState* self);
 BotState* bot_enter_sub_state(BotState* self);
+
+bool bot_make_placement(BotState* self);
+int bot_rate_placement(BotState* self, Coords penguin);
 
 bool bot_make_move(BotState* self);
 BotMove* bot_generate_all_moves_list(
@@ -71,6 +82,17 @@ BotMove* bot_generate_all_moves_list(
 );
 int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list);
 int bot_rate_move(BotState* self, BotMove move);
+int* bot_flood_fill_reset_grid(BotState* self, int** fill_grid, size_t* fill_grid_cap);
+int bot_flood_fill_count_fish(BotState* self, int* grid, Coords start, int marker_value);
+
+void flood_fill(
+  int x,
+  int y,
+  bool (*check)(int x, int y, void* user_data),
+  void (*mark)(int x, int y, void* user_data),
+  FillSpan* (*alloc_stack)(size_t capacity, void* user_data),
+  void* user_data
+);
 
 #ifdef __cplusplus
 }
