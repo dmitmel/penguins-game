@@ -18,8 +18,8 @@ void init_bot_parameters(BotParameters* self) {
   self->placement_scan_area = 6;
   self->movement_strategy = BOT_MOVEMENT_SMART;
   self->max_move_length = INT_MAX;
-  self->recursion_limit = 3;
-  self->bridge_check_recursion_limit = 1;
+  self->recursion_limit = 4;
+  self->junction_check_recursion_limit = 2;
 }
 
 BotState* bot_state_new(const BotParameters* params, Game* game) {
@@ -60,9 +60,9 @@ void bot_state_free(BotState* self) {
     free_and_clear(self->fill_grid1);
     free_and_clear(self->fill_grid2);
     free_and_clear(self->fill_stack);
-    BotState* tmp = self->sub_state;
+    BotState* next = self->sub_state;
     free(self);
-    self = tmp;
+    self = next;
   }
 }
 
@@ -343,6 +343,7 @@ BotMove* bot_generate_all_moves_list(
 int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
   Coords prev_penguin = { -1, -1 };
   int fishes_per_dir[DIRECTION_MAX];
+  int* fill_grid;
 
   bot_alloc_buf(self->move_scores, self->move_scores_cap, sizeof(int) * moves_count);
   for (int i = 0; i < moves_count; i++) {
@@ -352,27 +353,35 @@ int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
 
     if (self->depth == 0) {
       if (!(prev_penguin.x == penguin.x && prev_penguin.y == penguin.y)) {
-        int* fill_grid = bot_flood_fill_reset_grid(self, &self->fill_grid1, &self->fill_grid1_cap);
-        // Fill the cells of the fill grid with the directions they are
-        // reachable from and set the elements of fishes_per_dir to the total
-        // number of fish reachable in that direction.
         for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-          Coords neighbor = DIRECTION_TO_COORDS[dir];
-          neighbor.x += penguin.x, neighbor.y += penguin.y;
-          if (!is_tile_in_bounds(self->game, neighbor)) continue;
-          if (fill_grid[neighbor.x + neighbor.y * self->game->board_width] == 0) {
-            fishes_per_dir[dir] = bot_flood_fill_count_fish(self, fill_grid, neighbor, dir + 1);
-          } else {
-            fishes_per_dir[dir] = 0;
+          fishes_per_dir[dir] = 0;
+        }
+        fill_grid = NULL;
+        if (bot_quick_junction_check(self, penguin)) {
+          fill_grid = bot_flood_fill_reset_grid(self, &self->fill_grid1, &self->fill_grid1_cap);
+          // Fill the cells of the fill grid with the directions they are
+          // reachable from and set the elements of fishes_per_dir to the total
+          // number of fish reachable in that direction.
+          for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+            Coords neighbor = DIRECTION_TO_COORDS[dir];
+            neighbor.x += penguin.x, neighbor.y += penguin.y;
+            if (!is_tile_in_bounds(self->game, neighbor)) continue;
+            if (fill_grid[neighbor.x + neighbor.y * self->game->board_width] == 0) {
+              fishes_per_dir[dir] = bot_flood_fill_count_fish(self, fill_grid, neighbor, dir + 1);
+            }
           }
         }
       }
 
-      int available_fish =
-        fishes_per_dir[self->fill_grid1[target.x + target.y * self->game->board_width] - 1];
-      for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-        int missed_fish = fishes_per_dir[dir];
-        score += 10 * (available_fish - missed_fish);
+      if (fill_grid) {
+        int available_fish =
+          fishes_per_dir[self->fill_grid1[target.x + target.y * self->game->board_width] - 1];
+        for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+          int missed_fish = fishes_per_dir[dir];
+          if (missed_fish != 0) {
+            score += 10 * (available_fish - missed_fish);
+          }
+        }
       }
     }
 
@@ -396,6 +405,10 @@ int bot_rate_move(BotState* self, BotMove move) {
     // Emergency escape mode
     score += 1000;
   }
+  if (self->depth == 0 && count_obstructed_directions(self->game, target) == 4) {
+    // A suicide move
+    score += -10000;
+  }
 
   for (int dir = 0; dir < DIRECTION_MAX; dir++) {
     Coords neighbor = DIRECTION_TO_COORDS[dir];
@@ -416,30 +429,34 @@ int bot_rate_move(BotState* self, BotMove move) {
     }
   }
 
-  if (self->depth <= self->params->bridge_check_recursion_limit) {
+  if (self->depth <= self->params->junction_check_recursion_limit) {
     int undo_tile = move_penguin(self->game, penguin, target);
 
-    int* fill_grid = bot_flood_fill_reset_grid(self, &self->fill_grid2, &self->fill_grid2_cap);
-    bool did_find = false;
-    for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-      Coords neighbor = DIRECTION_TO_COORDS[dir];
-      neighbor.x += target.x, neighbor.y += target.y;
-      if (!is_tile_in_bounds(self->game, neighbor)) continue;
-      int other_tile = get_tile(self->game, neighbor);
-      if (is_fish_tile(other_tile)) {
-        if (!did_find) {
-          int marker = dir + 1;
-          int fish = bot_flood_fill_count_fish(self, fill_grid, neighbor, marker);
-          if (fish > 0) {
-            did_find = true;
-            continue;
-          }
-        } else {
+    if (bot_quick_junction_check(self, target)) {
+      int* fill_grid = bot_flood_fill_reset_grid(self, &self->fill_grid2, &self->fill_grid2_cap);
+      int dir;
+      for (dir = 0; dir < DIRECTION_MAX; dir++) {
+        Coords neighbor = DIRECTION_TO_COORDS[dir];
+        neighbor.x += target.x, neighbor.y += target.y;
+        if (!is_tile_in_bounds(self->game, neighbor)) continue;
+        int marker = dir + 1;
+        if (bot_flood_fill_count_fish(self, fill_grid, neighbor, marker) > 0) {
+          break;
+        }
+      }
+      // If there was no unobstructed direction, dir will be equal to
+      // DIRECTION_MAX at the start of this second loop.
+      for (; dir < DIRECTION_MAX; dir++) {
+        Coords neighbor = DIRECTION_TO_COORDS[dir];
+        neighbor.x += target.x, neighbor.y += target.y;
+        if (!is_tile_in_bounds(self->game, neighbor)) continue;
+        int other_tile = get_tile(self->game, neighbor);
+        if (is_fish_tile(other_tile)) {
           int marker = fill_grid[neighbor.x + neighbor.y * self->game->board_width];
           if (marker == 0) {
             // If a tile in some other direction is not reachable from the
-            // direction at which we ran the flood fill, then we must have
-            // broken a bridge somewhere.
+            // direction at which we ran the flood fill, then we must created
+            // junction somewhere.
             score += -200;
             break;
           }
@@ -466,6 +483,71 @@ int bot_rate_move(BotState* self, BotMove move) {
   }
 
   return score;
+}
+
+// A "junction" is a state when then bot has to check between two or more
+// directions because once it makes a move the other paths will be
+// inaccessible. This function only performs a quick heuristic check which can
+// only tell if the current tile is definitely not a junction, so it is used to
+// know if a more time-consuming flood fill test is necessary.
+bool bot_quick_junction_check(BotState* self, Coords coords) {
+  static const Neighbor ORDERED_NEIGHBORS[NEIGHBOR_MAX] = {
+    NEIGHBOR_RIGHT, NEIGHBOR_BOTTOM_RIGHT, NEIGHBOR_BOTTOM, NEIGHBOR_BOTTOM_LEFT,
+    NEIGHBOR_LEFT,  NEIGHBOR_TOP_LEFT,     NEIGHBOR_TOP,    NEIGHBOR_TOP_RIGHT,
+  };
+
+  bool in_bounds[NEIGHBOR_MAX];
+  bool is_fish[NEIGHBOR_MAX];
+  bool connected[NEIGHBOR_MAX];
+  int dir;
+  for (dir = 0; dir < NEIGHBOR_MAX; dir++) {
+    int dir2 = ORDERED_NEIGHBORS[dir];
+    Coords neighbor = NEIGHBOR_TO_COORDS[dir2];
+    neighbor.x += coords.x, neighbor.y += coords.y;
+    connected[dir] = false;
+    is_fish[dir2] = false;
+    if ((in_bounds[dir2] = is_tile_in_bounds(self->game, neighbor))) {
+      int tile = get_tile(self->game, neighbor);
+      is_fish[dir2] = is_fish_tile(tile);
+    }
+  }
+
+  // Find the starting direction
+  for (dir = 0; dir < NEIGHBOR_MAX; dir++) {
+    // Check that dir is one of the four cardinal directions
+    if (ORDERED_NEIGHBORS[dir] >= (Neighbor)DIRECTION_MAX) continue;
+    if (is_fish[ORDERED_NEIGHBORS[dir]]) break;
+  }
+  if (dir == NEIGHBOR_MAX) {
+    // The tile is obstructed on all sides - definitely not a junction.
+    return false;
+  }
+  int start_dir = dir;
+
+  // Walk in the clockwise direction
+  for (dir = start_dir; dir < NEIGHBOR_MAX; dir++) {
+    if (!is_fish[ORDERED_NEIGHBORS[dir]]) break;
+    connected[ORDERED_NEIGHBORS[dir]] = true;
+  }
+  // Walk in the counter-clockwise direction
+  for (dir = start_dir - 1; dir != start_dir; dir--) {
+    if (dir < 0) dir += NEIGHBOR_MAX;
+    if (!is_fish[ORDERED_NEIGHBORS[dir]]) break;
+    connected[ORDERED_NEIGHBORS[dir]] = true;
+  }
+
+  for (dir = 0; dir < DIRECTION_MAX; dir++) {
+    // The first four Neighbor values correspond to the four cardinal
+    // directions, so this is it is possible to use the value of dir without
+    // going through ORDERED_NEIGHBORS.
+    if (is_fish[dir] && !connected[dir]) {
+      // Found an unobstructed tile which is not connected - maybe a junction.
+      return true;
+    }
+  }
+
+  // All neighbor tiles are connected - definitely not a junction.
+  return false;
 }
 
 int* bot_flood_fill_reset_grid(BotState* self, int** fill_grid, size_t* fill_grid_cap) {

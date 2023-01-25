@@ -29,7 +29,7 @@ typedef struct BotParameters {
   BotMovementStrategy movement_strategy;
   int max_move_length;
   int recursion_limit;
-  int bridge_check_recursion_limit;
+  int junction_check_recursion_limit;
 } BotParameters;
 
 void init_bot_parameters(BotParameters* self);
@@ -82,6 +82,7 @@ BotMove* bot_generate_all_moves_list(
 );
 int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list);
 int bot_rate_move(BotState* self, BotMove move);
+bool bot_quick_junction_check(BotState* self, Coords coords);
 int* bot_flood_fill_reset_grid(BotState* self, int** fill_grid, size_t* fill_grid_cap);
 int bot_flood_fill_count_fish(BotState* self, int* grid, Coords start, int marker_value);
 

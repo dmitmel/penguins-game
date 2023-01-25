@@ -109,13 +109,13 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         fprintf(stderr, "Invalid value for the 'bot-recursion' option: '%s'\n", arg_value);
         ok = false;
       }
-    } else if ((arg_value = strip_prefix(arg, "bot-bridge-check-recursion="))) {
+    } else if ((arg_value = strip_prefix(arg, "bot-junction-check-recursion="))) {
       long value;
       if (parse_number(arg_value, &value) && value >= -1) {
-        result->bot.bridge_check_recursion_limit = (int)value;
+        result->bot.junction_check_recursion_limit = (int)value;
       } else {
         fprintf(
-          stderr, "Invalid value for the 'bot-bridge-check-recursion' option: '%s'\n", arg_value
+          stderr, "Invalid value for the 'bot-junction-check-recursion' option: '%s'\n", arg_value
         );
         ok = false;
       }
