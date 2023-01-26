@@ -1,5 +1,6 @@
 #include "gui/game.hh"
 #include "board.h"
+#include "bot.h"
 #include "game.h"
 #include "gui/game_end_dialog.hh"
 #include "gui/game_state.hh"
@@ -105,6 +106,26 @@ void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
   );
 }
 
+static void game_advance_state_plus(GuiGameState& state) {
+  Game* game = state.game.get();
+  while (true) {
+    game_advance_state(game);
+    int current_player_idx = game->current_player_index;
+    if (0 <= current_player_idx && current_player_idx < game->players_count) {
+      if (state.player_types[current_player_idx] != PLAYER_NORMAL) {
+        if (game->phase == GAME_PHASE_PLACEMENT) {
+          bot_make_placement(state.bot_state.get());
+          continue;
+        } else if (game->phase == GAME_PHASE_MOVEMENT) {
+          bot_make_move(state.bot_state.get());
+          continue;
+        }
+      }
+    }
+    break;
+  }
+}
+
 void GameFrame::start_new_game() {
   std::unique_ptr<NewGameDialog> dialog(new NewGameDialog(this, wxID_ANY));
   wxPersistentRegisterAndRestore(dialog.get());
@@ -113,27 +134,39 @@ void GameFrame::start_new_game() {
     return;
   }
 
-  this->state.game_ended = false;
+  state.game_ended = false;
   Game* game = game_new();
-  this->state.game.reset(game);
-  this->state.player_names.reset(new wxString[dialog->get_number_of_players()]);
+  state.game.reset(game);
+  state.bot_state.reset(nullptr);
+  state.bot_params.reset(nullptr);
+  state.player_names.reset(new wxString[dialog->get_number_of_players()]);
+  state.player_types.reset(new PlayerType[dialog->get_number_of_players()]);
 
   game_begin_setup(game);
   game_set_penguins_per_player(game, dialog->get_penguins_per_player());
   game_set_players_count(game, dialog->get_number_of_players());
+  bool any_bots = false;
   for (int i = 0; i < game->players_count; i++) {
     game_set_player_name(game, i, dialog->get_player_name(i).c_str());
-    this->state.player_names[i] = dialog->get_player_name(i);
+    state.player_names[i] = dialog->get_player_name(i);
+    state.player_types[i] = dialog->get_player_type(i);
+    any_bots = any_bots || dialog->get_player_type(i) != PLAYER_NORMAL;
   }
   setup_board(game, dialog->get_board_width(), dialog->get_board_height());
   switch (dialog->get_board_gen_type()) {
-    case NewGameDialog::BOARD_GEN_RANDOM: generate_board_random(game); break;
-    case NewGameDialog::BOARD_GEN_ISLAND: generate_board_island(game); break;
+    case BOARD_GEN_RANDOM: generate_board_random(game); break;
+    case BOARD_GEN_ISLAND: generate_board_island(game); break;
     default: break;
   }
   game_end_setup(game);
 
-  game_advance_state(game);
+  if (any_bots) {
+    state.bot_params.reset(new BotParameters);
+    init_bot_parameters(state.bot_params.get());
+    state.bot_state.reset(bot_state_new(state.bot_params.get(), game));
+  }
+
+  game_advance_state_plus(this->state);
 
   this->canvas_panel->blocked_cells.reset(new bool[game->board_width * game->board_height]);
   this->canvas_panel->update_blocked_cells();
@@ -166,7 +199,10 @@ void GameFrame::end_game() {
 
 void GameFrame::close_game() {
   this->state.game.reset(nullptr);
+  this->state.bot_params.reset(nullptr);
+  this->state.bot_state.reset(nullptr);
   this->state.player_names.reset(nullptr);
+  this->state.player_types.reset(nullptr);
   this->canvas_panel->blocked_cells.reset(nullptr);
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes.reset(nullptr);
@@ -614,7 +650,7 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
     if (is_tile_in_bounds(game, curr_cell) && coords_same(prev_cell, curr_cell)) {
       if (validate_placement(game, curr_cell) == PLACEMENT_VALID) {
         place_penguin(game, curr_cell);
-        game_advance_state(game);
+        game_advance_state_plus(this->state);
         this->game_frame->update_player_info_boxes();
         this->mark_board_dirty();
         this->update_blocked_cells();
@@ -625,7 +661,7 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
     if (is_tile_in_bounds(game, curr_cell) && is_tile_in_bounds(game, prev_cell)) {
       if (validate_movement(game, prev_cell, curr_cell, nullptr) == VALID_INPUT) {
         move_penguin(game, prev_cell, curr_cell);
-        game_advance_state(game);
+        game_advance_state_plus(this->state);
         this->game_frame->update_player_info_boxes();
         this->mark_board_dirty();
       }

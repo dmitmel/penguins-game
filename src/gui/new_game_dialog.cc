@@ -17,6 +17,7 @@ enum {
   ID_BOARD_GEN,
   ID_PENGUINS_NUMBER,
   ID_PLAYERS_NUMBER,
+  ID_PLAYER_TYPE,
   ID_PLAYER_NAME,
   ID_PLAYER_DELETE,
 };
@@ -69,7 +70,7 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   );
 
   this->players_grid = new wxFlexGridSizer(
-    /* cols */ 2,
+    /* cols */ 3,
     /* vgap */ wxRound(spacing),
     /* hgap */ wxRound(spacing / 2)
   );
@@ -137,7 +138,7 @@ int NewGameDialog::get_board_height() const {
   return this->height_input->GetValue();
 }
 
-NewGameDialog::BoardGenType NewGameDialog::get_board_gen_type() const {
+BoardGenType NewGameDialog::get_board_gen_type() const {
   return static_cast<BoardGenType>(this->board_gen_input->GetSelection());
 }
 
@@ -151,6 +152,10 @@ size_t NewGameDialog::get_number_of_players() const {
 
 wxString NewGameDialog::get_player_name(size_t index) const {
   return this->player_rows.at(index).name_input->GetValue();
+}
+
+PlayerType NewGameDialog::get_player_type(size_t index) const {
+  return static_cast<PlayerType>(this->player_rows.at(index).type_input->GetSelection());
 }
 
 void NewGameDialog::set_player_rows_count(size_t count) {
@@ -187,12 +192,21 @@ void NewGameDialog::add_new_player_row(bool initial) {
   name_input->SetHint("Add a new player...");
   grid->Add(name_input, wxSizerFlags().Expand());
 
+  wxString player_types[PLAYER_TYPE_MAX];
+  player_types[PLAYER_NORMAL] = "Normal";
+  player_types[PLAYER_SMART_BOT] = "Bot";
+  auto type_input = new wxChoice(
+    this, ID_PLAYER_TYPE, wxDefaultPosition, wxDefaultSize, PLAYER_TYPE_MAX, player_types
+  );
+  type_input->Select(0);
+  grid->Add(type_input, wxSizerFlags().Expand());
+
   auto delete_btn =
     new wxBitmapButton(this, ID_PLAYER_DELETE, wxArtProvider::GetIcon(wxART_CROSS_MARK));
   delete_btn->Hide();
-  grid->Add(delete_btn, wxSizerFlags());
+  grid->Add(delete_btn, wxSizerFlags().Expand());
 
-  this->new_player_row = { name_input, delete_btn };
+  this->new_player_row = { type_input, name_input, delete_btn };
 }
 
 void NewGameDialog::realize_player_row(size_t index) {
@@ -206,6 +220,7 @@ void NewGameDialog::realize_player_row(size_t index) {
 void NewGameDialog::delete_player_row(size_t index) {
   PlayerRowWidgets& row = this->player_rows.at(index);
   row.name_input->Destroy();
+  row.type_input->Destroy();
   row.delete_btn->Destroy();
   this->player_rows.erase(&row);
 }
@@ -305,8 +320,12 @@ bool NewGameDialog::Persistence::Restore() {
     dialog->set_player_rows_count(dialog->players_number_input->GetValue());
     for (int i = 0; i < int(dialog->player_rows.size()); i++) {
       PlayerRowWidgets& row = dialog->player_rows.at(i);
-      if (!this->RestoreValue(wxString::Format("player_%d_name", i), &str_value)) continue;
-      row.name_input->SetValue(str_value);
+      if (this->RestoreValue(wxString::Format("player_%d_name", i), &str_value)) {
+        row.name_input->SetValue(str_value);
+      }
+      if (this->RestoreValue(wxString::Format("player_%d_type", i), &value) && 0 <= value && value < PLAYER_TYPE_MAX) {
+        row.type_input->Select(value);
+      }
     }
   }
   return true;
@@ -322,5 +341,6 @@ void NewGameDialog::Persistence::Save() const {
   for (int i = 0; i < int(dialog->player_rows.size()); i++) {
     PlayerRowWidgets& row = dialog->player_rows.at(i);
     this->SaveValue(wxString::Format("player_%d_name", i), row.name_input->GetValue());
+    this->SaveValue(wxString::Format("player_%d_type", i), row.type_input->GetSelection());
   }
 }
