@@ -84,7 +84,13 @@ endif()
 target_link_libraries(penguins PRIVATE penguins-common)
 target_link_libraries(penguins PUBLIC penguins-lib)
 
-if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/munit AND BUILD_TESTS)
+find_path(munit_ROOT_DIR
+  NAMES munit.c munit.h
+  PATHS ${CMAKE_CURRENT_SOURCE_DIR}/munit
+  NO_DEFAULT_PATH
+)
+
+if(munit_ROOT_DIR AND BUILD_TESTS)
   add_library(munit munit/munit.c)
   target_include_directories(munit PUBLIC munit)
 
