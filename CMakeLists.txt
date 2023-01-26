@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.4)
 project(penguins C CXX)
 
 option(USE_SANITIZERS "Enable sanitizers" OFF)
+option(INTERACTIVE_MODE "Build the interactive mode" ON)
+option(AUTONOMOUS_MODE "Build the autonomous mode" ON)
+option(GRAPHICAL_MODE "Build the graphical interface" ON)
+option(BUILD_TESTS "Build tests" ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -59,18 +63,28 @@ target_link_libraries(penguins-lib PRIVATE penguins-common)
 # add executables (implementations of the files defined in the header files)
 add_executable(penguins
   src/arguments.c
-  src/autonomous.c
-  src/color.c
-  src/interactive.c
-  src/io.c
   src/main.c
   src/random.c
 )
+if(INTERACTIVE_MODE)
+  target_compile_definitions(penguins PUBLIC INTERACTIVE_MODE)
+  target_sources(penguins PRIVATE
+    src/color.c
+    src/interactive.c
+    src/io.c
+  )
+endif()
+if(AUTONOMOUS_MODE)
+  target_compile_definitions(penguins PUBLIC AUTONOMOUS_MODE)
+  target_sources(penguins PRIVATE
+    src/autonomous.c
+  )
+endif()
 # link all the
 target_link_libraries(penguins PRIVATE penguins-common)
 target_link_libraries(penguins PUBLIC penguins-lib)
 
-if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/munit)
+if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/munit AND BUILD_TESTS)
   add_library(munit munit/munit.c)
   target_include_directories(munit PUBLIC munit)
 
@@ -81,7 +95,7 @@ if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/munit)
 endif()
 
 find_package(wxWidgets COMPONENTS core base)
-if(wxWidgets_FOUND)
+if(wxWidgets_FOUND AND GRAPHICAL_MODE)
   # include(${wxWidgets_USE_FILE})
   embed_resource(resources/tileset.png)
   add_executable(penguins-gui WIN32

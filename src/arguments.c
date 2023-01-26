@@ -17,10 +17,14 @@ void init_arguments(Arguments* self) {
 
 void print_usage(const char* prog_name) {
   fprintf(stderr, "Usage:\n");
+#ifdef AUTONOMOUS_MODE
   fprintf(stderr, "%s phase=placement penguins=N inputboard.txt outpuboard.txt\n", prog_name);
   fprintf(stderr, "%s phase=movement board.txt board.txt\n", prog_name);
   fprintf(stderr, "%s name\n", prog_name);
+#endif
+#ifdef INTERACTIVE_MODE
   fprintf(stderr, "%s interactive\n", prog_name);
+#endif
 }
 
 bool parse_arguments(Arguments* result, int argc, char* argv[]) {
@@ -31,6 +35,8 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
   for (int i = 1; i < argc; i++) {
     const char* arg = argv[i];
     const char* arg_value;
+    bool is_placement_or_movement =
+      result->action == ACTION_ARG_PLACEMENT || result->action == ACTION_ARG_MOVEMENT;
     if ((arg_value = strip_prefix(arg, "phase="))) {
       if (strcmp(arg_value, "placement") == 0) {
         result->action = ACTION_ARG_PLACEMENT;
@@ -119,10 +125,10 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         );
         ok = false;
       }
-    } else if (file_arg == 0) {
+    } else if (is_placement_or_movement && file_arg == 0) {
       result->input_board_file = arg;
       file_arg++;
-    } else if (file_arg == 1) {
+    } else if (is_placement_or_movement && file_arg == 1) {
       result->output_board_file = arg;
       file_arg++;
     } else {
