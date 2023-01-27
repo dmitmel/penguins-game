@@ -104,6 +104,10 @@ find_package(wxWidgets COMPONENTS core base)
 if(wxWidgets_FOUND AND GRAPHICAL_MODE)
   # include(${wxWidgets_USE_FILE})
   embed_resource(resources/tileset.png)
+  set(gui_extra_sources)
+  if(WIN32)
+    list(APPEND gui_extra_sources resources/penguins.rc resources/penguins.exe.manifest)
+  endif()
   add_executable(penguins-gui WIN32
     resources_tileset_png.c
     src/gui/better_random.cc
@@ -114,6 +118,7 @@ if(wxWidgets_FOUND AND GRAPHICAL_MODE)
     src/gui/player_info_box.cc
     src/gui/simple_static_box.cc
     src/gui/tileset.cc
+    ${gui_extra_sources}
   )
   target_link_libraries(penguins-gui PRIVATE penguins-common)
   target_link_libraries(penguins-gui PUBLIC penguins-lib)
@@ -125,4 +130,10 @@ if(wxWidgets_FOUND AND GRAPHICAL_MODE)
   target_compile_definitions(penguins-gui PRIVATE ${wxWidgets_DEFINITIONS})
   target_compile_definitions(penguins-gui PRIVATE $<$<CONFIG:Debug>:${wxWidgets_DEFINITIONS_DEBUG}>)
   target_compile_options(penguins-gui PRIVATE ${wxWidgets_CXX_FLAGS})
+
+  if(WIN32)
+    foreach(dir IN LISTS wxWidgets_INCLUDE_DIRS)
+      set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -i${dir}")
+    endforeach()
+  endif()
 endif()
