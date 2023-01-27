@@ -105,11 +105,9 @@ if(wxWidgets_FOUND AND GRAPHICAL_MODE)
   # include(${wxWidgets_USE_FILE})
   embed_resource(resources/appicon_256.png)
   embed_resource(resources/tileset.png)
-  set(gui_extra_sources)
-  if(WIN32)
-    list(APPEND gui_extra_sources resources/penguins.rc resources/penguins.exe.manifest)
-  endif()
   add_executable(penguins-gui WIN32
+    resources/penguins.exe.manifest
+    resources/penguins.rc
     resources_appicon_256_png.c
     resources_tileset_png.c
     src/gui/better_random.cc
@@ -120,7 +118,6 @@ if(wxWidgets_FOUND AND GRAPHICAL_MODE)
     src/gui/player_info_box.cc
     src/gui/simple_static_box.cc
     src/gui/tileset.cc
-    ${gui_extra_sources}
   )
   target_link_libraries(penguins-gui PRIVATE penguins-common)
   target_link_libraries(penguins-gui PUBLIC penguins-lib)
