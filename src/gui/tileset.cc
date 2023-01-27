@@ -2,13 +2,14 @@
 #include "resources_tileset_png.h"
 #include <wx/defs.h>
 #include <wx/gdicmn.h>
+#include <wx/image.h>
 #include <wx/mstream.h>
 
 TilesetHelper::TilesetHelper(int scaling) : scaling(scaling) {}
 
 void TilesetHelper::load() {
-  wxMemoryInputStream is(resources_tileset_png, resources_tileset_png_size);
-  this->image = wxImage(is, wxBITMAP_TYPE_PNG);
+  wxMemoryInputStream stream(resources_tileset_png, resources_tileset_png_size);
+  this->image = wxImage(stream, wxBITMAP_TYPE_PNG);
   wxASSERT(this->image.IsOk());
   wxSize image_size = this->image.GetSize();
   this->image.Rescale(image_size.x * scaling, image_size.y * scaling, wxIMAGE_QUALITY_NEAREST);

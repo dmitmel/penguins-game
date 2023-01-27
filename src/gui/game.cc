@@ -8,6 +8,7 @@
 #include "gui/player_info_box.hh"
 #include "movement.h"
 #include "placement.h"
+#include "resources_appicon_256_png.h"
 #include "utils.h"
 #include <cmath>
 #include <cstddef>
@@ -26,6 +27,7 @@
 #include <wx/graphics.h>
 #include <wx/menu.h>
 #include <wx/msgdlg.h>
+#include <wx/mstream.h>
 #include <wx/pen.h>
 #include <wx/peninfobase.h>
 #include <wx/persist.h>
@@ -56,6 +58,12 @@ GameFrame::GameFrame(
   wxWindow* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset
 )
 : wxFrame(parent, id, "Penguins game"), state(state), tileset(tileset) {
+  wxMemoryInputStream icon_stream(resources_appicon_256_png, resources_appicon_256_png_size);
+  wxIcon app_icon;
+  // The triple conversion necessary to load the icon here is... meh.
+  app_icon.CopyFromBitmap(wxBitmap(wxImage(icon_stream, wxBITMAP_TYPE_PNG)));
+  this->SetIcon(app_icon);
+
   auto menu_file = new wxMenu();
   menu_file->Append(ID_NEW_GAME, "&New game\tCtrl-N", "Start a new game");
   menu_file->Append(ID_CLOSE_GAME, "&Close the game\tCtrl-W", "Close the current game");
