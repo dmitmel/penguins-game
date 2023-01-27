@@ -73,10 +73,10 @@ BotState* bot_state_new(const BotParameters* params, Game* game);
 void bot_state_free(BotState* self);
 BotState* bot_enter_sub_state(BotState* self);
 
-bool bot_make_placement(BotState* self);
+bool bot_make_placement(BotState* self, Coords* out_target);
 int bot_rate_placement(BotState* self, Coords penguin);
 
-bool bot_make_move(BotState* self);
+bool bot_make_move(BotState* self, Coords* out_penguin, Coords* out_target);
 BotMove* bot_generate_all_moves_list(
   BotState* self, int penguins_count, Coords* penguins, int* moves_count
 );

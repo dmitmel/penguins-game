@@ -11,6 +11,7 @@
 #include <wx/event.h>
 #include <wx/frame.h>
 #include <wx/gdicmn.h>
+#include <wx/graphics.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
 #include <wx/types.h>
@@ -24,9 +25,11 @@ public:
   GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
 
   void start_new_game();
+  void update_game_state();
+  void place_penguin(Coords target);
+  void move_penguin(Coords penguin, Coords target);
   void end_game();
   void close_game();
-
   void update_player_info_boxes();
 
 protected:
@@ -45,6 +48,13 @@ protected:
   wxDECLARE_EVENT_TABLE();
 };
 
+typedef enum CellAttribute {
+  CELL_DIRTY = 1 << 1,
+  CELL_BLOCKED = 1 << 2,
+  CELL_BLOCKED_BEFORE = 1 << 3,
+  CELL_BLOCKED_FOR_CURSOR = 1 << 4,
+} CellAttribute;
+
 class CanvasPanel : public wxPanel {
 public:
   static const wxCoord CELL_SIZE = 40;
@@ -54,8 +64,9 @@ public:
 
   CanvasPanel(GameFrame* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
 
-  std::unique_ptr<bool[]> blocked_cells{ nullptr };
-  bool* cell_blocked_ptr(Coords cell) const;
+  std::unique_ptr<wxByte[]> cell_attributes{ nullptr };
+  wxByte* cell_attributes_ptr(Coords cell) const;
+  void set_cell_attribute(Coords cell, wxByte attr, bool value);
   void update_blocked_cells();
 
   wxSize get_canvas_size() const;
@@ -74,8 +85,8 @@ public:
 protected:
   virtual wxSize DoGetBestClientSize() const override;
   void on_paint(wxPaintEvent& event);
-  void paint_board(wxDC& dc);
-  void paint_overlay(wxDC& dc);
+  void paint_board(wxGraphicsContext& gc);
+  void paint_overlay(wxGraphicsContext& gc);
 
   void on_any_mouse_event(wxMouseEvent& event);
   void on_mouse_down(wxMouseEvent& event);

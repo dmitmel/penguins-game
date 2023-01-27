@@ -59,14 +59,22 @@ int run_autonomous_mode(const Arguments* args) {
     placement_begin(game);
     game->current_player_index = my_player_index - 1;
     if (placement_switch_player(game) == my_player_index) {
-      move_ok = bot_make_placement(bot);
+      Coords target;
+      move_ok = bot_make_placement(bot, &target);
+      if (move_ok) {
+        place_penguin(game, target);
+      }
     }
     placement_end(game);
   } else if (args->action == ACTION_ARG_MOVEMENT) {
     movement_begin(game);
     game->current_player_index = my_player_index - 1;
     if (movement_switch_player(game) == my_player_index) {
-      move_ok = bot_make_move(bot);
+      Coords penguin, target;
+      move_ok = bot_make_move(bot, &penguin, &target);
+      if (move_ok) {
+        move_penguin(game, penguin, target);
+      }
     }
     movement_end(game);
   }

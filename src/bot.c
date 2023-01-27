@@ -123,7 +123,7 @@ static int pick_best_scores(int scores_length, int* scores, int best_length, int
   return j;
 }
 
-bool bot_make_placement(BotState* self) {
+bool bot_make_placement(BotState* self, Coords* out_target) {
   Game* game = self->game;
 
   bot_alloc_buf(
@@ -145,7 +145,7 @@ bool bot_make_placement(BotState* self) {
   BotPlacementStrategy strategy = self->params->placement_strategy;
   if (strategy == BOT_PLACEMENT_FIRST_POSSIBLE || strategy == BOT_PLACEMENT_RANDOM) {
     int picked_tile_idx = strategy == BOT_PLACEMENT_RANDOM ? random_range(0, tiles_count - 1) : 0;
-    place_penguin(game, self->tile_coords[picked_tile_idx]);
+    *out_target = self->tile_coords[picked_tile_idx];
     return true;
   }
 
@@ -158,7 +158,7 @@ bool bot_make_placement(BotState* self) {
     int best_tile_idx = 0;
     int available_tiles = pick_best_scores(tiles_count, self->tile_scores, 1, &best_tile_idx);
     assert(available_tiles == 1);
-    place_penguin(game, self->tile_coords[best_tile_idx]);
+    *out_target = self->tile_coords[best_tile_idx];
     return true;
   }
 
@@ -198,7 +198,7 @@ bool bot_make_placement(BotState* self) {
   Coords picked_tile = self->tile_coords[best_indexes[random_range(0, available_tiles - 1)]];
   fprintf(stderr, "Picked (%d, %d)\n", picked_tile.x, picked_tile.y);
 
-  place_penguin(game, picked_tile);
+  *out_target = picked_tile;
   return true;
 }
 
@@ -244,7 +244,7 @@ int bot_rate_placement(BotState* self, Coords penguin) {
         tile_score += 10;
       }
       int d = distance(penguin, coords);
-      static const int DIV_PRECISION = 1000;
+      const int DIV_PRECISION = 1000;
       score += tile_score * 4 * DIV_PRECISION / (d * d + 1) / DIV_PRECISION;
     }
   }
@@ -254,7 +254,7 @@ int bot_rate_placement(BotState* self, Coords penguin) {
   return score;
 }
 
-bool bot_make_move(BotState* self) {
+bool bot_make_move(BotState* self, Coords* out_penguin, Coords* out_target) {
   Player* my_player = game_get_player(self->game, self->game->current_player_index);
   int moves_count = 0;
   BotMove* moves_list = bot_generate_all_moves_list(
@@ -268,7 +268,7 @@ bool bot_make_move(BotState* self) {
   if (strategy == BOT_MOVEMENT_FIRST_POSSIBLE || strategy == BOT_MOVEMENT_RANDOM) {
     int picked_move_idx = strategy == BOT_MOVEMENT_RANDOM ? random_range(0, moves_count - 1) : 0;
     BotMove picked_move = self->all_moves[picked_move_idx];
-    move_penguin(self->game, picked_move.penguin, picked_move.target);
+    *out_penguin = picked_move.penguin, *out_target = picked_move.target;
     return true;
   }
 
@@ -303,7 +303,7 @@ bool bot_make_move(BotState* self) {
     picked_move.target.y
   );
 
-  move_penguin(self->game, picked_move.penguin, picked_move.target);
+  *out_penguin = picked_move.penguin, *out_target = picked_move.target;
   return true;
 }
 
