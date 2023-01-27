@@ -222,7 +222,7 @@ void NewGameDialog::delete_player_row(size_t index) {
   row.name_input->Destroy();
   row.type_input->Destroy();
   row.delete_btn->Destroy();
-  this->player_rows.erase(&row);
+  this->player_rows.erase(this->player_rows.begin() + index);
 }
 
 void NewGameDialog::on_ok(wxCommandEvent& WXUNUSED(event)) {

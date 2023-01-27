@@ -23,7 +23,7 @@ bool SimpleStaticBox::Create(
   this->m_labelWin = nullptr;
   return true;
 #else
-  return wxStaticBox::Create(parent, id, fake_label, pos, size, style, name);
+  return wxStaticBox::Create(parent, id, wxEmptyString, pos, size, style, name);
 #endif
 }
 

@@ -16,6 +16,11 @@
 
 const char* MY_AUTONOMOUS_PLAYER_NAME = "102D";
 
+// These are specified by the board file format
+#define MAX_PLAYERS 9
+#define MIN_PLAYER_ID 1
+#define MAX_PLAYER_ID 9
+
 int run_autonomous_mode(const Arguments* args) {
   const char* my_player_name = args->set_name != NULL ? args->set_name : MY_AUTONOMOUS_PLAYER_NAME;
   if (args->action == ACTION_ARG_PRINT_NAME) {
@@ -118,13 +123,10 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
   }
   setup_board(game, board_width, board_height);
 
-  static const int MAX_PLAYERS = 9; // This is specified by the file format
   int player_ids[MAX_PLAYERS];
   char* player_names[MAX_PLAYERS];
   int player_scores[MAX_PLAYERS];
 
-  static const int MIN_PLAYER_ID = 1; // These are also defined by the format
-  static const int MAX_PLAYER_ID = 9;
   int player_penguins_by_id[MAX_PLAYER_ID - MIN_PLAYER_ID + 1];
   bool taken_player_ids[MAX_PLAYER_ID - MIN_PLAYER_ID + 1];
   for (int i = MIN_PLAYER_ID; i <= MAX_PLAYER_ID; i++) {

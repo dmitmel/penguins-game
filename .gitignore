@@ -4,3 +4,4 @@ compile_commands.json
 # This one is created by Qt Creator:
 CMakeLists.txt.user
 local.mk
+.vs/

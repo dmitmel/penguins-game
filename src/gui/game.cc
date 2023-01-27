@@ -529,7 +529,7 @@ void CanvasPanel::paint_overlay(wxDC& dc) {
   if (this->mouse_within_window && game->phase != GAME_PHASE_END) {
     Coords current_cell = this->get_cell_by_coords(this->mouse_pos);
     if (is_tile_in_bounds(game, current_cell)) {
-      dc.SetBrush(wxNullBrush);
+      dc.SetBrush(*wxTRANSPARENT_BRUSH);
       dc.SetPen(wxPen(*this->cell_blocked_ptr(current_cell) ? *wxRED : *wxGREEN, 5));
       dc.DrawRectangle(this->get_cell_rect(current_cell));
     }
@@ -550,7 +550,6 @@ void CanvasPanel::paint_overlay(wxDC& dc) {
         wxPen bg_pen(*wxBLACK, 6);
         wxPen green_pen((*wxGREEN).ChangeLightness(75), 4);
         wxPen red_pen((*wxRED).ChangeLightness(75), 4);
-        dc.SetBrush(wxNullBrush);
 
         if (result != VALID_INPUT && !coords_same(move_fail_cell, start_cell)) {
           dc.SetPen(bg_pen);

@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BEST_MOVES_COUNT 5
+
 void init_bot_parameters(BotParameters* self) {
   self->placement_strategy = BOT_PLACEMENT_SMART;
   self->placement_scan_area = 6;
@@ -181,7 +183,6 @@ bool bot_make_placement(BotState* self) {
     fprintf(stderr, "\n");
   }
 
-  static const int BEST_MOVES_COUNT = 5;
   int best_indexes[BEST_MOVES_COUNT];
   int available_tiles =
     pick_best_scores(tiles_count, self->tile_scores, BEST_MOVES_COUNT, best_indexes);
@@ -273,7 +274,6 @@ bool bot_make_move(BotState* self) {
 
   int* move_scores = bot_rate_moves_list(self, moves_count, moves_list);
 
-  static const int BEST_MOVES_COUNT = 5;
   int best_indexes[BEST_MOVES_COUNT];
   int available_moves = pick_best_scores(moves_count, move_scores, BEST_MOVES_COUNT, best_indexes);
   assert(available_moves > 0);
@@ -343,7 +343,7 @@ BotMove* bot_generate_all_moves_list(
 int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
   Coords prev_penguin = { -1, -1 };
   int fishes_per_dir[DIRECTION_MAX];
-  int* fill_grid;
+  int* fill_grid = NULL;
 
   bot_alloc_buf(self->move_scores, self->move_scores_cap, sizeof(int) * moves_count);
   for (int i = 0; i < moves_count; i++) {

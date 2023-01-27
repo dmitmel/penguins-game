@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -26,7 +27,7 @@ const Coords NEIGHBOR_TO_COORDS[NEIGHBOR_MAX] = {
 
 const char* strip_prefix(const char* str, const char* prefix) {
   // Based on <https://stackoverflow.com/a/4770992>
-  int prefix_len = strlen(prefix);
+  size_t prefix_len = strlen(prefix);
   return strncmp(prefix, str, prefix_len) == 0 ? str + prefix_len : NULL;
 }
 
