@@ -86,8 +86,8 @@ protected:
   virtual wxSize DoGetBestClientSize() const override;
   void on_paint(wxPaintEvent& event);
   void draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& pos);
-  void paint_tiles(wxDC& dc);
-  void paint_board(wxDC& dc, wxDC& tiles_dc);
+  void paint_tiles(wxDC& dc, const wxRect& update_region);
+  void paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles_dc);
   void paint_overlay(wxDC& dc);
 
   void on_any_mouse_event(wxMouseEvent& event);

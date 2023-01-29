@@ -466,6 +466,8 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
     return;
   }
 
+  wxRect update_region = GetUpdateRegion().GetBox();
+
   if (!this->tiles_bitmap.IsOk() || this->tiles_bitmap.GetSize() != size) {
     this->tiles_bitmap.Create(size, 24);
   }
@@ -473,14 +475,13 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
     this->board_bitmap.Create(size, 24);
   }
   this->tiles_dc.SelectObject(this->tiles_bitmap);
-  this->paint_tiles(this->tiles_dc);
+  this->paint_tiles(this->tiles_dc, update_region);
   this->board_dc.SelectObject(this->board_bitmap);
-  this->paint_board(this->board_dc, this->tiles_dc);
+  this->paint_board(this->board_dc, update_region, this->tiles_dc);
   this->set_all_cells_attr(CELL_DIRTY | CELL_BLOCKED_DIRTY, false);
 
-  wxRect update = GetUpdateRegion().GetBox();
-  wxPoint upd_pos = update.GetPosition();
-  window_dc.Blit(upd_pos, update.GetSize(), &this->board_dc, upd_pos);
+  wxPoint update_pos = update_region.GetPosition();
+  window_dc.Blit(update_pos, update_region.GetSize(), &this->board_dc, update_pos);
   this->board_dc.SelectObject(wxNullBitmap);
   this->tiles_dc.SelectObject(wxNullBitmap);
 
@@ -498,7 +499,7 @@ void CanvasPanel::draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& p
 #endif
 }
 
-void CanvasPanel::paint_tiles(wxDC& dc) {
+void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
   Game* game = this->state.game.get();
   if (!game) return;
 
@@ -506,8 +507,9 @@ void CanvasPanel::paint_tiles(wxDC& dc) {
     for (int x = 0; x < game->board_width; x++) {
       Coords cell = { x, y };
       if ((*this->cell_attrs_ptr(cell) & CELL_DIRTY) == 0) continue;
-      int cell_value = get_tile(game, cell);
       wxRect cell_rect = this->get_cell_rect(cell);
+      if (!update_region.Intersects(cell_rect)) continue;
+      int cell_value = get_tile(game, cell);
       wxPoint cell_pos = cell_rect.GetPosition();
 
       if (is_water_tile(cell_value)) {
@@ -564,7 +566,7 @@ void CanvasPanel::paint_tiles(wxDC& dc) {
   }
 }
 
-void CanvasPanel::paint_board(wxDC& dc, wxDC& tiles_dc) {
+void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles_dc) {
   Game* game = this->state.game.get();
   if (!game) return;
 
@@ -582,9 +584,9 @@ void CanvasPanel::paint_board(wxDC& dc, wxDC& tiles_dc) {
       Coords cell = { x, y };
       wxByte cell_attrs = *this->cell_attrs_ptr(cell);
       if ((cell_attrs & (CELL_DIRTY | CELL_BLOCKED_DIRTY)) == 0) continue;
-
-      int cell_value = get_tile(game, cell);
       wxRect cell_rect = this->get_cell_rect(cell);
+      if (!update_region.Intersects(cell_rect)) continue;
+      int cell_value = get_tile(game, cell);
       wxPoint cell_pos = cell_rect.GetPosition();
 
       dc.Blit(cell_pos, cell_rect.GetSize(), &tiles_dc, cell_pos);
