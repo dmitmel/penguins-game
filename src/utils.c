@@ -14,15 +14,17 @@ const Coords DIRECTION_TO_COORDS[DIRECTION_MAX] = {
 };
 
 const Coords NEIGHBOR_TO_COORDS[NEIGHBOR_MAX] = {
-  [NEIGHBOR_RIGHT] = { 1, 0 },
-  [NEIGHBOR_BOTTOM] = { 0, 1 },
-  [NEIGHBOR_LEFT] = { -1, 0 },
-  [NEIGHBOR_TOP] = { 0, -1 },
-  //
-  [NEIGHBOR_BOTTOM_RIGHT] = { 1, 1 },
-  [NEIGHBOR_BOTTOM_LEFT] = { -1, 1 },
-  [NEIGHBOR_TOP_LEFT] = { -1, -1 },
-  [NEIGHBOR_TOP_RIGHT] = { 1, -1 },
+  [NEIGHBOR_RIGHT] = { 1, 0 },  [NEIGHBOR_BOTTOM_RIGHT] = { 1, 1 },
+  [NEIGHBOR_BOTTOM] = { 0, 1 }, [NEIGHBOR_BOTTOM_LEFT] = { -1, 1 },
+  [NEIGHBOR_LEFT] = { -1, 0 },  [NEIGHBOR_TOP_LEFT] = { -1, -1 },
+  [NEIGHBOR_TOP] = { 0, -1 },   [NEIGHBOR_TOP_RIGHT] = { 1, -1 },
+};
+
+const Neighbor DIRECTION_TO_NEIGHBOR[DIRECTION_MAX] = {
+  [DIRECTION_RIGHT] = NEIGHBOR_RIGHT,
+  [DIRECTION_DOWN] = NEIGHBOR_BOTTOM,
+  [DIRECTION_LEFT] = NEIGHBOR_LEFT,
+  [DIRECTION_UP] = NEIGHBOR_TOP,
 };
 
 const char* strip_prefix(const char* str, const char* prefix) {

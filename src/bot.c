@@ -514,56 +514,46 @@ int bot_rate_move(BotState* self, BotMove move) {
 // only tell if the current tile is definitely not a junction, so it is used to
 // know if a more time-consuming flood fill test is necessary.
 bool bot_quick_junction_check(BotState* self, Coords coords) {
-  static const Neighbor ORDERED_NEIGHBORS[NEIGHBOR_MAX] = {
-    NEIGHBOR_RIGHT, NEIGHBOR_BOTTOM_RIGHT, NEIGHBOR_BOTTOM, NEIGHBOR_BOTTOM_LEFT,
-    NEIGHBOR_LEFT,  NEIGHBOR_TOP_LEFT,     NEIGHBOR_TOP,    NEIGHBOR_TOP_RIGHT,
-  };
-
   bool in_bounds[NEIGHBOR_MAX];
   bool is_fish[NEIGHBOR_MAX];
   bool connected[NEIGHBOR_MAX];
   int dir;
   for (dir = 0; dir < NEIGHBOR_MAX; dir++) {
-    int dir2 = ORDERED_NEIGHBORS[dir];
-    Coords neighbor = NEIGHBOR_TO_COORDS[dir2];
+    Coords neighbor = NEIGHBOR_TO_COORDS[dir];
     neighbor.x += coords.x, neighbor.y += coords.y;
     connected[dir] = false;
-    is_fish[dir2] = false;
-    if ((in_bounds[dir2] = is_tile_in_bounds(self->game, neighbor))) {
+    is_fish[dir] = false;
+    if ((in_bounds[dir] = is_tile_in_bounds(self->game, neighbor))) {
       int tile = get_tile(self->game, neighbor);
-      is_fish[dir2] = is_fish_tile(tile);
+      is_fish[dir] = is_fish_tile(tile);
     }
   }
 
   // Find the starting direction
-  for (dir = 0; dir < NEIGHBOR_MAX; dir++) {
-    // Check that dir is one of the four cardinal directions
-    if (ORDERED_NEIGHBORS[dir] >= (Neighbor)DIRECTION_MAX) continue;
-    if (is_fish[ORDERED_NEIGHBORS[dir]]) break;
+  int start_dir = NEIGHBOR_MAX;
+  for (dir = 0; dir < DIRECTION_MAX; dir++) {
+    start_dir = DIRECTION_TO_NEIGHBOR[dir];
+    if (is_fish[start_dir]) break;
   }
-  if (dir == NEIGHBOR_MAX) {
+  if (dir == DIRECTION_MAX) {
     // The tile is obstructed on all sides - definitely not a junction.
     return false;
   }
-  int start_dir = dir;
 
   // Walk in the clockwise direction
   for (dir = start_dir; dir < NEIGHBOR_MAX; dir++) {
-    if (!is_fish[ORDERED_NEIGHBORS[dir]]) break;
-    connected[ORDERED_NEIGHBORS[dir]] = true;
+    if (!is_fish[dir]) break;
+    connected[dir] = true;
   }
   // Walk in the counter-clockwise direction
   for (dir = start_dir - 1; dir != start_dir; dir--) {
     if (dir < 0) dir += NEIGHBOR_MAX;
-    if (!is_fish[ORDERED_NEIGHBORS[dir]]) break;
-    connected[ORDERED_NEIGHBORS[dir]] = true;
+    if (!is_fish[dir]) break;
+    connected[dir] = true;
   }
 
   for (dir = 0; dir < DIRECTION_MAX; dir++) {
-    // The first four Neighbor values correspond to the four cardinal
-    // directions, so this is it is possible to use the value of dir without
-    // going through ORDERED_NEIGHBORS.
-    if (is_fish[dir] && !connected[dir]) {
+    if (is_fish[DIRECTION_TO_NEIGHBOR[dir]] && !connected[DIRECTION_TO_NEIGHBOR[dir]]) {
       // Found an unobstructed tile which is not connected - maybe a junction.
       return true;
     }

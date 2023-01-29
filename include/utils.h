@@ -20,19 +20,20 @@ typedef enum Direction {
 } Direction;
 
 typedef enum Neighbor {
-  NEIGHBOR_RIGHT = DIRECTION_RIGHT,
-  NEIGHBOR_BOTTOM = DIRECTION_DOWN,
-  NEIGHBOR_LEFT = DIRECTION_LEFT,
-  NEIGHBOR_TOP = DIRECTION_UP,
+  NEIGHBOR_RIGHT,
   NEIGHBOR_BOTTOM_RIGHT,
+  NEIGHBOR_BOTTOM,
   NEIGHBOR_BOTTOM_LEFT,
+  NEIGHBOR_LEFT,
   NEIGHBOR_TOP_LEFT,
+  NEIGHBOR_TOP,
   NEIGHBOR_TOP_RIGHT,
   NEIGHBOR_MAX,
 } Neighbor;
 
 extern const Coords DIRECTION_TO_COORDS[DIRECTION_MAX];
 extern const Coords NEIGHBOR_TO_COORDS[NEIGHBOR_MAX];
+extern const Neighbor DIRECTION_TO_NEIGHBOR[DIRECTION_MAX];
 
 // Generally several approaches are possible for implementing this macro:
 // <https://stackoverflow.com/a/3599170/12005228>
