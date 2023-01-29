@@ -17,16 +17,13 @@ public:
     const wxSize& size = wxDefaultSize,
     long style = 0,
     const wxString& name = wxASCII_STR(wxGridNameStr)
-  )
-  : wxGrid(parent, id, pos, size, style, name) {}
+  );
 
   void equally_size_columns();
 
 protected:
   virtual bool TryBefore(wxEvent& event) override;
   void on_resize(wxSizeEvent& event);
-
-  wxDECLARE_EVENT_TABLE();
 };
 
 class GameEndDialog : public wxDialog {
@@ -41,6 +38,4 @@ protected:
 
   void on_ok(wxCommandEvent& event);
   void on_key_down(wxKeyEvent& event);
-
-  wxDECLARE_EVENT_TABLE();
 };

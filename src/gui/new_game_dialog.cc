@@ -7,36 +7,17 @@
 #include <wx/gdicmn.h>
 #include <wx/panel.h>
 #include <wx/spinbutt.h>
+#include <wx/spinctrl.h>
 #include <wx/statline.h>
 #include <wx/stattext.h>
 #include <wx/string.h>
-
-enum {
-  ID_BOARD_WIDTH = wxID_HIGHEST + 1,
-  ID_BOARD_HEIGHT,
-  ID_BOARD_GEN,
-  ID_PENGUINS_NUMBER,
-  ID_PLAYERS_NUMBER,
-  ID_PLAYER_TYPE,
-  ID_PLAYER_NAME,
-  ID_PLAYER_DELETE,
-};
-
-// clang-format off
-wxBEGIN_EVENT_TABLE(NewGameDialog, wxDialog)
-  EVT_BUTTON(wxID_OK, NewGameDialog::on_ok)
-  EVT_BUTTON(wxID_CLOSE, NewGameDialog::on_close)
-  EVT_TEXT(ID_PLAYER_NAME, NewGameDialog::on_player_name_input)
-  EVT_TEXT_ENTER(ID_PLAYER_NAME, NewGameDialog::on_player_name_enter_pressed)
-  EVT_SPINCTRL(ID_BOARD_WIDTH, NewGameDialog::on_board_width_input)
-  EVT_SPINCTRL(ID_BOARD_HEIGHT, NewGameDialog::on_board_height_input)
-  EVT_BUTTON(ID_PLAYER_DELETE, NewGameDialog::on_player_delete_clicked)
-  EVT_SPINCTRL(ID_PLAYERS_NUMBER, NewGameDialog::on_players_number_input)
-wxEND_EVENT_TABLE();
-// clang-format on
+#include <wx/textctrl.h>
 
 NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
 : wxDialog(parent, id, "New game options", wxDefaultPosition, wxDefaultSize) {
+  this->Bind(wxEVT_BUTTON, &NewGameDialog::on_ok, this, wxID_OK);
+  this->Bind(wxEVT_BUTTON, &NewGameDialog::on_close, this, wxID_CLOSE);
+
 #if wxCHECK_VERSION(3, 1, 4)
   float spacing = wxSizerFlags::GetDefaultBorderFractional();
 #else
@@ -50,24 +31,26 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   );
 
   this->width_input =
-    this->create_number_option("Board width:", ID_BOARD_WIDTH, 1, 1000, DEFAULT_BOARD_WIDTH);
+    this->create_number_option("Board width:", wxID_ANY, 1, 1000, DEFAULT_BOARD_WIDTH);
+  this->width_input->Bind(wxEVT_SPINCTRL, &NewGameDialog::on_board_width_input, this);
   this->height_input =
-    this->create_number_option("Board height:", ID_BOARD_HEIGHT, 1, 1000, DEFAULT_BOARD_HEIGHT);
+    this->create_number_option("Board height:", wxID_ANY, 1, 1000, DEFAULT_BOARD_HEIGHT);
+  this->height_input->Bind(wxEVT_SPINCTRL, &NewGameDialog::on_board_height_input, this);
 
   wxString board_gen_types[BOARD_GEN_MAX] = {};
   board_gen_types[BOARD_GEN_RANDOM] = "Random";
   board_gen_types[BOARD_GEN_ISLAND] = "Island";
   this->board_gen_input = this->create_choice_option(
-    "Board generation type:", ID_BOARD_GEN, WXSIZEOF(board_gen_types), board_gen_types
+    "Board generation type:", wxID_ANY, WXSIZEOF(board_gen_types), board_gen_types
   );
   this->board_gen_input->Select(0);
 
   this->penguins_input = this->create_number_option(
-    "Penguins per player:", ID_PENGUINS_NUMBER, 1, 10, DEFAULT_PENGUINS_PER_PLAYER
+    "Penguins per player:", wxID_ANY, 1, 10, DEFAULT_PENGUINS_PER_PLAYER
   );
-  this->players_number_input = this->create_number_option(
-    "Number of players:", ID_PLAYERS_NUMBER, 2, 5, DEFAULT_NUMBER_OF_PLAYERS
-  );
+  this->players_number_input =
+    this->create_number_option("Number of players:", wxID_ANY, 2, 5, DEFAULT_NUMBER_OF_PLAYERS);
+  this->players_number_input->Bind(wxEVT_SPINCTRL, &NewGameDialog::on_players_number_input, this);
 
   this->players_grid = new wxFlexGridSizer(
     /* cols */ 3,
@@ -187,22 +170,23 @@ void NewGameDialog::add_new_player_row(bool initial) {
   }
 
   auto name_input = new wxTextCtrl(
-    this, ID_PLAYER_NAME, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER
+    this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER
   );
+  name_input->Bind(wxEVT_TEXT, &NewGameDialog::on_player_name_input, this);
+  name_input->Bind(wxEVT_TEXT_ENTER, &NewGameDialog::on_player_name_enter_pressed, this);
   name_input->SetHint("Add a new player...");
   grid->Add(name_input, wxSizerFlags().Expand());
 
   wxString player_types[PLAYER_TYPE_MAX];
   player_types[PLAYER_NORMAL] = "Normal";
   player_types[PLAYER_SMART_BOT] = "Bot";
-  auto type_input = new wxChoice(
-    this, ID_PLAYER_TYPE, wxDefaultPosition, wxDefaultSize, PLAYER_TYPE_MAX, player_types
-  );
+  auto type_input =
+    new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, PLAYER_TYPE_MAX, player_types);
   type_input->Select(0);
   grid->Add(type_input, wxSizerFlags().Expand());
 
-  auto delete_btn =
-    new wxBitmapButton(this, ID_PLAYER_DELETE, wxArtProvider::GetIcon(wxART_CROSS_MARK));
+  auto delete_btn = new wxBitmapButton(this, wxID_ANY, wxArtProvider::GetIcon(wxART_CROSS_MARK));
+  delete_btn->Bind(wxEVT_BUTTON, &NewGameDialog::on_player_delete_clicked, this);
   delete_btn->Hide();
   grid->Add(delete_btn, wxSizerFlags().Expand());
 

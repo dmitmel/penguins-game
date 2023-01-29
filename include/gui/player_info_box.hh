@@ -53,6 +53,4 @@ protected:
   void on_paint(wxPaintEvent& event);
 
   PlayerInfoBox* info_box;
-
-  wxDECLARE_EVENT_TABLE();
 };

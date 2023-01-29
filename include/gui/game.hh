@@ -45,8 +45,6 @@ protected:
   std::unique_ptr<PlayerInfoBox*[]> player_info_boxes;
   GuiGameState& state;
   const TilesetHelper& tileset;
-
-  wxDECLARE_EVENT_TABLE();
 };
 
 typedef enum CellAttribute {

@@ -60,14 +60,10 @@ void PlayerInfoBox::paint_penguin_window(wxDC& dc) {
   }
 }
 
-// clang-format off
-wxBEGIN_EVENT_TABLE(PlayerPenguinWindow, wxWindow)
-  EVT_PAINT(PlayerPenguinWindow::on_paint)
-wxEND_EVENT_TABLE();
-// clang-format on
-
 PlayerPenguinWindow::PlayerPenguinWindow(PlayerInfoBox* parent, wxWindowID id)
-: wxWindow(parent, id), info_box(parent) {}
+: wxWindow(parent, id), info_box(parent) {
+  this->Bind(wxEVT_PAINT, &PlayerPenguinWindow::on_paint, this);
+}
 
 wxSize PlayerPenguinWindow::DoGetBestSize() const {
   const wxBitmap& bitmap = this->info_box->penguin_sprite;

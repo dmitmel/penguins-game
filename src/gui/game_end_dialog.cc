@@ -13,14 +13,9 @@
 #include <wx/stattext.h>
 #include <wx/string.h>
 
-// clang-format off
-wxBEGIN_EVENT_TABLE(GameEndDialog, wxDialog)
-  EVT_BUTTON(wxID_OK, GameEndDialog::on_ok)
-wxEND_EVENT_TABLE();
-// clang-format on
-
 GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, GuiGameState& state)
 : wxDialog(parent, id, "Game summary", wxDefaultPosition, wxDefaultSize) {
+  this->Bind(wxEVT_BUTTON, &GameEndDialog::on_ok, this, wxID_OK);
   Game* game = state.game.get();
 
   std::unique_ptr<int[]> players_by_score(new int[game->players_count]);
@@ -121,11 +116,17 @@ void GameEndDialog::on_ok(wxCommandEvent& WXUNUSED(event)) {
   this->EndModal(wxID_OK);
 }
 
-// clang-format off
-wxBEGIN_EVENT_TABLE(GameEndDialogGrid, wxGrid)
-  EVT_SIZE(GameEndDialogGrid::on_resize)
-wxEND_EVENT_TABLE();
-// clang-format on
+GameEndDialogGrid::GameEndDialogGrid(
+  wxWindow* parent,
+  wxWindowID id,
+  const wxPoint& pos,
+  const wxSize& size,
+  long style,
+  const wxString& name
+)
+: wxGrid(parent, id, pos, size, style, name) {
+  this->Bind(wxEVT_SIZE, &GameEndDialogGrid::on_resize, this);
+}
 
 bool GameEndDialogGrid::TryBefore(wxEvent& event) {
   wxEventType type = event.GetEventType();

@@ -23,7 +23,7 @@ bool PenguinsApp::OnInit() {
   this->game_frame->Centre();
   this->game_frame->Show();
 
-  this->Yield(true);
+  wxYieldIfNeeded();
   this->game_frame->start_new_game();
 
   return true;

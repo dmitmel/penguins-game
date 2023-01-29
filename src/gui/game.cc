@@ -26,6 +26,7 @@
 #include <wx/geometry.h>
 #include <wx/graphics.h>
 #include <wx/menu.h>
+#include <wx/menuitem.h>
 #include <wx/msgdlg.h>
 #include <wx/mstream.h>
 #include <wx/pen.h>
@@ -41,20 +42,6 @@ static inline bool coords_same(const Coords& a, const Coords& b) {
   return a.x == b.x && a.y == b.y;
 }
 
-enum {
-  ID_NEW_GAME = wxID_HIGHEST + 1,
-  ID_CLOSE_GAME,
-};
-
-// clang-format off
-wxBEGIN_EVENT_TABLE(GameFrame, wxFrame)
-  EVT_MENU(ID_NEW_GAME, GameFrame::on_new_game)
-  EVT_MENU(ID_CLOSE_GAME, GameFrame::on_close_game)
-  EVT_MENU(wxID_ABOUT, GameFrame::on_about)
-  EVT_MENU(wxID_EXIT, GameFrame::on_exit)
-wxEND_EVENT_TABLE();
-// clang-format on
-
 GameFrame::GameFrame(
   wxWindow* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset
 )
@@ -69,18 +56,28 @@ GameFrame::GameFrame(
   this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
 #endif
 
+  auto menu_bar = new wxMenuBar();
+  wxMenuItem* item;
+
   auto menu_file = new wxMenu();
-  menu_file->Append(ID_NEW_GAME, "&New game\tCtrl-N", "Start a new game");
-  menu_file->Append(ID_CLOSE_GAME, "&Close the game\tCtrl-W", "Close the current game");
+  menu_bar->Append(menu_file, "&File");
+
+  item = menu_file->Append(wxID_ANY, "&New game\tCtrl-N", "Start a new game");
+  this->Bind(wxEVT_MENU, &GameFrame::on_new_game, this, item->GetId());
+
+  item = menu_file->Append(wxID_ANY, "&Close the game\tCtrl-W", "Close the current game");
+  this->Bind(wxEVT_MENU, &GameFrame::on_close_game, this, item->GetId());
+
   menu_file->AppendSeparator();
-  menu_file->Append(wxID_EXIT);
+
+  item = menu_file->Append(wxID_EXIT);
+  this->Bind(wxEVT_MENU, &GameFrame::on_exit, this, item->GetId());
 
   auto menu_help = new wxMenu();
-  menu_help->Append(wxID_ABOUT);
-
-  auto menu_bar = new wxMenuBar();
-  menu_bar->Append(menu_file, "&File");
   menu_bar->Append(menu_help, "&Help");
+
+  item = menu_help->Append(wxID_ABOUT);
+  this->Bind(wxEVT_MENU, &GameFrame::on_about, this, item->GetId());
 
   this->SetMenuBar(menu_bar);
 
@@ -198,6 +195,8 @@ void GameFrame::update_game_state() {
     if (game->phase == GAME_PHASE_END) {
       if (!this->state.game_ended) {
         this->state.game_ended = true;
+        this->canvas_panel->update_blocked_cells();
+        this->canvas_panel->Refresh();
         this->end_game();
       }
       break;
@@ -426,12 +425,7 @@ void CanvasPanel::update_blocked_cells() {
       }
     }
   } else {
-    for (int y = 0; y < game->board_height; y++) {
-      for (int x = 0; x < game->board_width; x++) {
-        Coords cell = { x, y };
-        this->set_cell_attr(cell, CELL_BLOCKED | CELL_BLOCKED_FOR_CURSOR, false);
-      }
-    }
+    this->set_all_cells_attr(CELL_BLOCKED | CELL_BLOCKED_FOR_CURSOR, false);
   }
 
   for (int y = 0; y < game->board_height; y++) {

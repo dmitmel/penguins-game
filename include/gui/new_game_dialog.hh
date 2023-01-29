@@ -75,8 +75,6 @@ protected:
   void on_player_delete_clicked(wxCommandEvent& event);
   void on_players_number_input(wxSpinEvent& event);
 
-  wxDECLARE_EVENT_TABLE();
-
 public:
   class Persistence : public wxPersistentWindow<NewGameDialog> {
   public:
