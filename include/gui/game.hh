@@ -8,6 +8,7 @@
 #include <memory>
 #include <wx/bitmap.h>
 #include <wx/dc.h>
+#include <wx/dcmemory.h>
 #include <wx/event.h>
 #include <wx/frame.h>
 #include <wx/gdicmn.h>
@@ -53,6 +54,7 @@ typedef enum CellAttribute {
   CELL_BLOCKED = 1 << 2,
   CELL_BLOCKED_BEFORE = 1 << 3,
   CELL_BLOCKED_FOR_CURSOR = 1 << 4,
+  CELL_BLOCKED_DIRTY = 1 << 5,
 } CellAttribute;
 
 class CanvasPanel : public wxPanel {
@@ -65,8 +67,10 @@ public:
   CanvasPanel(GameFrame* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
 
   std::unique_ptr<wxByte[]> cell_attributes{ nullptr };
-  wxByte* cell_attributes_ptr(Coords cell) const;
-  void set_cell_attribute(Coords cell, wxByte attr, bool value);
+  wxByte* cell_attrs_ptr(Coords cell) const;
+  void set_cell_attr(Coords cell, wxByte attr, bool value);
+  void set_cell_neighbors_attr(Coords cell, wxByte attr, bool value);
+  void set_all_cells_attr(wxByte attr, bool value);
   void update_blocked_cells();
 
   wxSize get_canvas_size() const;
@@ -76,17 +80,15 @@ public:
 
   Coords get_selected_penguin_cell(int player_index) const;
 
-  void mark_board_dirty() {
-    this->board_dirty = true;
-  }
-
   const wxBitmap& get_player_penguin_sprite(int player_id, bool flipped = false) const;
 
 protected:
   virtual wxSize DoGetBestClientSize() const override;
   void on_paint(wxPaintEvent& event);
-  void paint_board(wxGraphicsContext& gc);
-  void paint_overlay(wxGraphicsContext& gc);
+  void draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& pos);
+  void paint_tiles(wxDC& dc);
+  void paint_board(wxDC& dc, wxDC& tiles_dc);
+  void paint_overlay(wxDC& dc);
 
   void on_any_mouse_event(wxMouseEvent& event);
   void on_mouse_down(wxMouseEvent& event);
@@ -94,8 +96,14 @@ protected:
   void on_mouse_up(wxMouseEvent& event);
   void on_mouse_enter_leave(wxMouseEvent& event);
 
-  bool board_dirty = true;
   wxBitmap board_bitmap;
+  wxMemoryDC board_dc;
+  wxBitmap tiles_bitmap;
+  wxMemoryDC tiles_dc;
+
+#ifdef __WXMSW__
+  wxMemoryDC draw_bitmap_dc;
+#endif
 
   bool mouse_within_window = false;
   bool mouse_is_down = false;

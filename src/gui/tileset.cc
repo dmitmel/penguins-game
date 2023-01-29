@@ -14,6 +14,7 @@ void TilesetHelper::load() {
   wxSize image_size = this->image.GetSize();
   this->image.Rescale(image_size.x * scaling, image_size.y * scaling, wxIMAGE_QUALITY_NEAREST);
 
+  this->transparent_tile = get_tile(4, 1);
   for (int i = 0; i < int(WXSIZEOF(this->ice_tiles)); i++) {
     this->ice_tiles[i] = get_tile(0 + i % 3, 0 + i / 3);
   }

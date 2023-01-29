@@ -163,10 +163,9 @@ void GameFrame::start_new_game() {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords cell = { x, y };
-      *this->canvas_panel->cell_attributes_ptr(cell) = CELL_DIRTY;
+      *this->canvas_panel->cell_attrs_ptr(cell) = CELL_DIRTY | CELL_BLOCKED_DIRTY;
     }
   }
-  this->canvas_panel->mark_board_dirty();
 
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes.reset(new PlayerInfoBox*[game->players_count]);
@@ -227,15 +226,16 @@ void GameFrame::update_game_state() {
 
 void GameFrame::place_penguin(Coords target) {
   ::place_penguin(this->state.game.get(), target);
-  this->canvas_panel->set_cell_attribute(target, CELL_DIRTY, true);
-  this->canvas_panel->mark_board_dirty();
+  this->canvas_panel->set_cell_attr(target, CELL_DIRTY, true);
+  this->canvas_panel->set_cell_neighbors_attr(target, CELL_DIRTY, true);
 }
 
 void GameFrame::move_penguin(Coords penguin, Coords target) {
   ::move_penguin(this->state.game.get(), penguin, target);
-  this->canvas_panel->set_cell_attribute(penguin, CELL_DIRTY, true);
-  this->canvas_panel->set_cell_attribute(target, CELL_DIRTY, true);
-  this->canvas_panel->mark_board_dirty();
+  this->canvas_panel->set_cell_attr(penguin, CELL_DIRTY, true);
+  this->canvas_panel->set_cell_neighbors_attr(penguin, CELL_DIRTY, true);
+  this->canvas_panel->set_cell_attr(target, CELL_DIRTY, true);
+  this->canvas_panel->set_cell_neighbors_attr(target, CELL_DIRTY, true);
 }
 
 void GameFrame::end_game() {
@@ -339,7 +339,7 @@ Coords CanvasPanel::get_selected_penguin_cell(int player_index) const {
   return get_tile_player_id(tile) == player_id ? curr_cell : null_coords;
 }
 
-wxByte* CanvasPanel::cell_attributes_ptr(Coords cell) const {
+wxByte* CanvasPanel::cell_attrs_ptr(Coords cell) const {
   if (Game* game = this->state.game.get()) {
     assert(is_tile_in_bounds(game, cell));
     return &this->cell_attributes[cell.x + cell.y * game->board_width];
@@ -348,9 +348,29 @@ wxByte* CanvasPanel::cell_attributes_ptr(Coords cell) const {
   }
 }
 
-void CanvasPanel::set_cell_attribute(Coords cell, wxByte attr, bool value) {
-  wxByte* cell_attrs = this->cell_attributes_ptr(cell);
+void CanvasPanel::set_cell_attr(Coords cell, wxByte attr, bool value) {
+  wxByte* cell_attrs = this->cell_attrs_ptr(cell);
   *cell_attrs = (*cell_attrs & ~attr) | (value ? attr : 0);
+}
+
+void CanvasPanel::set_cell_neighbors_attr(Coords cell, wxByte attr, bool value) {
+  for (int dir = 0; dir < NEIGHBOR_MAX; dir++) {
+    Coords neighbor = NEIGHBOR_TO_COORDS[dir];
+    neighbor.x += cell.x, neighbor.y += cell.y;
+    if (!is_tile_in_bounds(this->state.game.get(), neighbor)) continue;
+    this->set_cell_attr(neighbor, attr, value);
+  }
+}
+
+void CanvasPanel::set_all_cells_attr(wxByte attr, bool value) {
+  if (Game* game = this->state.game.get()) {
+    for (int y = 0; y < game->board_height; y++) {
+      for (int x = 0; x < game->board_width; x++) {
+        Coords cell = { x, y };
+        this->set_cell_attr(cell, attr, value);
+      }
+    }
+  }
 }
 
 void CanvasPanel::update_blocked_cells() {
@@ -364,8 +384,8 @@ void CanvasPanel::update_blocked_cells() {
       for (int x = 0; x < game->board_width; x++) {
         Coords cell = { x, y };
         bool blocked = !validate_placement_simple(game, cell);
-        this->set_cell_attribute(cell, CELL_BLOCKED_FOR_CURSOR, blocked);
-        this->set_cell_attribute(cell, CELL_BLOCKED, blocked && is_a_cell_selected);
+        this->set_cell_attr(cell, CELL_BLOCKED_FOR_CURSOR, blocked);
+        this->set_cell_attr(cell, CELL_BLOCKED, blocked && is_a_cell_selected);
       }
     }
   } else if (game->phase == GAME_PHASE_MOVEMENT) {
@@ -375,7 +395,7 @@ void CanvasPanel::update_blocked_cells() {
       for (int y = 0; y < game->board_height; y++) {
         for (int x = 0; x < game->board_width; x++) {
           Coords cell = { x, y };
-          this->set_cell_attribute(cell, CELL_BLOCKED | CELL_BLOCKED_FOR_CURSOR, true);
+          this->set_cell_attr(cell, CELL_BLOCKED | CELL_BLOCKED_FOR_CURSOR, true);
         }
       }
       PossibleSteps moves = calculate_penguin_possible_moves(game, curr_cell);
@@ -386,12 +406,12 @@ void CanvasPanel::update_blocked_cells() {
         steps_sum += moves.steps[dir];
         for (int steps = moves.steps[dir]; steps > 0; steps--) {
           cell.x += d.x, cell.y += d.y;
-          this->set_cell_attribute(cell, CELL_BLOCKED | CELL_BLOCKED_FOR_CURSOR, false);
+          this->set_cell_attr(cell, CELL_BLOCKED | CELL_BLOCKED_FOR_CURSOR, false);
         }
       }
-      this->set_cell_attribute(curr_cell, CELL_BLOCKED, false);
+      this->set_cell_attr(curr_cell, CELL_BLOCKED, false);
       if (steps_sum != 0 && !this->mouse_is_down) {
-        this->set_cell_attribute(curr_cell, CELL_BLOCKED_FOR_CURSOR, false);
+        this->set_cell_attr(curr_cell, CELL_BLOCKED_FOR_CURSOR, false);
       }
     } else {
       int current_player_id = game_get_current_player(game)->id;
@@ -400,8 +420,8 @@ void CanvasPanel::update_blocked_cells() {
           Coords cell = { x, y };
           int tile = get_tile(game, cell);
           bool blocked = get_tile_player_id(tile) != current_player_id;
-          this->set_cell_attribute(cell, CELL_BLOCKED_FOR_CURSOR, blocked);
-          this->set_cell_attribute(cell, CELL_BLOCKED, false);
+          this->set_cell_attr(cell, CELL_BLOCKED_FOR_CURSOR, blocked);
+          this->set_cell_attr(cell, CELL_BLOCKED, false);
         }
       }
     }
@@ -409,7 +429,7 @@ void CanvasPanel::update_blocked_cells() {
     for (int y = 0; y < game->board_height; y++) {
       for (int x = 0; x < game->board_width; x++) {
         Coords cell = { x, y };
-        this->set_cell_attribute(cell, CELL_BLOCKED | CELL_BLOCKED_FOR_CURSOR, false);
+        this->set_cell_attr(cell, CELL_BLOCKED | CELL_BLOCKED_FOR_CURSOR, false);
       }
     }
   }
@@ -417,14 +437,13 @@ void CanvasPanel::update_blocked_cells() {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords cell = { x, y };
-      wxByte* attrs = this->cell_attributes_ptr(cell);
+      wxByte* attrs = this->cell_attrs_ptr(cell);
       bool was_blocked = (*attrs & CELL_BLOCKED_BEFORE) != 0;
       bool is_blocked = (*attrs & CELL_BLOCKED) != 0;
       if (is_blocked != was_blocked) {
-        this->set_cell_attribute(cell, CELL_DIRTY, true);
-        this->mark_board_dirty();
+        this->set_cell_attr(cell, CELL_BLOCKED_DIRTY, true);
       }
-      this->set_cell_attribute(cell, CELL_BLOCKED_BEFORE, is_blocked);
+      this->set_cell_attr(cell, CELL_BLOCKED_BEFORE, is_blocked);
     }
   }
 }
@@ -442,45 +461,112 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
 
   wxSize size = this->get_canvas_size();
   if (!(size.x > 0 && size.y > 0)) {
-    this->board_dirty = false;
     this->board_bitmap.UnRef();
+    this->tiles_bitmap.UnRef();
     return;
   }
 
-  wxMemoryDC board_dc;
+  if (!this->tiles_bitmap.IsOk() || this->tiles_bitmap.GetSize() != size) {
+    this->tiles_bitmap.Create(size, 24);
+  }
   if (!this->board_bitmap.IsOk() || this->board_bitmap.GetSize() != size) {
-    this->board_dirty = true;
-    this->board_bitmap.Create(size);
-    board_dc.SelectObject(this->board_bitmap);
-    board_dc.SetBackground(*wxWHITE_BRUSH);
-    board_dc.Clear();
-  } else {
-    board_dc.SelectObject(this->board_bitmap);
+    this->board_bitmap.Create(size, 24);
   }
-  if (this->board_dirty) {
-    this->board_dirty = false;
-    std::unique_ptr<wxGraphicsContext> gc(wxGraphicsContext::Create(board_dc));
-    this->paint_board(*gc);
-  }
+  this->tiles_dc.SelectObject(this->tiles_bitmap);
+  this->paint_tiles(this->tiles_dc);
+  this->board_dc.SelectObject(this->board_bitmap);
+  this->paint_board(this->board_dc, this->tiles_dc);
+  this->set_all_cells_attr(CELL_DIRTY | CELL_BLOCKED_DIRTY, false);
 
   wxRect update = GetUpdateRegion().GetBox();
   wxPoint upd_pos = update.GetPosition();
-  // This works faster than `wxGraphicsContext::DrawBitmap` on Windows:
-  window_dc.Blit(upd_pos, update.GetSize(), &board_dc, upd_pos);
-  // Remove the board bitmap out of the context, so that we may use it again (for whatever reason).
-  board_dc.SelectObject(wxNullBitmap);
+  window_dc.Blit(upd_pos, update.GetSize(), &this->board_dc, upd_pos);
+  this->board_dc.SelectObject(wxNullBitmap);
+  this->tiles_dc.SelectObject(wxNullBitmap);
 
-  std::unique_ptr<wxGraphicsContext> gc(wxGraphicsContext::Create(window_dc));
-  this->paint_overlay(*gc);
+  this->paint_overlay(window_dc);
 }
 
-void CanvasPanel::paint_board(wxGraphicsContext& gc) {
+void CanvasPanel::draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& pos) {
+#ifdef __WXMSW__
+  // This works faster on Windows:
+  wxMemoryDC& bmp_dc = this->draw_bitmap_dc;
+  bmp_dc.SelectObjectAsSource(bitmap);
+  dc.Blit(pos, bmp_dc.GetSize(), &bmp_dc, wxPoint(0, 0), wxCOPY);
+#else
+  dc.DrawBitmap(bitmap, pos);
+#endif
+}
+
+void CanvasPanel::paint_tiles(wxDC& dc) {
   Game* game = this->state.game.get();
   if (!game) return;
 
-  auto draw_bitmap = [&](const wxBitmap& bitmap, const wxPoint& pos) {
-    gc.DrawBitmap(bitmap, pos.x, pos.y, bitmap.GetWidth(), bitmap.GetHeight());
-  };
+  for (int y = 0; y < game->board_height; y++) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords cell = { x, y };
+      if ((*this->cell_attrs_ptr(cell) & CELL_DIRTY) == 0) continue;
+      int cell_value = get_tile(game, cell);
+      wxRect cell_rect = this->get_cell_rect(cell);
+      wxPoint cell_pos = cell_rect.GetPosition();
+
+      if (is_water_tile(cell_value)) {
+        this->draw_bitmap(
+          dc, tileset.water_tiles[(x ^ y) % WXSIZEOF(tileset.water_tiles)], cell_pos
+        );
+        continue;
+      }
+
+      this->draw_bitmap(dc, tileset.ice_tiles[(x ^ y) % WXSIZEOF(tileset.ice_tiles)], cell_pos);
+
+      auto check_water = [&](int dx, int dy) -> bool {
+        Coords cell2 = { cell.x + dx, cell.y + dy };
+        return is_tile_in_bounds(game, cell2) && is_water_tile(get_tile(game, cell2));
+      };
+
+      auto draw_edge = [&](int dx, int dy, TileEdge type) {
+        if (check_water(dx, dy)) {
+          this->draw_bitmap(dc, tileset.tile_edges[type], cell_pos);
+        }
+      };
+      draw_edge(0, -1, EDGE_TOP);
+      draw_edge(1, 0, EDGE_RIGHT);
+      draw_edge(0, 1, EDGE_BOTTOM);
+      draw_edge(-1, 0, EDGE_LEFT);
+
+      auto draw_concave_corner = [&](int dx, int dy, TileCorner type) -> void {
+        if (check_water(dx, dy) && !check_water(dx, 0) && !check_water(0, dy)) {
+          this->draw_bitmap(dc, tileset.tile_concave_corners[type], cell_pos);
+        }
+      };
+      draw_concave_corner(1, -1, CORNER_TOP_RIGHT);
+      draw_concave_corner(1, 1, CORNER_BOTTOM_RIGHT);
+      draw_concave_corner(-1, 1, CORNER_BOTTOM_LEFT);
+      draw_concave_corner(-1, -1, CORNER_TOP_LEFT);
+
+      auto draw_convex_corner = [&](int dx, int dy, TileCorner type) -> void {
+        if (check_water(dx, 0) && check_water(0, dy)) {
+          this->draw_bitmap(dc, tileset.tile_convex_corners[type], cell_pos);
+        }
+      };
+      draw_convex_corner(1, -1, CORNER_TOP_RIGHT);
+      draw_convex_corner(1, 1, CORNER_BOTTOM_RIGHT);
+      draw_convex_corner(-1, 1, CORNER_BOTTOM_LEFT);
+      draw_convex_corner(-1, -1, CORNER_TOP_LEFT);
+
+      if (is_fish_tile(cell_value)) {
+        int fish_count = get_tile_fish(cell_value);
+        this->draw_bitmap(
+          dc, tileset.fish_sprites[(fish_count - 1) % WXSIZEOF(tileset.fish_sprites)], cell_pos
+        );
+      }
+    }
+  }
+}
+
+void CanvasPanel::paint_board(wxDC& dc, wxDC& tiles_dc) {
+  Game* game = this->state.game.get();
+  if (!game) return;
 
   Coords mouse_cell = this->get_cell_by_coords(this->mouse_pos);
 
@@ -494,76 +580,29 @@ void CanvasPanel::paint_board(wxGraphicsContext& gc) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords cell = { x, y };
-      wxByte cell_attrs = *this->cell_attributes_ptr(cell);
-      if ((cell_attrs & CELL_DIRTY) == 0) continue;
-      this->set_cell_attribute(cell, CELL_DIRTY, false);
+      wxByte cell_attrs = *this->cell_attrs_ptr(cell);
+      if ((cell_attrs & (CELL_DIRTY | CELL_BLOCKED_DIRTY)) == 0) continue;
 
       int cell_value = get_tile(game, cell);
       wxRect cell_rect = this->get_cell_rect(cell);
       wxPoint cell_pos = cell_rect.GetPosition();
 
-      if (is_water_tile(cell_value)) {
-        draw_bitmap(tileset.water_tiles[(x ^ y) % WXSIZEOF(tileset.water_tiles)], cell_pos);
-      } else {
-        draw_bitmap(tileset.ice_tiles[(x ^ y) % WXSIZEOF(tileset.ice_tiles)], cell_pos);
+      dc.Blit(cell_pos, cell_rect.GetSize(), &tiles_dc, cell_pos);
 
-        auto check_water = [&](int dx, int dy) -> bool {
-          Coords cell2 = { cell.x + dx, cell.y + dy };
-          return is_tile_in_bounds(game, cell2) && is_water_tile(get_tile(game, cell2));
-        };
-
-        auto draw_edge = [&](int dx, int dy, TileEdge type) {
-          if (check_water(dx, dy)) {
-            draw_bitmap(tileset.tile_edges[type], cell_pos);
-          }
-        };
-        draw_edge(0, -1, EDGE_TOP);
-        draw_edge(1, 0, EDGE_RIGHT);
-        draw_edge(0, 1, EDGE_BOTTOM);
-        draw_edge(-1, 0, EDGE_LEFT);
-
-        auto draw_concave_corner = [&](int dx, int dy, TileCorner type) -> void {
-          if (check_water(dx, dy) && !check_water(dx, 0) && !check_water(0, dy)) {
-            draw_bitmap(tileset.tile_concave_corners[type], cell_pos);
-          }
-        };
-        draw_concave_corner(1, -1, CORNER_TOP_RIGHT);
-        draw_concave_corner(1, 1, CORNER_BOTTOM_RIGHT);
-        draw_concave_corner(-1, 1, CORNER_BOTTOM_LEFT);
-        draw_concave_corner(-1, -1, CORNER_TOP_LEFT);
-
-        auto draw_convex_corner = [&](int dx, int dy, TileCorner type) -> void {
-          if (check_water(dx, 0) && check_water(0, dy)) {
-            draw_bitmap(tileset.tile_convex_corners[type], cell_pos);
-          }
-        };
-        draw_convex_corner(1, -1, CORNER_TOP_RIGHT);
-        draw_convex_corner(1, 1, CORNER_BOTTOM_RIGHT);
-        draw_convex_corner(-1, 1, CORNER_BOTTOM_LEFT);
-        draw_convex_corner(-1, -1, CORNER_TOP_LEFT);
-
-        if (is_fish_tile(cell_value)) {
-          int fish_count = get_tile_fish(cell_value);
-          draw_bitmap(
-            tileset.fish_sprites[(fish_count - 1) % WXSIZEOF(tileset.fish_sprites)], cell_pos
-          );
-          if ((cell_attrs & CELL_BLOCKED) != 0) {
-            draw_bitmap(tileset.blocked_tile, cell_pos);
-          }
-        } else if (is_penguin_tile(cell_value)) {
-          int player = get_tile_player_id(cell_value);
-          if ((cell_attrs & CELL_BLOCKED) != 0) {
-            draw_bitmap(tileset.blocked_tile, cell_pos);
-          }
-          bool flipped = false;
-          if (is_penguin_selected && coords_same(cell, selected_penguin_cell)) {
-            flipped = mouse_cell.x < selected_penguin_cell.x;
-          }
-          draw_bitmap(this->get_player_penguin_sprite(player, flipped), cell_pos);
-        }
+      if ((cell_attrs & CELL_BLOCKED) != 0) {
+        this->draw_bitmap(dc, tileset.blocked_tile, cell_pos);
       }
 
-      draw_bitmap(tileset.grid_tile, cell_pos);
+      if (is_penguin_tile(cell_value)) {
+        int player = get_tile_player_id(cell_value);
+        bool flipped = false;
+        if (is_penguin_selected && coords_same(cell, selected_penguin_cell)) {
+          flipped = mouse_cell.x < selected_penguin_cell.x;
+        }
+        this->draw_bitmap(dc, this->get_player_penguin_sprite(player, flipped), cell_pos);
+      }
+
+      this->draw_bitmap(dc, tileset.grid_tile, cell_pos);
     }
   }
 }
@@ -579,7 +618,7 @@ enum ArrowHeadType {
 };
 
 static void draw_arrow_head(
-  wxGraphicsContext& gc,
+  wxDC& dc,
   wxPoint start,
   wxPoint end,
   wxSize head_size,
@@ -592,36 +631,29 @@ static void draw_arrow_head(
   wxPoint2DDouble head1 = -norm * head_size.x + perp * head_size.y;
   wxPoint2DDouble head2 = -norm * head_size.x - perp * head_size.y;
   wxPoint head1i(head1.m_x, head1.m_y), head2i(head2.m_x, head2.m_y);
-  auto draw_line = [&](const wxPoint& start, const wxPoint& end) {
-    gc.StrokeLine(start.x, start.y, end.x, end.y);
-  };
   if (head_type == ARROW_HEAD_NORMAL) {
-    draw_line(end, end + head1i);
-    draw_line(end, end + head2i);
+    dc.DrawLine(end, end + head1i);
+    dc.DrawLine(end, end + head2i);
   } else if (head_type == ARROW_HEAD_CROSS) {
-    draw_line(end - head1i, end + head1i);
-    draw_line(end - head2i, end + head2i);
+    dc.DrawLine(end - head1i, end + head1i);
+    dc.DrawLine(end - head2i, end + head2i);
   }
 }
 
-void CanvasPanel::paint_overlay(wxGraphicsContext& gc) {
+void CanvasPanel::paint_overlay(wxDC& dc) {
   Game* game = this->state.game.get();
   if (!game) return;
 
   if (this->mouse_within_window && game->phase != GAME_PHASE_END) {
     Coords current_cell = this->get_cell_by_coords(this->mouse_pos);
     if (is_tile_in_bounds(game, current_cell)) {
-      wxByte cell_attrs = *this->cell_attributes_ptr(current_cell);
-      gc.SetBrush(*wxTRANSPARENT_BRUSH);
-      gc.SetPen(wxPen((cell_attrs & CELL_BLOCKED_FOR_CURSOR) != 0 ? *wxRED : *wxGREEN, 5));
+      wxByte cell_attrs = *this->cell_attrs_ptr(current_cell);
+      dc.SetBrush(*wxTRANSPARENT_BRUSH);
+      dc.SetPen(wxPen((cell_attrs & CELL_BLOCKED_FOR_CURSOR) != 0 ? *wxRED : *wxGREEN, 5));
       wxRect rect = this->get_cell_rect(current_cell);
-      gc.DrawRectangle(rect.x, rect.y, rect.width, rect.height);
+      dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height);
     }
   }
-
-  auto draw_line = [&](const wxPoint& start, const wxPoint& end) {
-    gc.StrokeLine(start.x, start.y, end.x, end.y);
-  };
 
   if (this->mouse_is_down && game->phase == GAME_PHASE_MOVEMENT) {
     Coords start_cell = this->get_selected_penguin_cell(game->current_player_index);
@@ -640,25 +672,25 @@ void CanvasPanel::paint_overlay(wxGraphicsContext& gc) {
         wxPen red_pen((*wxRED).ChangeLightness(75), 4);
 
         if (result != VALID_INPUT && !coords_same(move_fail_cell, start_cell)) {
-          gc.SetPen(bg_pen);
-          draw_line(arrow_start, arrow_fail);
-          gc.SetPen(green_pen);
-          draw_line(arrow_start, arrow_fail);
-          gc.SetPen(bg_pen);
-          draw_arrow_head(gc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
-          draw_line(arrow_fail, arrow_end);
-          draw_arrow_head(gc, arrow_fail, arrow_end, head_size);
-          gc.SetPen(red_pen);
-          draw_arrow_head(gc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
-          draw_line(arrow_fail, arrow_end);
-          draw_arrow_head(gc, arrow_fail, arrow_end, head_size);
+          dc.SetPen(bg_pen);
+          dc.DrawLine(arrow_start, arrow_fail);
+          dc.SetPen(green_pen);
+          dc.DrawLine(arrow_start, arrow_fail);
+          dc.SetPen(bg_pen);
+          draw_arrow_head(dc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
+          dc.DrawLine(arrow_fail, arrow_end);
+          draw_arrow_head(dc, arrow_fail, arrow_end, head_size);
+          dc.SetPen(red_pen);
+          draw_arrow_head(dc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
+          dc.DrawLine(arrow_fail, arrow_end);
+          draw_arrow_head(dc, arrow_fail, arrow_end, head_size);
         } else {
-          gc.SetPen(bg_pen);
-          draw_line(arrow_start, arrow_end);
-          draw_arrow_head(gc, arrow_start, arrow_end, head_size);
-          gc.SetPen(result == VALID_INPUT ? green_pen : red_pen);
-          draw_line(arrow_start, arrow_end);
-          draw_arrow_head(gc, arrow_start, arrow_end, head_size);
+          dc.SetPen(bg_pen);
+          dc.DrawLine(arrow_start, arrow_end);
+          draw_arrow_head(dc, arrow_start, arrow_end, head_size);
+          dc.SetPen(result == VALID_INPUT ? green_pen : red_pen);
+          dc.DrawLine(arrow_start, arrow_end);
+          draw_arrow_head(dc, arrow_start, arrow_end, head_size);
         }
       }
     }
@@ -727,8 +759,7 @@ void CanvasPanel::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
     }
     Coords selected_penguin_cell = this->get_selected_penguin_cell(game->current_player_index);
     if (is_tile_in_bounds(game, selected_penguin_cell) && game->phase == GAME_PHASE_MOVEMENT) {
-      this->set_cell_attribute(selected_penguin_cell, CELL_DIRTY, true);
-      this->mark_board_dirty();
+      this->set_cell_attr(selected_penguin_cell, CELL_DIRTY, true);
     }
     this->Refresh();
   }

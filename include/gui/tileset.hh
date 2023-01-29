@@ -49,6 +49,7 @@ public:
   const int scaling;
   wxImage image;
 
+  wxBitmap transparent_tile;
   wxBitmap water_tiles[3];
   wxBitmap ice_tiles[6];
   wxBitmap tile_edges[EDGE_MAX];
