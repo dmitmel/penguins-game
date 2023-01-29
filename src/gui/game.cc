@@ -327,18 +327,16 @@ wxPoint CanvasPanel::get_cell_centre(Coords cell) const {
 }
 
 Coords CanvasPanel::get_selected_penguin_cell(int player_index) const {
-  if (Game* game = this->state.game.get()) {
-    int player_id = game_get_player(game, player_index)->id;
-    Coords curr_cell =
-      this->get_cell_by_coords(this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos);
-    if (is_tile_in_bounds(game, curr_cell)) {
-      int tile = get_tile(game, curr_cell);
-      if (get_tile_player_id(tile) == player_id) {
-        return curr_cell;
-      }
-    }
-  }
-  return { -1, -1 };
+  Coords null_coords = { -1, -1 };
+  Game* game = this->state.game.get();
+  if (!game) return null_coords;
+  if (!(0 <= player_index && player_index < game->players_count)) return null_coords;
+  int player_id = game_get_player(game, player_index)->id;
+  wxPoint curr_cell_pos = this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos;
+  Coords curr_cell = this->get_cell_by_coords(curr_cell_pos);
+  if (!is_tile_in_bounds(game, curr_cell)) return null_coords;
+  int tile = get_tile(game, curr_cell);
+  return get_tile_player_id(tile) == player_id ? curr_cell : null_coords;
 }
 
 wxByte* CanvasPanel::cell_attributes_ptr(Coords cell) const {
@@ -424,8 +422,8 @@ void CanvasPanel::update_blocked_cells() {
       bool is_blocked = (*attrs & CELL_BLOCKED) != 0;
       if (is_blocked != was_blocked) {
         this->set_cell_attribute(cell, CELL_DIRTY, true);
-  this->mark_board_dirty();
-}
+        this->mark_board_dirty();
+      }
       this->set_cell_attribute(cell, CELL_BLOCKED_BEFORE, is_blocked);
     }
   }
