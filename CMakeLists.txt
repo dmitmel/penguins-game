@@ -124,13 +124,18 @@ if(GRAPHICAL_MODE)
       URL_HASH SHA1=b5299275abddc7cb5fa92f75c17475ade3bc0532
     )
     FetchContent_MakeAvailable(wxWidgets)
+    set(wxWidgets_ROOT_DIR ${wxWidgets_SOURCE_DIR})
     set_property(DIRECTORY ${wxWidgets_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL ON)
   endif()
 
   embed_resource(resources/appicon_256.png)
   embed_resource(resources/tileset.png)
+  # Useful information about enabling High-DPI support on Windows:
+  # <https://doc.magnum.graphics/magnum/platforms-windows.html#platforms-windows-hidpi>.
+  # Note that when compiling on an OS other than Windows, the Windows-specific options and source
+  # files (`*.rc`, `*.manifest`) will be ignored.
   add_executable(penguins-gui WIN32
-    resources/penguins.exe.manifest
+    ${wxWidgets_ROOT_DIR}/include/wx/msw/wx_dpi_aware_pmv2.manifest
     resources/penguins.rc
     resources_appicon_256_png.c
     resources_tileset_png.c
