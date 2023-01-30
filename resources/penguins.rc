@@ -1,7 +1,5 @@
-#ifdef __MINGW32__
 #define wxUSE_RC_MANIFEST 1
 #define wxUSE_DPI_AWARE_MANIFEST 2
-#endif
 #include "wx/msw/wx.rc"
 IDI_ICON1 ICON "appicon_128.ico"
 IDI_ICON2 ICON "appicon_16.ico"

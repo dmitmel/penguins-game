@@ -18,7 +18,7 @@ option(FETCHCONTENT_QUIET "" OFF)
 option(FETCHCONTENT_UPDATES_DISCONNECTED "" ON)
 
 option(BUILD_WXWIDGETS_FROM_SOURCE "Whether to download and build wxWidgets from source" OFF)
-option(wxBUILD_SHARED "Whether to build wxWidgets as a shared or a static library" OFF)
+option(BUILD_SHARED_LIBS "Whether to build shared or static libraries" OFF)
 
 include(FetchContent)
 
@@ -124,7 +124,6 @@ if(GRAPHICAL_MODE)
       URL_HASH SHA1=b5299275abddc7cb5fa92f75c17475ade3bc0532
     )
     FetchContent_MakeAvailable(wxWidgets)
-    set(wxWidgets_ROOT_DIR ${wxWidgets_SOURCE_DIR})
     set_property(DIRECTORY ${wxWidgets_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL ON)
   endif()
 
@@ -135,7 +134,6 @@ if(GRAPHICAL_MODE)
   # Note that when compiling on an OS other than Windows, the Windows-specific options and source
   # files (`*.rc`, `*.manifest`) will be ignored.
   add_executable(penguins-gui WIN32
-    ${wxWidgets_ROOT_DIR}/include/wx/msw/wx_dpi_aware_pmv2.manifest
     resources/penguins.rc
     resources_appicon_256_png.c
     resources_tileset_png.c
@@ -150,6 +148,10 @@ if(GRAPHICAL_MODE)
   )
   target_link_libraries(penguins-gui PRIVATE penguins-common PUBLIC penguins-lib)
   target_include_directories(penguins-gui PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+  if(MSVC)
+    # We include our own manifest via the `.rc` file, so the default one has to be disabled.
+    target_link_options(penguins-gui PRIVATE /MANIFEST:NO)
+  endif()
 
   if(BUILD_WXWIDGETS_FROM_SOURCE)
     target_link_libraries(penguins-gui PUBLIC wx::core wx::base)
@@ -160,14 +162,5 @@ if(GRAPHICAL_MODE)
     target_compile_definitions(penguins-gui PRIVATE ${wxWidgets_DEFINITIONS})
     target_compile_definitions(penguins-gui PRIVATE $<$<CONFIG:Debug>:${wxWidgets_DEFINITIONS_DEBUG}>)
     target_compile_options(penguins-gui PRIVATE ${wxWidgets_CXX_FLAGS})
-  endif()
-
-  if(WIN32)
-    foreach(dir IN LISTS wxWidgets_INCLUDE_DIRS)
-      set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -I${dir}")
-    endforeach()
-    foreach(def IN LISTS wxWidgets_DEFINITIONS)
-      set(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -D${def}")
-    endforeach()
   endif()
 endif()
