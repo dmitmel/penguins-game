@@ -108,7 +108,11 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, GuiGameState& stat
   this->buttons_sizer = this->CreateStdDialogButtonSizer(wxOK);
   this->SetEscapeId(wxID_OK);
   outer_vbox->Add(new wxStaticLine(this), wxSizerFlags().Expand());
-  outer_vbox->Add(this->buttons_sizer, wxSizerFlags().Expand().DoubleBorder(wxTOP | wxBOTTOM));
+  wxSizerFlags buttons_sizer_flags = wxSizerFlags().Expand().DoubleBorder(wxALL);
+#ifdef __WXGTK__
+  buttons_sizer_flags.DoubleBorder(wxTOP | wxBOTTOM);
+#endif
+  outer_vbox->Add(this->buttons_sizer, buttons_sizer_flags);
   this->SetSizerAndFit(outer_vbox);
 }
 

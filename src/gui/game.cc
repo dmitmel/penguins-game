@@ -98,6 +98,12 @@ GameFrame::GameFrame(
   this->SetStatusText("Welcome to wxWidgets!");
 }
 
+void GameFrame::update_layout() {
+  this->canvas_panel->InvalidateBestSize();
+  this->Layout();
+  this->GetSizer()->SetSizeHints(this);
+}
+
 void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
   this->start_new_game();
 }
@@ -178,8 +184,7 @@ void GameFrame::start_new_game() {
   }
   this->update_player_info_boxes();
 
-  this->canvas_panel->InvalidateBestSize();
-  this->GetSizer()->SetSizeHints(this);
+  this->update_layout();
   this->Refresh();
   this->Centre();
 
@@ -252,8 +257,7 @@ void GameFrame::close_game() {
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes.reset(nullptr);
 
-  this->canvas_panel->InvalidateBestSize();
-  this->GetSizer()->SetSizeHints(this);
+  this->update_layout();
   this->Refresh();
   this->Centre();
 }

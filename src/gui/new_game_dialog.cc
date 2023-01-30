@@ -73,7 +73,11 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   this->buttons_sizer = this->CreateStdDialogButtonSizer(wxOK | wxCLOSE);
   this->SetEscapeId(wxID_CLOSE);
   outer_vbox->Add(new wxStaticLine(this), wxSizerFlags().Expand());
-  outer_vbox->Add(this->buttons_sizer, wxSizerFlags().Expand().DoubleBorder(wxTOP | wxBOTTOM));
+  wxSizerFlags buttons_sizer_flags = wxSizerFlags().Expand().DoubleBorder(wxALL);
+#ifdef __WXGTK__
+  buttons_sizer_flags.DoubleBorder(wxTOP | wxBOTTOM);
+#endif
+  outer_vbox->Add(this->buttons_sizer, buttons_sizer_flags);
   this->SetSizerAndFit(outer_vbox);
 
   this->width_input->SetFocus();
@@ -110,6 +114,7 @@ wxChoice* NewGameDialog::create_choice_option(
 }
 
 void NewGameDialog::update_layout() {
+  this->Layout();
   this->GetSizer()->SetSizeHints(this);
 }
 
@@ -156,9 +161,9 @@ void NewGameDialog::set_player_rows_count(size_t count) {
 }
 
 void NewGameDialog::update_new_player_row() {
-  this->new_player_row.name_input->Show(
-    this->player_rows.size() < size_t(this->players_number_input->GetMax())
-  );
+  bool show = this->player_rows.size() < size_t(this->players_number_input->GetMax());
+  this->new_player_row.name_input->Show(show);
+  this->new_player_row.type_input->Show(show);
 }
 
 void NewGameDialog::add_new_player_row(bool initial) {
@@ -312,6 +317,7 @@ bool NewGameDialog::Persistence::Restore() {
       }
     }
   }
+  dialog->update_layout();
   return true;
 }
 

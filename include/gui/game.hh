@@ -25,6 +25,8 @@ class GameFrame : public wxFrame {
 public:
   GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
 
+  void update_layout();
+
   void start_new_game();
   void update_game_state();
   void place_penguin(Coords target);
@@ -38,7 +40,6 @@ protected:
   void on_about(wxCommandEvent& event);
   void on_new_game(wxCommandEvent& event);
   void on_close_game(wxCommandEvent& event);
-  void on_mouse_enter_leave(wxMouseEvent& event);
 
   CanvasPanel* canvas_panel;
   wxBoxSizer* players_box;
