@@ -115,10 +115,9 @@ if(GRAPHICAL_MODE)
   if(NOT BUILD_WXWIDGETS_FROM_SOURCE)
     find_package(wxWidgets COMPONENTS core base)
     if(NOT wxWidgets_FOUND)
-      set(BUILD_WXWIDGETS_FROM_SOURCE ON)
+      set(GRAPHICAL_MODE OFF)
     endif()
-  endif()
-  if(BUILD_WXWIDGETS_FROM_SOURCE)
+  else()
     FetchContent_Declare(wxWidgets
       URL "https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.1/wxWidgets-3.2.1.tar.bz2"
       URL_HASH SHA1=b5299275abddc7cb5fa92f75c17475ade3bc0532
@@ -126,7 +125,9 @@ if(GRAPHICAL_MODE)
     FetchContent_MakeAvailable(wxWidgets)
     set_property(DIRECTORY ${wxWidgets_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL ON)
   endif()
+endif()
 
+if(GRAPHICAL_MODE)
   embed_resource(resources/appicon_256.png)
   embed_resource(resources/tileset.png)
   # Useful information about enabling High-DPI support on Windows:
