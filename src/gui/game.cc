@@ -493,15 +493,6 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   this->board_dc.SelectObject(this->board_bitmap);
   this->paint_board(this->board_dc, update_region, this->tiles_dc);
 
-  for (int y = 0; y < game->board_height; y++) {
-    for (int x = 0; x < game->board_width; x++) {
-      Coords coords = { x, y };
-      wxRect tile_rect = this->get_tile_rect(coords);
-      if (!update_region.Intersects(tile_rect)) continue;
-      this->set_tile_attr(coords, TILE_DIRTY | TILE_BLOCKED_DIRTY, false);
-    }
-  }
-
   wxPoint update_pos = update_region.GetPosition();
   window_dc.Blit(update_pos, update_region.GetSize(), &this->board_dc, update_pos);
   this->board_dc.SelectObject(wxNullBitmap);
@@ -531,6 +522,10 @@ void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
       if ((*this->tile_attrs_ptr(coords) & TILE_DIRTY) == 0) continue;
       wxRect tile_rect = this->get_tile_rect(coords);
       if (!update_region.Intersects(tile_rect)) continue;
+      this->set_tile_attr(coords, TILE_DIRTY, false);
+      // The next layer of the board has to be repainted though.
+      this->set_tile_attr(coords, TILE_BLOCKED_DIRTY, true);
+
       int tile = get_tile(game, coords);
       wxPoint tile_pos = tile_rect.GetPosition();
 
@@ -605,12 +600,13 @@ void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
       wxByte tile_attrs = *this->tile_attrs_ptr(coords);
-      if ((tile_attrs & (TILE_DIRTY | TILE_BLOCKED_DIRTY)) == 0) continue;
+      if ((tile_attrs & TILE_BLOCKED_DIRTY) == 0) continue;
       wxRect tile_rect = this->get_tile_rect(coords);
       if (!update_region.Intersects(tile_rect)) continue;
+      this->set_tile_attr(coords, TILE_BLOCKED_DIRTY, false);
+
       int tile = get_tile(game, coords);
       wxPoint tile_pos = tile_rect.GetPosition();
-
       dc.Blit(tile_pos, tile_rect.GetSize(), &tiles_dc, tile_pos);
 
       if ((tile_attrs & TILE_BLOCKED) != 0) {
