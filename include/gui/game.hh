@@ -14,6 +14,7 @@
 #include <wx/gdicmn.h>
 #include <wx/graphics.h>
 #include <wx/panel.h>
+#include <wx/scrolwin.h>
 #include <wx/sizer.h>
 #include <wx/types.h>
 #include <wx/vector.h>
@@ -41,6 +42,7 @@ protected:
   void on_new_game(wxCommandEvent& event);
   void on_close_game(wxCommandEvent& event);
 
+  wxScrolledWindow* scrolled_panel;
   CanvasPanel* canvas_panel;
   wxBoxSizer* players_box;
   std::unique_ptr<PlayerInfoBox*[]> player_info_boxes;
@@ -63,7 +65,13 @@ public:
   static const int FISH_CIRCLE_RADIUS = 4;
   static const int BLOCKED_CELL_LIGHTNESS = -40;
 
-  CanvasPanel(GameFrame* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
+  CanvasPanel(
+    wxWindow* parent,
+    wxWindowID id,
+    GameFrame* game_frame,
+    GuiGameState& state,
+    const TilesetHelper& tileset
+  );
 
   std::unique_ptr<wxByte[]> cell_attributes{ nullptr };
   wxByte* cell_attrs_ptr(Coords cell) const;

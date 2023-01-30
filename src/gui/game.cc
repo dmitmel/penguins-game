@@ -32,6 +32,7 @@
 #include <wx/pen.h>
 #include <wx/peninfobase.h>
 #include <wx/persist.h>
+#include <wx/scrolwin.h>
 #include <wx/settings.h>
 #include <wx/sizer.h>
 #include <wx/string.h>
@@ -81,16 +82,23 @@ GameFrame::GameFrame(
 
   this->SetMenuBar(menu_bar);
 
-  auto root_vbox = new wxBoxSizer(wxVERTICAL);
+  this->scrolled_panel = new wxScrolledWindow(this, wxID_ANY);
+  auto scroll_vbox = new wxBoxSizer(wxVERTICAL);
+  auto scroll_hbox = new wxBoxSizer(wxHORIZONTAL);
+  this->scrolled_panel->SetScrollRate(10, 10);
+  this->canvas_panel = new CanvasPanel(this->scrolled_panel, wxID_ANY, this, state, tileset);
+  scroll_hbox->Add(this->canvas_panel, wxSizerFlags(1).Centre());
+  scroll_vbox->Add(scroll_hbox, wxSizerFlags(1).Centre());
+  this->scrolled_panel->SetSizerAndFit(scroll_vbox);
 
-  this->canvas_panel = new CanvasPanel(this, wxID_ANY, state, tileset);
+  auto root_vbox = new wxBoxSizer(wxVERTICAL);
 
   this->players_box = new wxBoxSizer(wxHORIZONTAL);
   root_vbox->Add(players_box, wxSizerFlags().Centre().Border(wxALL & ~wxDOWN));
 
   auto canvas_hbox = new wxBoxSizer(wxHORIZONTAL);
-  canvas_hbox->Add(this->canvas_panel, wxSizerFlags(1).Centre().Border());
-  root_vbox->Add(canvas_hbox, wxSizerFlags(1).Centre().Border());
+  canvas_hbox->Add(this->scrolled_panel, wxSizerFlags(1).Expand().Border());
+  root_vbox->Add(canvas_hbox, wxSizerFlags(1).Expand().Border());
 
   this->SetSizerAndFit(root_vbox);
 
@@ -101,6 +109,7 @@ GameFrame::GameFrame(
 void GameFrame::update_layout() {
   this->canvas_panel->InvalidateBestSize();
   this->Layout();
+  this->scrolled_panel->GetSizer()->SetSizeHints(this->scrolled_panel);
   this->GetSizer()->SetSizeHints(this);
 }
 
@@ -299,9 +308,13 @@ wxEND_EVENT_TABLE();
 // clang-format on
 
 CanvasPanel::CanvasPanel(
-  GameFrame* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset
+  wxWindow* parent,
+  wxWindowID id,
+  GameFrame* game_frame,
+  GuiGameState& state,
+  const TilesetHelper& tileset
 )
-: wxPanel(parent, id), game_frame(parent), state(state), tileset(tileset) {
+: wxPanel(parent, id), game_frame(game_frame), state(state), tileset(tileset) {
 #ifdef __WXMSW__
   // Necessary to avoid flicker on Windows, see <https://wiki.wxwidgets.org/Flicker-Free_Drawing>.
   this->SetDoubleBuffered(true);
@@ -464,6 +477,9 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
     return;
   }
 
+  Game* game = this->state.game.get();
+  if (!game) return;
+
   wxRect update_region = GetUpdateRegion().GetBox();
 
   if (!this->tiles_bitmap.IsOk() || this->tiles_bitmap.GetSize() != size) {
@@ -476,7 +492,15 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   this->paint_tiles(this->tiles_dc, update_region);
   this->board_dc.SelectObject(this->board_bitmap);
   this->paint_board(this->board_dc, update_region, this->tiles_dc);
-  this->set_all_cells_attr(CELL_DIRTY | CELL_BLOCKED_DIRTY, false);
+
+  for (int y = 0; y < game->board_height; y++) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords cell = { x, y };
+      wxRect cell_rect = this->get_cell_rect(cell);
+      if (!update_region.Intersects(cell_rect)) continue;
+      this->set_cell_attr(cell, CELL_DIRTY | CELL_BLOCKED_DIRTY, false);
+    }
+  }
 
   wxPoint update_pos = update_region.GetPosition();
   window_dc.Blit(update_pos, update_region.GetSize(), &this->board_dc, update_pos);
