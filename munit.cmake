@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.1)
+project(munit C)
+add_library(munit STATIC munit.c)
+set_target_properties(munit PROPERTIES C_STANDARD 99 C_STANDARD_REQUIRED YES)
+target_include_directories(munit SYSTEM PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
