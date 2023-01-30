@@ -13,7 +13,7 @@ public:
 protected:
   GameFrame* game_frame;
   GuiGameState game_state;
-  TilesetHelper tileset{ CanvasPanel::CELL_SIZE / TilesetHelper::TILE_SIZE };
+  TilesetHelper tileset{ CanvasPanel::TILE_SIZE / TilesetHelper::TILE_SIZE };
 };
 
 wxDECLARE_APP(PenguinsApp);

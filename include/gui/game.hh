@@ -50,20 +50,17 @@ protected:
   const TilesetHelper& tileset;
 };
 
-typedef enum CellAttribute {
-  CELL_DIRTY = 1 << 1,
-  CELL_BLOCKED = 1 << 2,
-  CELL_BLOCKED_BEFORE = 1 << 3,
-  CELL_BLOCKED_FOR_CURSOR = 1 << 4,
-  CELL_BLOCKED_DIRTY = 1 << 5,
-} CellAttribute;
+typedef enum TileAttribute {
+  TILE_DIRTY = 1 << 1,
+  TILE_BLOCKED = 1 << 2,
+  TILE_BLOCKED_BEFORE = 1 << 3,
+  TILE_BLOCKED_FOR_CURSOR = 1 << 4,
+  TILE_BLOCKED_DIRTY = 1 << 5,
+} TileAttribute;
 
 class CanvasPanel : public wxPanel {
 public:
-  static const wxCoord CELL_SIZE = 40;
-  static const int CELL_FONT_SIZE = 16;
-  static const int FISH_CIRCLE_RADIUS = 4;
-  static const int BLOCKED_CELL_LIGHTNESS = -40;
+  static const wxCoord TILE_SIZE = 40;
 
   CanvasPanel(
     wxWindow* parent,
@@ -73,19 +70,19 @@ public:
     const TilesetHelper& tileset
   );
 
-  std::unique_ptr<wxByte[]> cell_attributes{ nullptr };
-  wxByte* cell_attrs_ptr(Coords cell) const;
-  void set_cell_attr(Coords cell, wxByte attr, bool value);
-  void set_cell_neighbors_attr(Coords cell, wxByte attr, bool value);
-  void set_all_cells_attr(wxByte attr, bool value);
-  void update_blocked_cells();
+  std::unique_ptr<wxByte[]> tile_attributes{ nullptr };
+  wxByte* tile_attrs_ptr(Coords coords) const;
+  void set_tile_attr(Coords coords, wxByte attr, bool value);
+  void set_tile_neighbors_attr(Coords coords, wxByte attr, bool value);
+  void set_all_tiles_attr(wxByte attr, bool value);
+  void update_blocked_tiles();
 
   wxSize get_canvas_size() const;
-  Coords get_cell_by_coords(wxPoint point) const;
-  wxRect get_cell_rect(Coords cell) const;
-  wxPoint get_cell_centre(Coords cell) const;
+  Coords tile_coords_at_point(wxPoint point) const;
+  wxRect get_tile_rect(Coords coords) const;
+  wxPoint get_tile_centre(Coords coords) const;
 
-  Coords get_selected_penguin_cell(int player_index) const;
+  Coords get_selected_penguin_coords(int player_index) const;
 
   const wxBitmap& get_player_penguin_sprite(int player_id, bool flipped = false) const;
 
