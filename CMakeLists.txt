@@ -99,8 +99,8 @@ endif()
 target_link_libraries(penguins PRIVATE penguins-common PUBLIC penguins-lib)
 
 FetchContent_Declare(munit
-  URL "https://github.com/nemequ/munit/archive/fbbdf1467eb0d04a6ee465def2e529e4c87f2118.tar.gz"
-  URL_HASH SHA1=bd1f917487c42bcee3f32c41f07bdafdc4765b13
+  URL "https://github.com/nemequ/munit/tarball/fbbdf1467eb0d04a6ee465def2e529e4c87f2118"
+  URL_HASH SHA1=53028ad0abb0667dd1f8d75940326b73ed759a71
   PATCH_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/munit.cmake <SOURCE_DIR>/CMakeLists.txt
 )
 FetchContent_MakeAvailable(munit)
