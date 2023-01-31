@@ -1,5 +1,5 @@
 #include "gui/player_info_box.hh"
-#include "gui/tileset.hh"
+#include <gui/main.hh>
 #include <wx/bitmap.h>
 #include <wx/dcclient.h>
 #include <wx/defs.h>
@@ -10,14 +10,8 @@
 #include <wx/stattext.h>
 #include <wx/window.h>
 
-PlayerInfoBox::PlayerInfoBox(
-  wxWindow* parent,
-  wxWindowID id,
-  int player_id,
-  wxString player_name,
-  const TilesetHelper& tileset
-)
-: SimpleStaticBox(parent, id), player_id(player_id), player_name(player_name), tileset(tileset) {
+PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id, int player_id, wxString player_name)
+: SimpleStaticBox(parent, id), player_id(player_id), player_name(player_name) {
   this->root_hbox = new wxStaticBoxSizer(this, wxHORIZONTAL);
 
   this->penguin_window = new PlayerPenguinWindow(this, wxID_ANY);
@@ -43,6 +37,7 @@ void PlayerInfoBox::set_score(int points) {
 }
 
 void PlayerInfoBox::paint_penguin_window(wxDC& dc) {
+  auto& tileset = wxGetApp().tileset;
   const wxRect rect(wxPoint(0, 0), dc.GetSize());
   dc.DrawBitmap(tileset.ice_tiles[0], rect.GetPosition());
   if (this->penguin_sprite.IsOk()) {

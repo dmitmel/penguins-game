@@ -10,10 +10,11 @@ public:
 
   virtual bool OnInit() override;
 
-protected:
-  GameFrame* game_frame;
   GuiGameState game_state;
   TilesetHelper tileset{ CanvasPanel::TILE_SIZE / TilesetHelper::TILE_SIZE };
+
+protected:
+  GameFrame* game_frame;
 };
 
 wxDECLARE_APP(PenguinsApp);

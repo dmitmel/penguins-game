@@ -34,12 +34,8 @@ int movement_switch_player(Game* game) {
 bool any_valid_player_move_exists(const Game* game, int player_idx) {
   Player* player = game_get_player(game, player_idx);
   for (int i = 0; i < player->penguins_count; i++) {
-    Coords penguin = player->penguins[i];
-    PossibleSteps moves = calculate_penguin_possible_moves(game, penguin);
-    for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-      if (moves.steps[dir] != 0) {
-        return true;
-      }
+    if (count_obstructed_directions(game, player->penguins[i]) < DIRECTION_MAX) {
+      return true;
     }
   }
   return false;
@@ -79,6 +75,19 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
   }
 
   return VALID_INPUT;
+}
+
+int count_obstructed_directions(const Game* game, Coords penguin) {
+  assert(is_tile_in_bounds(game, penguin));
+  int result = 0;
+  for (int dir = 0; dir < DIRECTION_MAX; dir++) {
+    Coords neighbor = DIRECTION_TO_COORDS[dir];
+    neighbor.x += penguin.x, neighbor.y += penguin.y;
+    if (!(is_tile_in_bounds(game, neighbor) && is_fish_tile(get_tile(game, neighbor)))) {
+      result += 1;
+    }
+  }
+  return result;
 }
 
 PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start) {

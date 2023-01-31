@@ -2,7 +2,6 @@
 
 #include "gui/game_state.hh"
 #include "gui/player_info_box.hh"
-#include "gui/tileset.hh"
 #include "utils.h"
 #include <cstddef>
 #include <memory>
@@ -24,7 +23,7 @@ class CanvasPanel;
 
 class GameFrame : public wxFrame {
 public:
-  GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset);
+  GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state);
 
   void update_layout();
 
@@ -47,7 +46,6 @@ protected:
   wxBoxSizer* players_box;
   std::unique_ptr<PlayerInfoBox*[]> player_info_boxes;
   GuiGameState& state;
-  const TilesetHelper& tileset;
 };
 
 typedef enum TileAttribute {
@@ -62,13 +60,7 @@ class CanvasPanel : public wxPanel {
 public:
   static const wxCoord TILE_SIZE = 40;
 
-  CanvasPanel(
-    wxWindow* parent,
-    wxWindowID id,
-    GameFrame* game_frame,
-    GuiGameState& state,
-    const TilesetHelper& tileset
-  );
+  CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame, GuiGameState& state);
 
   std::unique_ptr<wxByte[]> tile_attributes{ nullptr };
   wxByte* tile_attrs_ptr(Coords coords) const;
@@ -83,8 +75,6 @@ public:
   wxPoint get_tile_centre(Coords coords) const;
 
   Coords get_selected_penguin_coords(int player_index) const;
-
-  const wxBitmap& get_player_penguin_sprite(int player_id, bool flipped = false) const;
 
 protected:
   virtual wxSize DoGetBestClientSize() const override;
@@ -117,7 +107,6 @@ protected:
 
   GameFrame* game_frame;
   GuiGameState& state;
-  const TilesetHelper& tileset;
 
   wxDECLARE_EVENT_TABLE();
 };

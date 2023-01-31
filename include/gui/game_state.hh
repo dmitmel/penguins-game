@@ -30,4 +30,5 @@ public:
   std::unique_ptr<BotState, decltype(&bot_state_free)> bot_state{ nullptr, bot_state_free };
   std::unique_ptr<wxString[]> player_names{ nullptr };
   std::unique_ptr<PlayerType[]> player_types{ nullptr };
+  std::unique_ptr<int[]> player_penguin_sprites{ nullptr };
 };

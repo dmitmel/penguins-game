@@ -87,18 +87,6 @@ static int distance(Coords start, Coords end) {
   return abs(end.x - start.x) + abs(end.y - start.y);
 }
 
-static int count_obstructed_directions(const Game* game, Coords penguin) {
-  int result = 0;
-  for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-    Coords neighbor = DIRECTION_TO_COORDS[dir];
-    neighbor.x += penguin.x, neighbor.y += penguin.y;
-    if (!(is_tile_in_bounds(game, neighbor) && is_fish_tile(get_tile(game, neighbor)))) {
-      result += 1;
-    }
-  }
-  return result;
-}
-
 static int pick_best_scores(int scores_length, int* scores, int best_length, int* best_indexes) {
   best_length = my_min(best_length, scores_length);
   int prev_best_score = INT_MAX;

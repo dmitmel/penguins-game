@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <gui/main.hh>
 #include <memory>
 #include <wx/bitmap.h>
 #include <wx/brush.h>
@@ -43,10 +44,8 @@ static inline bool coords_same(const Coords& a, const Coords& b) {
   return a.x == b.x && a.y == b.y;
 }
 
-GameFrame::GameFrame(
-  wxWindow* parent, wxWindowID id, GuiGameState& state, const TilesetHelper& tileset
-)
-: wxFrame(parent, id, "Penguins game"), state(state), tileset(tileset) {
+GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
+: wxFrame(parent, id, "Penguins game"), state(state) {
   wxMemoryInputStream icon_stream(resources_appicon_256_png, resources_appicon_256_png_size);
   wxIcon app_icon;
   // The triple conversion necessary to load the icon here is... meh.
@@ -86,7 +85,7 @@ GameFrame::GameFrame(
   auto scroll_vbox = new wxBoxSizer(wxVERTICAL);
   auto scroll_hbox = new wxBoxSizer(wxHORIZONTAL);
   this->scrolled_panel->SetScrollRate(10, 10);
-  this->canvas_panel = new CanvasPanel(this->scrolled_panel, wxID_ANY, this, state, tileset);
+  this->canvas_panel = new CanvasPanel(this->scrolled_panel, wxID_ANY, this, state);
   scroll_hbox->Add(this->canvas_panel, wxSizerFlags(1).Centre());
   scroll_vbox->Add(scroll_hbox, wxSizerFlags(1).Centre());
   this->scrolled_panel->SetSizerAndFit(scroll_vbox);
@@ -181,11 +180,9 @@ void GameFrame::start_new_game() {
 
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes.reset(new PlayerInfoBox*[game->players_count]);
-
   for (int i = 0; i < game->players_count; i++) {
-    auto player_box = new PlayerInfoBox(
-      this, wxID_ANY, game_get_player(game, i)->id, dialog->get_player_name(i), this->tileset
-    );
+    auto player_box =
+      new PlayerInfoBox(this, wxID_ANY, game_get_player(game, i)->id, dialog->get_player_name(i));
     this->players_box->Add(
       player_box->GetContainingSizer(), wxSizerFlags().Border(wxALL & ~wxDOWN)
     );
@@ -274,28 +271,15 @@ void GameFrame::close_game() {
 void GameFrame::update_player_info_boxes() {
   Game* game = this->state.game.get();
   if (!game) return;
+  auto& tileset = wxGetApp().tileset;
   for (int i = 0; i < game->players_count; i++) {
     PlayerInfoBox* player_box = this->player_info_boxes[i];
     Player* player = game_get_player(game, i);
     player_box->is_current = i == game->current_player_index;
-    if (game->phase == GAME_PHASE_MOVEMENT) {
-      player_box->is_blocked = true;
-      for (int j = 0; j < player->penguins_count; j++) {
-        PossibleSteps moves = calculate_penguin_possible_moves(game, player->penguins[j]);
-        int steps_sum = 0;
-        for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-          steps_sum += moves.steps[dir];
-        }
-        if (steps_sum != 0) {
-          player_box->is_blocked = false;
-          break;
-        }
-      }
-    } else {
-      player_box->is_blocked = false;
-    }
+    player_box->is_blocked =
+      game->phase == GAME_PHASE_MOVEMENT && !any_valid_player_move_exists(game, i);
     player_box->set_score(player->points);
-    player_box->penguin_sprite = this->canvas_panel->get_player_penguin_sprite(player->id);
+    player_box->penguin_sprite = tileset.penguin_sprites[i % WXSIZEOF(tileset.penguin_sprites)];
     player_box->Refresh();
   }
 }
@@ -308,13 +292,9 @@ wxEND_EVENT_TABLE();
 // clang-format on
 
 CanvasPanel::CanvasPanel(
-  wxWindow* parent,
-  wxWindowID id,
-  GameFrame* game_frame,
-  GuiGameState& state,
-  const TilesetHelper& tileset
+  wxWindow* parent, wxWindowID id, GameFrame* game_frame, GuiGameState& state
 )
-: wxPanel(parent, id), game_frame(game_frame), state(state), tileset(tileset) {
+: wxPanel(parent, id), game_frame(game_frame), state(state) {
 #ifdef __WXMSW__
   // Necessary to avoid flicker on Windows, see <https://wiki.wxwidgets.org/Flicker-Free_Drawing>.
   this->SetDoubleBuffered(true);
@@ -515,6 +495,7 @@ void CanvasPanel::draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& p
 void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
   Game* game = this->state.game.get();
   if (!game) return;
+  auto& tileset = wxGetApp().tileset;
 
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
@@ -586,6 +567,7 @@ void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
 void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles_dc) {
   Game* game = this->state.game.get();
   if (!game) return;
+  auto& tileset = wxGetApp().tileset;
 
   Coords mouse_coords = this->tile_coords_at_point(this->mouse_pos);
 
@@ -614,22 +596,22 @@ void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles
       }
 
       if (is_penguin_tile(tile)) {
-        int player = get_tile_player_id(tile);
+        int player = game_find_player_by_id(game, get_tile_player_id(tile));
+        assert(player >= 0);
         bool flipped = false;
         if (is_penguin_selected && coords_same(coords, selected_penguin)) {
           flipped = mouse_coords.x < selected_penguin.x;
         }
-        this->draw_bitmap(dc, this->get_player_penguin_sprite(player, flipped), tile_pos);
+        auto& penguin_sprites =
+          flipped ? tileset.penguin_sprites_flipped : tileset.penguin_sprites;
+        this->draw_bitmap(
+          dc, penguin_sprites[player % WXSIZEOF(tileset.penguin_sprites)], tile_pos
+        );
       }
 
       this->draw_bitmap(dc, tileset.grid_tile, tile_pos);
     }
   }
-}
-
-const wxBitmap& CanvasPanel::get_player_penguin_sprite(int player_id, bool flipped) const {
-  size_t idx = size_t(player_id - 1) % WXSIZEOF(tileset.penguin_sprites);
-  return flipped ? tileset.penguin_sprites_flipped[idx] : tileset.penguin_sprites[idx];
 }
 
 enum ArrowHeadType {

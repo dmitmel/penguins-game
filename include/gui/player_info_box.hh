@@ -1,7 +1,6 @@
 #pragma once
 
 #include "gui/simple_static_box.hh"
-#include "gui/tileset.hh"
 #include <wx/bitmap.h>
 #include <wx/dc.h>
 #include <wx/defs.h>
@@ -15,13 +14,7 @@ class PlayerPenguinWindow;
 
 class PlayerInfoBox : public SimpleStaticBox {
 public:
-  PlayerInfoBox(
-    wxWindow* parent,
-    wxWindowID id,
-    int player_id,
-    wxString player_name,
-    const TilesetHelper& tileset
-  );
+  PlayerInfoBox(wxWindow* parent, wxWindowID id, int player_id, wxString player_name);
 
   const int player_id;
   const wxString player_name;
@@ -34,8 +27,6 @@ public:
   void paint_penguin_window(wxDC& dc);
 
 protected:
-  const TilesetHelper& tileset;
-
   wxStaticBoxSizer* root_hbox;
   wxBoxSizer* info_vbox;
   PlayerPenguinWindow* penguin_window;

@@ -19,7 +19,7 @@ bool PenguinsApp::OnInit() {
   wxImage::AddHandler(new wxPNGHandler());
   tileset.load();
 
-  this->game_frame = new GameFrame(nullptr, wxID_ANY, this->game_state, this->tileset);
+  this->game_frame = new GameFrame(nullptr, wxID_ANY, this->game_state);
   this->game_frame->Centre();
   this->game_frame->Show();
 
