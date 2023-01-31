@@ -83,7 +83,7 @@ BotState* bot_enter_sub_state(BotState* self) {
 
 // The only distance function that is relevant for us since penguins can move
 // only along the axes.
-static int distance(Coords start, Coords end) {
+static inline int distance(Coords start, Coords end) {
   return abs(end.x - start.x) + abs(end.y - start.y);
 }
 

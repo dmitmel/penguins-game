@@ -2,6 +2,8 @@
 
 #include "game.h"
 #include "utils.h"
+#include <assert.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,13 +19,23 @@ extern "C" {
 #define get_tile_player_id(tile) ((tile) < 0 ? -(tile) : 0)
 
 void setup_board(Game* game, int width, int height);
-
-bool is_tile_in_bounds(const Game* game, Coords coords);
-int get_tile(const Game* game, Coords coords);
-void set_tile(Game* game, Coords coords, int value);
-
 void generate_board_random(Game* game);
 void generate_board_island(Game* game);
+
+inline bool is_tile_in_bounds(const Game* game, Coords coords) {
+  int x = coords.x, y = coords.y;
+  return 0 <= x && x < game->board_width && 0 <= y && y < game->board_height;
+}
+
+inline int get_tile(const Game* game, Coords coords) {
+  assert(is_tile_in_bounds(game, coords));
+  return game->board_grid[coords.x + game->board_width * coords.y];
+}
+
+inline void set_tile(Game* game, Coords coords, int value) {
+  assert(is_tile_in_bounds(game, coords));
+  game->board_grid[coords.x + game->board_width * coords.y] = value;
+}
 
 #ifdef __cplusplus
 }

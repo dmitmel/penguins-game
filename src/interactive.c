@@ -16,12 +16,11 @@ int run_interactive_mode(void) {
   get_players_count(&players_count);
   game_set_players_count(game, players_count);
   for (int i = 0; i < players_count; i++) {
+    Player* player = game_get_player(game, i);
     char name[32];
-    int color;
     get_player_name(i + 1, name);
     game_set_player_name(game, i, name);
-    get_player_color(i + 1, &color);
-    game_set_player_color(game, i, color);
+    get_player_color(i + 1, &player->color);
   }
 
   int penguin_count;

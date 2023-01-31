@@ -7,6 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern Player* game_get_player(const Game* self, int idx);
+extern Player* game_get_current_player(const Game* self);
+extern int game_find_player_by_id(const Game* self, int id);
+extern Coords* game_find_player_penguin(const Game* self, int idx, Coords coords);
+
 Game* game_new(void) {
   Game* self = malloc(sizeof(Game));
   self->phase = GAME_PHASE_NONE;
@@ -82,24 +87,6 @@ void game_set_players_count(Game* self, int count) {
   }
 }
 
-Player* game_get_player(const Game* self, int idx) {
-  assert(0 <= idx && idx < self->players_count);
-  return &self->players[idx];
-}
-
-Player* game_get_current_player(const Game* self) {
-  return game_get_player(self, self->current_player_index);
-}
-
-int game_find_player_by_id(const Game* self, int id) {
-  for (int i = 0; i < self->players_count; i++) {
-    if (self->players[i].id == id) {
-      return i;
-    }
-  }
-  return -1;
-}
-
 void game_set_player_name(Game* self, int idx, const char* name) {
   assert(self->phase == GAME_PHASE_SETUP);
   Player* player = game_get_player(self, idx);
@@ -107,27 +94,10 @@ void game_set_player_name(Game* self, int idx, const char* name) {
   player->name = strdup(name);
 }
 
-void game_set_player_color(Game* self, int idx, int color) {
-  assert(self->phase == GAME_PHASE_SETUP);
-  Player* player = game_get_player(self, idx);
-  player->color = color;
-}
-
 void game_add_player_penguin(Game* self, int idx, Coords coords) {
   Player* player = game_get_player(self, idx);
   assert(0 <= player->penguins_count && player->penguins_count < self->penguins_per_player);
   player->penguins[player->penguins_count++] = coords;
-}
-
-Coords* game_find_player_penguin(const Game* self, int idx, Coords coords) {
-  Player* player = game_get_player(self, idx);
-  for (int i = 0; i < player->penguins_count; i++) {
-    Coords* penguin = &player->penguins[i];
-    if (penguin->x == coords.x && penguin->y == coords.y) {
-      return penguin;
-    }
-  }
-  return NULL;
 }
 
 void game_advance_state(Game* self) {

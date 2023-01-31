@@ -5,6 +5,9 @@
 #include <assert.h>
 #include <stdio.h>
 
+extern int count_obstructed_directions(const Game* game, Coords penguin);
+extern PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start);
+
 void movement_begin(Game* game) {
   assert(game->phase >= GAME_PHASE_SETUP_DONE);
   game->phase = GAME_PHASE_MOVEMENT;
@@ -75,37 +78,6 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
   }
 
   return VALID_INPUT;
-}
-
-int count_obstructed_directions(const Game* game, Coords penguin) {
-  assert(is_tile_in_bounds(game, penguin));
-  int result = 0;
-  for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-    Coords neighbor = DIRECTION_TO_COORDS[dir];
-    neighbor.x += penguin.x, neighbor.y += penguin.y;
-    if (!(is_tile_in_bounds(game, neighbor) && is_fish_tile(get_tile(game, neighbor)))) {
-      result += 1;
-    }
-  }
-  return result;
-}
-
-PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start) {
-  assert(is_tile_in_bounds(game, start));
-  PossibleSteps moves;
-  for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-    Coords d = DIRECTION_TO_COORDS[dir];
-    Coords target = start;
-    int steps = 0;
-    while (true) {
-      target.x += d.x, target.y += d.y;
-      if (!is_tile_in_bounds(game, target)) break;
-      if (!is_fish_tile(get_tile(game, target))) break;
-      steps++;
-    }
-    moves.steps[dir] = steps;
-  }
-  return moves;
 }
 
 int move_penguin(Game* game, Coords start, Coords target) {

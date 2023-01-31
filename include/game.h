@@ -1,7 +1,9 @@
 #pragma once
 
 #include "utils.h"
+#include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,22 +48,42 @@ void game_begin_setup(Game* self);
 void game_end_setup(Game* self);
 
 void game_set_penguins_per_player(Game* self, int value);
-
 void game_set_players_count(Game* self, int count);
-
-Player* game_get_player(const Game* self, int idx);
-Player* game_get_current_player(const Game* self);
-int game_find_player_by_id(const Game* self, int id);
-
 void game_set_player_name(Game* self, int idx, const char* name);
-void game_set_player_color(Game* self, int idx, int color);
 void game_set_player_score(Game* self, int idx, int points);
-
 void game_add_player_penguin(Game* self, int idx, Coords coords);
-Coords* game_find_player_penguin(const Game* self, int idx, Coords coords);
 
 void game_advance_state(Game* self);
 void game_end(Game* self);
+
+inline Player* game_get_player(const Game* self, int idx) {
+  assert(0 <= idx && idx < self->players_count);
+  return &self->players[idx];
+}
+
+inline Player* game_get_current_player(const Game* self) {
+  return game_get_player(self, self->current_player_index);
+}
+
+inline int game_find_player_by_id(const Game* self, int id) {
+  for (int i = 0; i < self->players_count; i++) {
+    if (self->players[i].id == id) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+inline Coords* game_find_player_penguin(const Game* self, int idx, Coords coords) {
+  Player* player = game_get_player(self, idx);
+  for (int i = 0; i < player->penguins_count; i++) {
+    Coords* penguin = &player->penguins[i];
+    if (penguin->x == coords.x && penguin->y == coords.y) {
+      return penguin;
+    }
+  }
+  return NULL;
+}
 
 #ifdef __cplusplus
 }
