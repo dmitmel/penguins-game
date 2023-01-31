@@ -47,6 +47,12 @@ extern const Neighbor DIRECTION_TO_NEIGHBOR[DIRECTION_MAX];
 #define UNUSED(x) UNUSED_##x
 #endif
 
+#if defined(__GNUC__)
+#define ALWAYS_INLINE __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define ALWAYS_INLINE __forceinline
+#endif
+
 #define free_and_clear(ptr) (free(ptr), ptr = NULL)
 
 // Taken from <https://stackoverflow.com/a/21338744/12005228>

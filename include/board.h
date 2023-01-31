@@ -22,17 +22,17 @@ void setup_board(Game* game, int width, int height);
 void generate_board_random(Game* game);
 void generate_board_island(Game* game);
 
-inline bool is_tile_in_bounds(const Game* game, Coords coords) {
+inline ALWAYS_INLINE bool is_tile_in_bounds(const Game* game, Coords coords) {
   int x = coords.x, y = coords.y;
   return 0 <= x && x < game->board_width && 0 <= y && y < game->board_height;
 }
 
-inline int get_tile(const Game* game, Coords coords) {
+inline ALWAYS_INLINE int get_tile(const Game* game, Coords coords) {
   assert(is_tile_in_bounds(game, coords));
   return game->board_grid[coords.x + game->board_width * coords.y];
 }
 
-inline void set_tile(Game* game, Coords coords, int value) {
+inline ALWAYS_INLINE void set_tile(Game* game, Coords coords, int value) {
   assert(is_tile_in_bounds(game, coords));
   game->board_grid[coords.x + game->board_width * coords.y] = value;
 }
