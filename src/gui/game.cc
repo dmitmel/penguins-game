@@ -602,7 +602,7 @@ void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles
         if (is_penguin_selected && coords_same(coords, selected_penguin)) {
           flipped = mouse_coords.x < selected_penguin.x;
         }
-        auto& penguin_sprites =
+        wxBitmap* penguin_sprites =
           flipped ? tileset.penguin_sprites_flipped : tileset.penguin_sprites;
         this->draw_bitmap(
           dc, penguin_sprites[player % WXSIZEOF(tileset.penguin_sprites)], tile_pos
