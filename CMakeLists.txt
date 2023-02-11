@@ -114,8 +114,8 @@ if(GRAPHICAL_MODE)
     endif()
   else()
     FetchContent_Declare(wxWidgets
-      URL "https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.1/wxWidgets-3.2.1.tar.bz2"
-      URL_HASH SHA1=b5299275abddc7cb5fa92f75c17475ade3bc0532
+      URL "https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.2/wxWidgets-3.2.2.tar.bz2"
+      URL_HASH SHA1=50ef97a7f51a697d0e28b7b22377fab6b7dc509c
     )
     FetchContent_MakeAvailable(wxWidgets)
     set_property(DIRECTORY ${wxWidgets_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL ON)
