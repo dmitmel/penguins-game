@@ -30,6 +30,9 @@ run-gui: build-gui
 test: build-tests
 	$(BUILD_DIR)/penguins-tests
 
+docs: $(BUILD_DIR)/.ran-cmake
+	$(MAKE) -C $(BUILD_DIR) doxygen
+
 clean:
 	$(MAKE) -C $(BUILD_DIR) clean
 
@@ -45,4 +48,4 @@ $(BUILD_DIR)/.ran-cmake:
 	cd $(BUILD_DIR) && $(CMAKE) $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) $$OLDPWD
 	touch $@
 
-.PHONY: all build build-gui run run-gui clean distclean cmake
+.PHONY: all build build-gui run run-gui test docs clean distclean cmake

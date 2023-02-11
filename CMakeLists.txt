@@ -50,12 +50,7 @@ add_executable(embed_resource src/tools/embed_resource.cc)
 target_link_libraries(embed_resource PRIVATE penguins-common)
 
 function(embed_resource res_path)
-  set(var_name ${res_path})
-  # <https://github.com/Kitware/CMake/blob/v3.25.1/Source/kwsys/SystemTools.cxx#L4304-L4321>
-  if(var_name MATCHES "^[0-9]")
-    set(var_name "_${var_name}")
-  endif()
-  string(REGEX REPLACE "[^A-Za-z0-9_]" "_" var_name ${var_name})
+  string(MAKE_C_IDENTIFIER ${res_path} var_name)
   get_filename_component(res_path_abs ${res_path} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
   add_custom_command(
     OUTPUT ${var_name}.c ${var_name}.h
@@ -164,4 +159,53 @@ if(GRAPHICAL_MODE)
     target_compile_definitions(penguins-gui PRIVATE $<$<CONFIG:Debug>:${wxWidgets_DEFINITIONS_DEBUG}>)
     target_compile_options(penguins-gui PRIVATE ${wxWidgets_CXX_FLAGS})
   endif()
+endif()
+
+find_package(Doxygen)
+if(Doxygen_FOUND)
+  FetchContent_Declare(doxygen-awesome-css
+    URL "https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.1.0.tar.gz"
+    URL_HASH SHA1=4986c8b81cdbdcc63d0788e2c8cdca4745ceb564
+  )
+  FetchContent_MakeAvailable(doxygen-awesome-css)
+
+  set(doxygen_inputs include src)
+  # Options for better integration with C.
+  set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
+  set(DOXYGEN_TYPEDEF_HIDES_STRUCT YES)
+  # Put undocumented and private functions into the generated documentation.
+  set(DOXYGEN_EXTRACT_ALL YES)
+  set(DOXYGEN_EXTRACT_PRIVATE YES)
+  set(DOXYGEN_EXTRACT_STATIC YES)
+  # Generate pages with the code of source files with clickable links (by
+  # default only the code of headers is included).
+  set(DOXYGEN_SOURCE_BROWSER YES)
+  # Don't put either a list of includes or an includes graph at the beginning
+  # of pages for individual files.
+  set(DOXYGEN_SHOW_INCLUDE_FILES NO)
+  set(DOXYGEN_INCLUDE_GRAPH NO)
+  set(DOXYGEN_INCLUDED_BY_GRAPH NO)
+  # Also don't generate graphs on the directory pages (why is this even done?).
+  set(DOXYGEN_DIRECTORY_GRAPH NO)
+  # Use our README as the homepage of the generated documentation.
+  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE readme.md)
+  # Arrange members on the file and class pages in the order of declaration.
+  set(DOXYGEN_SORT_MEMBER_DOCS NO)
+  # Add links to other members which reference a given one.
+  set(DOXYGEN_REFERENCED_BY_RELATION YES)
+  set(DOXYGEN_REFERENCES_LINK_SOURCE NO)
+  # Apply the doxygen-awesome theme (in the sidebar-only mode), see
+  # <https://github.com/jothepro/doxygen-awesome-css#sidebar-only-theme-2>.
+  set(DOXYGEN_GENERATE_TREEVIEW YES)
+  set(DOXYGEN_DISABLE_INDEX NO)
+  set(DOXYGEN_FULL_SIDEBAR NO)
+  set(DOXYGEN_HTML_EXTRA_STYLESHEET
+    ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css
+    ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-sidebar-only.css)
+  set(DOXYGEN_HTML_COLORSTYLE LIGHT)
+
+  doxygen_add_docs(doxygen
+    ${doxygen_inputs} ${DOXYGEN_USE_MDFILE_AS_MAINPAGE}
+    COMMENT "Generate API documentation for ${PROJECT_NAME}"
+  )
 endif()
