@@ -81,6 +81,9 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
 
   this->SetMenuBar(menu_bar);
 
+  this->CreateStatusBar();
+  this->SetStatusText("Welcome to wxWidgets!");
+
   this->scrolled_panel = new wxScrolledWindow(this, wxID_ANY);
   auto scroll_vbox = new wxBoxSizer(wxVERTICAL);
   auto scroll_hbox = new wxBoxSizer(wxHORIZONTAL);
@@ -88,7 +91,7 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
   this->canvas_panel = new CanvasPanel(this->scrolled_panel, wxID_ANY, this, state);
   scroll_hbox->Add(this->canvas_panel, wxSizerFlags(1).Centre());
   scroll_vbox->Add(scroll_hbox, wxSizerFlags(1).Centre());
-  this->scrolled_panel->SetSizerAndFit(scroll_vbox);
+  this->scrolled_panel->SetSizer(scroll_vbox);
 
   auto root_vbox = new wxBoxSizer(wxVERTICAL);
 
@@ -99,10 +102,9 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
   canvas_hbox->Add(this->scrolled_panel, wxSizerFlags(1).Expand().Border());
   root_vbox->Add(canvas_hbox, wxSizerFlags(1).Expand().Border());
 
-  this->SetSizerAndFit(root_vbox);
+  this->SetSizer(root_vbox);
 
-  this->CreateStatusBar();
-  this->SetStatusText("Welcome to wxWidgets!");
+  this->update_layout();
 }
 
 void GameFrame::update_layout() {
