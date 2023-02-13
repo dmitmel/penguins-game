@@ -39,6 +39,7 @@ protected:
   void on_new_game(wxCommandEvent& event);
   void on_close_game(wxCommandEvent& event);
 
+  wxPanel* root_panel;
   wxScrolledWindow* scrolled_panel;
   CanvasPanel* canvas_panel;
   wxBoxSizer* players_box;

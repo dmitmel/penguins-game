@@ -29,6 +29,7 @@
 #include <wx/menuitem.h>
 #include <wx/msgdlg.h>
 #include <wx/mstream.h>
+#include <wx/panel.h>
 #include <wx/pen.h>
 #include <wx/persist.h>
 #include <wx/region.h>
@@ -37,9 +38,6 @@
 #include <wx/string.h>
 #include <wx/types.h>
 #include <wx/window.h>
-#ifdef __WXMSW__
-#include <wx/settings.h>
-#endif
 
 static inline bool coords_same(const Coords& a, const Coords& b) {
   return a.x == b.x && a.y == b.y;
@@ -53,9 +51,7 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
   app_icon.CopyFromBitmap(wxBitmap(wxImage(icon_stream, wxBITMAP_TYPE_PNG)));
   this->SetIcon(app_icon);
 
-#ifdef __WXMSW__
-  this->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
-#endif
+  this->root_panel = new wxPanel(this, wxID_ANY);
 
   auto menu_bar = new wxMenuBar();
   wxMenuItem* item;
@@ -85,7 +81,7 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
   this->CreateStatusBar();
   this->SetStatusText("Welcome to wxWidgets!");
 
-  this->scrolled_panel = new wxScrolledWindow(this, wxID_ANY);
+  this->scrolled_panel = new wxScrolledWindow(this->root_panel, wxID_ANY);
   auto scroll_vbox = new wxBoxSizer(wxVERTICAL);
   auto scroll_hbox = new wxBoxSizer(wxHORIZONTAL);
   this->scrolled_panel->SetScrollRate(10, 10);
@@ -94,15 +90,19 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
   scroll_vbox->Add(scroll_hbox, wxSizerFlags(1).Centre());
   this->scrolled_panel->SetSizer(scroll_vbox);
 
-  auto root_vbox = new wxBoxSizer(wxVERTICAL);
+  auto panel_vbox = new wxBoxSizer(wxVERTICAL);
 
   this->players_box = new wxBoxSizer(wxHORIZONTAL);
-  root_vbox->Add(players_box, wxSizerFlags().Centre().Border(wxALL & ~wxDOWN));
+  panel_vbox->Add(players_box, wxSizerFlags().Centre().Border(wxALL & ~wxDOWN));
 
   auto canvas_hbox = new wxBoxSizer(wxHORIZONTAL);
   canvas_hbox->Add(this->scrolled_panel, wxSizerFlags(1).Expand().Border());
-  root_vbox->Add(canvas_hbox, wxSizerFlags(1).Expand().Border());
+  panel_vbox->Add(canvas_hbox, wxSizerFlags(1).Expand().Border());
 
+  this->root_panel->SetSizer(panel_vbox);
+
+  auto root_vbox = new wxBoxSizer(wxVERTICAL);
+  root_vbox->Add(this->root_panel, wxSizerFlags(1).Expand());
   this->SetSizer(root_vbox);
 
   this->update_layout();
@@ -184,8 +184,9 @@ void GameFrame::start_new_game() {
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes.reset(new PlayerInfoBox*[game->players_count]);
   for (int i = 0; i < game->players_count; i++) {
-    auto player_box =
-      new PlayerInfoBox(this, wxID_ANY, game_get_player(game, i)->id, dialog->get_player_name(i));
+    auto player_box = new PlayerInfoBox(
+      this->root_panel, wxID_ANY, game_get_player(game, i)->id, dialog->get_player_name(i)
+    );
     this->players_box->Add(
       player_box->GetContainingSizer(), wxSizerFlags().Border(wxALL & ~wxDOWN)
     );
