@@ -2,9 +2,12 @@
 #include "gui/game.hh"
 #include "random.h"
 #include <wx/app.h>
+#include <wx/defs.h>
 #include <wx/image.h>
 #include <wx/imagpng.h>
 #include <wx/stdpaths.h>
+#include <wx/utils.h>
+#include <wx/version.h>
 
 wxIMPLEMENT_APP(PenguinsApp);
 

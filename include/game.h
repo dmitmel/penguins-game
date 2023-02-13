@@ -2,7 +2,6 @@
 
 #include "utils.h"
 #include <assert.h>
-#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus

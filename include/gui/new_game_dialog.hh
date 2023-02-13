@@ -1,11 +1,12 @@
 #pragma once
 
 #include "gui/game_state.hh"
+#include <cstddef>
 #include <wx/bmpbuttn.h>
 #include <wx/choice.h>
+#include <wx/defs.h>
 #include <wx/dialog.h>
 #include <wx/event.h>
-#include <wx/gdicmn.h>
 #include <wx/persist.h>
 #include <wx/persist/window.h>
 #include <wx/sizer.h>
@@ -14,6 +15,7 @@
 #include <wx/string.h>
 #include <wx/textctrl.h>
 #include <wx/vector.h>
+#include <wx/window.h>
 
 class NewGameDialog : public wxDialog {
 public:

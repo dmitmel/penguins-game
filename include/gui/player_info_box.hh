@@ -5,9 +5,10 @@
 #include <wx/dc.h>
 #include <wx/defs.h>
 #include <wx/event.h>
+#include <wx/gdicmn.h>
 #include <wx/sizer.h>
-#include <wx/statbmp.h>
 #include <wx/stattext.h>
+#include <wx/string.h>
 #include <wx/window.h>
 
 class PlayerPenguinWindow;

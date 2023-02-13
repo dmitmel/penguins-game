@@ -2,11 +2,11 @@
 // information on using our testing library.
 #define MUNIT_ENABLE_ASSERT_ALIASES
 
-#include "board.h"
+#include "game.h"
 #include "movement.h"
 #include "placement.h"
 #include "random.h"
-
+#include "utils.h"
 #include <munit.h>
 #include <stdio.h>
 

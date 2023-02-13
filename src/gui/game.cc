@@ -4,19 +4,17 @@
 #include "game.h"
 #include "gui/game_end_dialog.hh"
 #include "gui/game_state.hh"
+#include "gui/main.hh"
 #include "gui/new_game_dialog.hh"
 #include "gui/player_info_box.hh"
+#include "gui/tileset.hh"
 #include "movement.h"
 #include "placement.h"
 #include "resources_appicon_256_png.h"
 #include "utils.h"
-#include <cmath>
-#include <cstddef>
-#include <cstring>
-#include <gui/main.hh>
+#include <cassert>
 #include <memory>
 #include <wx/bitmap.h>
-#include <wx/brush.h>
 #include <wx/colour.h>
 #include <wx/dc.h>
 #include <wx/dcclient.h>
@@ -25,20 +23,23 @@
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/geometry.h>
-#include <wx/graphics.h>
+#include <wx/icon.h>
+#include <wx/image.h>
 #include <wx/menu.h>
 #include <wx/menuitem.h>
 #include <wx/msgdlg.h>
 #include <wx/mstream.h>
 #include <wx/pen.h>
-#include <wx/peninfobase.h>
 #include <wx/persist.h>
+#include <wx/region.h>
 #include <wx/scrolwin.h>
-#include <wx/settings.h>
 #include <wx/sizer.h>
 #include <wx/string.h>
 #include <wx/types.h>
 #include <wx/window.h>
+#ifdef __WXMSW__
+#include <wx/settings.h>
+#endif
 
 static inline bool coords_same(const Coords& a, const Coords& b) {
   return a.x == b.x && a.y == b.y;

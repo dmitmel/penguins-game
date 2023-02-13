@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gui/game.hh"
+#include "gui/game_state.hh"
 #include "gui/tileset.hh"
 #include <wx/app.h>
 

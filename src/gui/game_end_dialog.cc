@@ -3,7 +3,6 @@
 #include "gui/game_state.hh"
 #include <algorithm>
 #include <memory>
-#include <wx/button.h>
 #include <wx/event.h>
 #include <wx/font.h>
 #include <wx/gdicmn.h>

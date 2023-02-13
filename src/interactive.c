@@ -4,6 +4,7 @@
 #include "io.h"
 #include "movement.h"
 #include "placement.h"
+#include <stdbool.h>
 #include <stddef.h>
 
 int run_interactive_mode(void) {

@@ -1,12 +1,13 @@
 #include "gui/player_info_box.hh"
-#include <gui/main.hh>
+#include "gui/main.hh"
+#include "gui/tileset.hh"
 #include <wx/bitmap.h>
 #include <wx/dcclient.h>
 #include <wx/defs.h>
 #include <wx/event.h>
+#include <wx/font.h>
 #include <wx/gdicmn.h>
 #include <wx/pen.h>
-#include <wx/statbmp.h>
 #include <wx/stattext.h>
 #include <wx/window.h>
 

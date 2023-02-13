@@ -3,20 +3,18 @@
 #include "gui/game_state.hh"
 #include "gui/player_info_box.hh"
 #include "utils.h"
-#include <cstddef>
 #include <memory>
 #include <wx/bitmap.h>
 #include <wx/dc.h>
 #include <wx/dcmemory.h>
+#include <wx/defs.h>
 #include <wx/event.h>
 #include <wx/frame.h>
 #include <wx/gdicmn.h>
-#include <wx/graphics.h>
 #include <wx/panel.h>
 #include <wx/scrolwin.h>
 #include <wx/sizer.h>
 #include <wx/types.h>
-#include <wx/vector.h>
 #include <wx/window.h>
 
 class CanvasPanel;

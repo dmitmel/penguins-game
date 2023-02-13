@@ -1,8 +1,10 @@
 #pragma once
 
-#include <wx/event.h>
+#include <wx/defs.h>
+#include <wx/gdicmn.h>
 #include <wx/statbox.h>
-#include <wx/stattext.h>
+#include <wx/string.h>
+#include <wx/window.h>
 
 class SimpleStaticBox : public wxStaticBox {
 public:

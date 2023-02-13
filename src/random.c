@@ -6,9 +6,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
-#include <sys/types.h>
 #include <time.h>
-#include <unistd.h>
 #endif
 
 // Taken from <https://cplusplus.com/faq/beginners/random-numbers/#seeding>.

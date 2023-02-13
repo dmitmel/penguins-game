@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.11)
 project(penguins C CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if (POLICY CMP0135)
+if(POLICY CMP0135)
   # Necessary for using ExternalProject and FetchContent.
   # <https://cmake.org/cmake/help/latest/policy/CMP0135.html>
   cmake_policy(SET CMP0135 NEW)
 endif()
 
 option(USE_SANITIZERS "Enable sanitizers" OFF)
+option(CHECK_INCLUDES "Check #include directives with include-what-you-use" ON)
+
 option(INTERACTIVE_MODE "Build the interactive mode" ON)
 option(AUTONOMOUS_MODE "Build the autonomous mode" ON)
 option(GRAPHICAL_MODE "Build the graphical interface" ON)
@@ -22,32 +25,43 @@ option(BUILD_SHARED_LIBS "Whether to build shared or static libraries" OFF)
 
 include(FetchContent)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+find_program(IWYU NAMES include-what-you-use iwyu)
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)
+function(setup_penguins_target target)
+  target_include_directories(${target} PUBLIC include)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_library(penguins-common INTERFACE)
-target_include_directories(penguins-common INTERFACE include)
-if(MSVC)
-  target_compile_options(penguins-common INTERFACE /W4)
-else()
-  target_compile_options(penguins-common INTERFACE
-    -Wall -Wextra -Wpedantic -Werror=return-type
-    $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>
+  set_target_properties(${target} PROPERTIES
+    C_STANDARD 99
+    C_STANDARD_REQUIRED YES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED YES
   )
-endif()
 
-if(USE_SANITIZERS AND NOT MSVC)
-  target_compile_options(penguins-common INTERFACE -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all)
-  target_link_options(penguins-common INTERFACE -fsanitize=address -fsanitize=undefined)
-endif()
+  if(MSVC)
+    target_compile_options(${target} PRIVATE /W4)
+  else()
+    target_compile_options(${target} PRIVATE
+      -Wall -Wextra -Wpedantic -Werror=return-type
+      $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>
+    )
+  endif()
+
+  if(USE_SANITIZERS AND NOT MSVC)
+    target_compile_options(${target} PRIVATE -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all)
+    target_link_options(${target} PRIVATE -fsanitize=address -fsanitize=undefined)
+  endif()
+
+  if(IWYU AND CHECK_INCLUDES)
+    set(iwyu_command ${IWYU} -Xiwyu --mapping_file=${CMAKE_CURRENT_SOURCE_DIR}/iwyu-config.yml -Xiwyu --no_fwd_decls)
+    set_target_properties(${target} PROPERTIES
+      C_INCLUDE_WHAT_YOU_USE "${iwyu_command}"
+      CXX_INCLUDE_WHAT_YOU_USE "${iwyu_command}"
+    )
+  endif()
+endfunction()
 
 add_executable(embed_resource src/tools/embed_resource.cc)
-target_link_libraries(embed_resource PRIVATE penguins-common)
+setup_penguins_target(embed_resource)
 
 function(embed_resource res_path)
   string(MAKE_C_IDENTIFIER ${res_path} var_name)
@@ -68,7 +82,7 @@ add_library(penguins-lib STATIC
   src/placement.c
   src/utils.c
 )
-target_link_libraries(penguins-lib PRIVATE penguins-common)
+setup_penguins_target(penguins-lib)
 
 # add executables (implementations of the files defined in the header files)
 add_executable(penguins
@@ -76,6 +90,7 @@ add_executable(penguins
   src/main.c
   src/random.c
 )
+setup_penguins_target(penguins)
 if(INTERACTIVE_MODE)
   target_compile_definitions(penguins PUBLIC INTERACTIVE_MODE)
   target_sources(penguins PRIVATE
@@ -91,7 +106,7 @@ if(AUTONOMOUS_MODE)
   )
 endif()
 # link all the
-target_link_libraries(penguins PRIVATE penguins-common PUBLIC penguins-lib)
+target_link_libraries(penguins PUBLIC penguins-lib)
 
 FetchContent_Declare(munit
   URL "https://github.com/nemequ/munit/archive/fbbdf1467eb0d04a6ee465def2e529e4c87f2118.tar.gz"
@@ -102,8 +117,9 @@ FetchContent_MakeAvailable(munit)
 
 if(BUILD_TESTS)
   add_executable(penguins-tests src/tests.c)
+  setup_penguins_target(penguins-tests)
   # add all of the libraries defined in penguins-lib
-  target_link_libraries(penguins-tests PRIVATE penguins-common PUBLIC munit penguins-lib)
+  target_link_libraries(penguins-tests PUBLIC munit penguins-lib)
 endif()
 
 if(GRAPHICAL_MODE)
@@ -142,7 +158,8 @@ if(GRAPHICAL_MODE)
     src/gui/simple_static_box.cc
     src/gui/tileset.cc
   )
-  target_link_libraries(penguins-gui PRIVATE penguins-common PUBLIC penguins-lib)
+  setup_penguins_target(penguins-gui)
+  target_link_libraries(penguins-gui PUBLIC penguins-lib)
   target_include_directories(penguins-gui PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
   if(MSVC)
     # We include our own manifest via the `.rc` file, so the default one has to be disabled.

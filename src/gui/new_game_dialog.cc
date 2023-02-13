@@ -1,17 +1,18 @@
 #include "gui/new_game_dialog.hh"
 #include <cstddef>
 #include <wx/artprov.h>
-#include <wx/button.h>
 #include <wx/choice.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
-#include <wx/panel.h>
+#include <wx/math.h>
 #include <wx/spinbutt.h>
 #include <wx/spinctrl.h>
 #include <wx/statline.h>
 #include <wx/stattext.h>
 #include <wx/string.h>
 #include <wx/textctrl.h>
+#include <wx/version.h>
+// IWYU pragma: no_include <wx/bmpbndl.h>
 
 NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
 : wxDialog(parent, id, "New game options", wxDefaultPosition, wxDefaultSize) {

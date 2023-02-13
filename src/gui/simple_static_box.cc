@@ -1,9 +1,8 @@
 #include "gui/simple_static_box.hh"
-#include <wx/dcclient.h>
-#include <wx/event.h>
 #include <wx/gdicmn.h>
-#include <wx/pen.h>
+#ifdef __WXGTK__
 #include <wx/stattext.h>
+#endif
 
 bool SimpleStaticBox::Create(
   wxWindow* parent,

@@ -1,5 +1,6 @@
 #include "gui/tileset.hh"
 #include "resources_tileset_png.h"
+#include <wx/debug.h>
 #include <wx/defs.h>
 #include <wx/gdicmn.h>
 #include <wx/image.h>

@@ -1,0 +1,9 @@
+# vim:ft=yaml:
+# <https://github.com/include-what-you-use/include-what-you-use/blob/0.19/docs/IWYUPragmas.md>
+# <https://github.com/include-what-you-use/include-what-you-use/blob/0.19/docs/IWYUMappings.md>
+# <https://github.com/include-what-you-use/include-what-you-use/commit/6fb66575fba17039d1be6c1fc3dca08623163460>
+[
+  { include: ['@<wx/generic/(.+)g\.h>', private, '<wx/\1.h>', public] },
+  { include: ['@<wx/(generic|gtk|msw|qt|univ|unix)/(.+)\.h>', private, '<wx/\2.h>', public] },
+  { include: ['@<wx/stringimpl.h>', private, '<wx/string.h>', public] },
+]

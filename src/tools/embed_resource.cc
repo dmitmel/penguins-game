@@ -3,7 +3,7 @@
 
 #include <cerrno>
 #include <cstring>
-#include <fstream>
+#include <fstream> // IWYU pragma: keep
 #include <iostream>
 
 int main(int argc, char* argv[]) {
