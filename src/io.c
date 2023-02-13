@@ -31,9 +31,10 @@ void print_board(const Game* game) {
         printf(" 0 ");
         reset_color();
       } else if (is_penguin_tile(tile)) {
-        Player* current_player = game_get_player(game, get_tile_player_id(tile) - 1);
-        player_color(current_player);
-        printf("p%d ", get_tile_player_id(tile));
+        int player_idx = game_find_player_by_id(game, get_tile_player_id(tile));
+        Player* player = game_get_player(game, player_idx);
+        player_color(player);
+        printf("p%d ", player_idx + 1);
         reset_color();
       } else if (is_fish_tile(tile)) {
         ice_color();
