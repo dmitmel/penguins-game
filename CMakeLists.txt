@@ -160,7 +160,7 @@ if(GRAPHICAL_MODE)
   )
   setup_penguins_target(penguins-gui)
   target_link_libraries(penguins-gui PUBLIC penguins-lib)
-  target_include_directories(penguins-gui PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+  target_include_directories(penguins-gui PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
   if(MSVC)
     # We include our own manifest via the `.rc` file, so the default one has to be disabled.
     target_link_options(penguins-gui PRIVATE /MANIFEST:NO)

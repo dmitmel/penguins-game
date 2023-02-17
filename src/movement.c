@@ -3,7 +3,7 @@
 #include "game.h"
 #include "utils.h"
 #include <assert.h>
-#include <stdio.h>
+#include <stddef.h> // IWYU pragma: keep
 
 extern int count_obstructed_directions(const Game* game, Coords penguin);
 extern PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start);
@@ -96,10 +96,10 @@ int move_penguin(Game* game, Coords start, Coords target) {
 
 void undo_move_penguin(Game* game, Coords start, Coords target, int prev_target_tile) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
-  int start_tile = get_tile(game, start);
+  int start_tile UNUSED_ATTR = get_tile(game, start);
   assert(is_water_tile(start_tile));
   Player* player = game_get_current_player(game);
-  int target_tile = get_tile(game, target);
+  int target_tile UNUSED_ATTR = get_tile(game, target);
   assert(get_tile_player_id(target_tile) == player->id);
   *game_find_player_penguin(game, game->current_player_index, target) = start;
   set_tile(game, start, PENGUIN_TILE(player->id));

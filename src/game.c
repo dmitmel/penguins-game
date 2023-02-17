@@ -91,7 +91,7 @@ void game_set_player_name(Game* self, int idx, const char* name) {
   assert(self->phase == GAME_PHASE_SETUP);
   Player* player = game_get_player(self, idx);
   free_and_clear(player->name);
-  player->name = strdup(name);
+  player->name = name ? strdup(name) : NULL;
 }
 
 void game_add_player_penguin(Game* self, int idx, Coords coords) {

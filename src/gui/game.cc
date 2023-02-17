@@ -62,7 +62,7 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
   item = menu_file->Append(wxID_ANY, "&New game\tCtrl-N", "Start a new game");
   this->Bind(wxEVT_MENU, &GameFrame::on_new_game, this, item->GetId());
 
-  item = menu_file->Append(wxID_ANY, "&Close the game\tCtrl-W", "Close the current game");
+  item = menu_file->Append(wxID_ANY, "&Close game\tCtrl-W", "Close the current game");
   this->Bind(wxEVT_MENU, &GameFrame::on_close_game, this, item->GetId());
 
   menu_file->AppendSeparator();
@@ -129,7 +129,7 @@ void GameFrame::on_exit(wxCommandEvent& WXUNUSED(event)) {
 
 void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
   wxMessageBox(
-    "This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION
+    "This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION, this
   );
 }
 

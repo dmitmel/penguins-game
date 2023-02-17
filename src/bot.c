@@ -144,7 +144,8 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
 
   if (strategy == BOT_PLACEMENT_MOST_FISH) {
     int best_tile_idx = 0;
-    int available_tiles = pick_best_scores(tiles_count, self->tile_scores, 1, &best_tile_idx);
+    int available_tiles UNUSED_ATTR =
+      pick_best_scores(tiles_count, self->tile_scores, 1, &best_tile_idx);
     assert(available_tiles == 1);
     *out_target = self->tile_coords[best_tile_idx];
     return true;
@@ -243,7 +244,7 @@ int bot_rate_placement(BotState* self, Coords penguin) {
 }
 
 bool bot_make_move(BotState* self, Coords* out_penguin, Coords* out_target) {
-  Player* my_player = game_get_player(self->game, self->game->current_player_index);
+  Player* my_player = game_get_current_player(self->game);
   int moves_count = 0;
   BotMove* moves_list = bot_generate_all_moves_list(
     self, my_player->penguins_count, my_player->penguins, &moves_count

@@ -194,7 +194,7 @@ void NewGameDialog::add_new_player_row(bool initial) {
   auto delete_btn = new wxBitmapButton(this, wxID_ANY, wxArtProvider::GetIcon(wxART_CROSS_MARK));
   delete_btn->Bind(wxEVT_BUTTON, &NewGameDialog::on_player_delete_clicked, this);
   delete_btn->Hide();
-  grid->Add(delete_btn, wxSizerFlags().Expand());
+  grid->Add(delete_btn, wxSizerFlags().Expand().ReserveSpaceEvenIfHidden());
 
   this->new_player_row = { type_input, name_input, delete_btn };
 }
