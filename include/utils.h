@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,6 +62,7 @@ extern const Neighbor DIRECTION_TO_NEIGHBOR[DIRECTION_MAX];
 
 const char* strip_prefix(const char* str, const char* prefix);
 bool parse_number(const char* str, long* result);
+void* memdup(const void* src, size_t size);
 
 #ifdef __cplusplus
 }

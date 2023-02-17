@@ -1,6 +1,5 @@
 #include "gui/game_end_dialog.hh"
 #include "game.h"
-#include "gui/game_state.hh"
 #include <algorithm>
 #include <memory>
 #include <wx/event.h>
@@ -12,10 +11,9 @@
 #include <wx/stattext.h>
 #include <wx/string.h>
 
-GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, GuiGameState& state)
+GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxString player_names[])
 : wxDialog(parent, id, "Game summary", wxDefaultPosition, wxDefaultSize) {
   this->Bind(wxEVT_BUTTON, &GameEndDialog::on_ok, this, wxID_OK);
-  Game* game = state.game.get();
 
   std::unique_ptr<int[]> players_by_score(new int[game->players_count]);
   for (int i = 0; i < game->players_count; i++) {
@@ -51,7 +49,7 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, GuiGameState& stat
       winners_str << "The winners are ";
     }
     for (int i = 0; i < winners_count; i++) {
-      winners_str << state.player_names[players_by_score[i]];
+      winners_str << player_names[players_by_score[i]];
       if (i < winners_count - 2) {
         winners_str << ", ";
       } else if (i < winners_count - 1) {
@@ -60,7 +58,7 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, GuiGameState& stat
     }
     winners_str << "!";
   } else if (winners_count == 1) {
-    winners_str << "The winner is " << state.player_names[players_by_score[0]] << "!";
+    winners_str << "The winner is " << player_names[players_by_score[0]] << "!";
   } else {
     winners_str << "There are no winners???";
   }
@@ -95,7 +93,7 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, GuiGameState& stat
   for (int j = 0; j < game->players_count; j++) {
     int i = players_by_score[j];
     Player* player = game_get_player(game, i);
-    this->grid->SetCellValue(j, 0, state.player_names[i]);
+    this->grid->SetCellValue(j, 0, player_names[i]);
     this->grid->SetCellValue(j, 1, wxString::Format("%d", player->points));
     this->grid->SetCellValue(j, 2, wxString::Format("%d", player->moves_count));
   }

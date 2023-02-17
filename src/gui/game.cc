@@ -2,6 +2,7 @@
 #include "board.h"
 #include "bot.h"
 #include "game.h"
+#include "gui/bot_thread.hh"
 #include "gui/game_end_dialog.hh"
 #include "gui/game_state.hh"
 #include "gui/main.hh"
@@ -14,13 +15,16 @@
 #include "utils.h"
 #include <cassert>
 #include <memory>
+#include <wx/anybutton.h>
 #include <wx/bitmap.h>
 #include <wx/colour.h>
 #include <wx/dc.h>
 #include <wx/dcclient.h>
 #include <wx/dcmemory.h>
+#include <wx/debug.h>
 #include <wx/defs.h>
 #include <wx/event.h>
+#include <wx/gauge.h>
 #include <wx/gdicmn.h>
 #include <wx/geometry.h>
 #include <wx/icon.h>
@@ -35,16 +39,21 @@
 #include <wx/region.h>
 #include <wx/scrolwin.h>
 #include <wx/sizer.h>
+#include <wx/statusbr.h>
 #include <wx/string.h>
+#include <wx/thread.h>
+#include <wx/timer.h>
 #include <wx/types.h>
+#include <wx/utils.h>
 #include <wx/window.h>
 
 static inline bool coords_same(const Coords& a, const Coords& b) {
   return a.x == b.x && a.y == b.y;
 }
 
-GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
-: wxFrame(parent, id, "Penguins game"), state(state) {
+GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Penguins game") {
+  this->Bind(wxEVT_DESTROY, &GameFrame::on_destroy, this);
+
   wxMemoryInputStream icon_stream(resources_appicon_256_png, resources_appicon_256_png_size);
   wxIcon app_icon;
   // The triple conversion necessary to load the icon here is... meh.
@@ -78,15 +87,67 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
 
   this->SetMenuBar(menu_bar);
 
-  this->CreateStatusBar();
+  this->CreateStatusBar(2);
   this->SetStatusText("Welcome to wxWidgets!");
+  int status_bar_widths[2] = { -3, -1 };
+  this->SetStatusWidths(2, status_bar_widths);
+
+  this->progress_container = new wxWindow(this->GetStatusBar(), wxID_ANY);
+  this->progress_container->Hide();
+
+  this->progress_bar = new wxGauge(
+    this->progress_container,
+    wxID_ANY,
+    100,
+    wxDefaultPosition,
+    wxSize(200, -1),
+    wxGA_HORIZONTAL | wxGA_SMOOTH
+  );
+
+  this->stop_bot_button = new wxButton(
+    this->progress_container,
+    wxID_STOP,
+    wxEmptyString,
+    wxDefaultPosition,
+    wxDefaultSize,
+    wxBORDER_NONE | wxBU_EXACTFIT
+  );
+  this->stop_bot_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) -> void {
+    this->stop_bot_thread();
+  });
+
+  auto progress_hbox = new wxBoxSizer(wxHORIZONTAL);
+  progress_hbox->AddStretchSpacer(1);
+  progress_hbox->Add(this->progress_bar, wxSizerFlags(1).Centre().HorzBorder());
+  progress_hbox->Add(this->stop_bot_button, wxSizerFlags().Centre().HorzBorder());
+  this->progress_container->SetSizer(progress_hbox);
+
+  this->GetStatusBar()->Bind(wxEVT_SIZE, [this](wxSizeEvent& event) -> void {
+    event.Skip();
+    wxRect rect;
+    if (this->GetStatusBar()->GetFieldRect(1, rect)) {
+      // This sets both the position and the size at the same time.
+      this->progress_container->SetSize(rect);
+    }
+  });
+
+  this->progress_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent&) -> void {
+    this->progress_container->Show();
+    this->progress_bar->Pulse();
+  });
 
   this->scrolled_panel = new wxScrolledWindow(this->root_panel, wxID_ANY);
   auto scroll_vbox = new wxBoxSizer(wxVERTICAL);
   auto scroll_hbox = new wxBoxSizer(wxHORIZONTAL);
   this->scrolled_panel->SetScrollRate(10, 10);
-  this->canvas_panel = new CanvasPanel(this->scrolled_panel, wxID_ANY, this, state);
-  scroll_hbox->Add(this->canvas_panel, wxSizerFlags(1).Centre());
+  wxSize default_board_size(
+    NewGameDialog::DEFAULT_BOARD_WIDTH, NewGameDialog::DEFAULT_BOARD_HEIGHT
+  );
+  this->empty_canvas_panel = new wxPanel(
+    this->scrolled_panel, wxID_ANY, wxDefaultPosition, default_board_size * CanvasPanel::TILE_SIZE
+  );
+  scroll_hbox->Add(this->empty_canvas_panel, wxSizerFlags(1).Centre());
+  this->canvas_sizer = scroll_hbox;
   scroll_vbox->Add(scroll_hbox, wxSizerFlags(1).Centre());
   this->scrolled_panel->SetSizer(scroll_vbox);
 
@@ -104,15 +165,21 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id, GuiGameState& state)
   auto root_vbox = new wxBoxSizer(wxVERTICAL);
   root_vbox->Add(this->root_panel, wxSizerFlags(1).Expand());
   this->SetSizer(root_vbox);
-
   this->update_layout();
 }
 
 void GameFrame::update_layout() {
-  this->canvas_panel->InvalidateBestSize();
   this->Layout();
   this->scrolled_panel->GetSizer()->SetSizeHints(this->scrolled_panel);
   this->GetSizer()->SetSizeHints(this);
+}
+
+GameFrame::~GameFrame() {
+  this->SendDestroyEvent();
+}
+
+void GameFrame::on_destroy(wxWindowDestroyEvent& WXUNUSED(event)) {
+  this->stop_bot_thread();
 }
 
 void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
@@ -121,6 +188,9 @@ void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
 
 void GameFrame::on_close_game(wxCommandEvent& WXUNUSED(event)) {
   this->close_game();
+  this->update_layout();
+  this->Refresh();
+  this->Centre();
 }
 
 void GameFrame::on_exit(wxCommandEvent& WXUNUSED(event)) {
@@ -141,23 +211,23 @@ void GameFrame::start_new_game() {
     return;
   }
 
-  state.game_ended = false;
+  this->close_game();
+
   Game* game = game_new();
-  state.game.reset(game);
-  state.bot_state.reset(nullptr);
-  state.bot_params.reset(nullptr);
-  state.player_names.reset(new wxString[dialog->get_number_of_players()]);
-  state.player_types.reset(new PlayerType[dialog->get_number_of_players()]);
+  this->state.game.reset(game);
+  this->state.player_names.reset(new wxString[dialog->get_number_of_players()]);
+  this->state.player_types.reset(new PlayerType[dialog->get_number_of_players()]);
+
+  this->state.bot_params.reset(new BotParameters);
+  init_bot_parameters(this->state.bot_params.get());
 
   game_begin_setup(game);
   game_set_penguins_per_player(game, dialog->get_penguins_per_player());
   game_set_players_count(game, dialog->get_number_of_players());
-  bool any_bots = false;
   for (int i = 0; i < game->players_count; i++) {
     game_set_player_name(game, i, dialog->get_player_name(i).c_str());
-    state.player_names[i] = dialog->get_player_name(i);
-    state.player_types[i] = dialog->get_player_type(i);
-    any_bots = any_bots || dialog->get_player_type(i) != PLAYER_NORMAL;
+    this->state.player_names[i] = dialog->get_player_name(i);
+    this->state.player_types[i] = dialog->get_player_type(i);
   }
   setup_board(game, dialog->get_board_width(), dialog->get_board_height());
   switch (dialog->get_board_gen_type()) {
@@ -167,11 +237,10 @@ void GameFrame::start_new_game() {
   }
   game_end_setup(game);
 
-  if (any_bots) {
-    state.bot_params.reset(new BotParameters);
-    init_bot_parameters(state.bot_params.get());
-    state.bot_state.reset(bot_state_new(state.bot_params.get(), game));
-  }
+  this->canvas_panel = new CanvasPanel(this->scrolled_panel, wxID_ANY, this);
+  bool replaced = this->canvas_sizer->Replace(this->empty_canvas_panel, this->canvas_panel);
+  wxASSERT(replaced);
+  this->empty_canvas_panel->Hide();
 
   this->canvas_panel->tile_attributes.reset(new wxByte[game->board_width * game->board_height]);
   for (int y = 0; y < game->board_height; y++) {
@@ -184,9 +253,7 @@ void GameFrame::start_new_game() {
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes.reset(new PlayerInfoBox*[game->players_count]);
   for (int i = 0; i < game->players_count; i++) {
-    auto player_box = new PlayerInfoBox(
-      this->root_panel, wxID_ANY, game_get_player(game, i)->id, dialog->get_player_name(i)
-    );
+    auto player_box = new PlayerInfoBox(this->root_panel, wxID_ANY);
     this->players_box->Add(
       player_box->GetContainingSizer(), wxSizerFlags().Border(wxALL & ~wxDOWN)
     );
@@ -199,42 +266,117 @@ void GameFrame::start_new_game() {
   this->Centre();
 
   this->update_game_state();
-  this->canvas_panel->update_blocked_tiles();
 }
 
 void GameFrame::update_game_state() {
   Game* game = this->state.game.get();
-  while (true) {
-    game_advance_state(game);
-    this->update_player_info_boxes();
-    if (game->phase == GAME_PHASE_END) {
-      if (!this->state.game_ended) {
-        this->state.game_ended = true;
-        this->canvas_panel->update_blocked_tiles();
-        this->canvas_panel->Refresh();
-        this->end_game();
-      }
-      break;
+  game_advance_state(game);
+
+  // Repaint
+  this->update_player_info_boxes();
+  this->canvas_panel->Refresh();
+
+  if (this->get_current_player_type() == PLAYER_BOT) {
+    this->start_bot_progress();
+    this->execute_bot_turn();
+  } else {
+    this->stop_bot_progress();
+  }
+
+  if (game->phase == GAME_PHASE_END) {
+    if (!this->state.game_ended) {
+      this->state.game_ended = true;
+      this->CallAfter(&GameFrame::end_game);
     }
-    int current_player_idx = game->current_player_index;
-    if (0 <= current_player_idx && current_player_idx < game->players_count) {
-      if (state.player_types[current_player_idx] != PLAYER_NORMAL) {
-        if (game->phase == GAME_PHASE_PLACEMENT) {
-          Coords target;
-          if (bot_make_placement(state.bot_state.get(), &target)) {
-            this->place_penguin(target);
-          }
-          continue;
-        } else if (game->phase == GAME_PHASE_MOVEMENT) {
-          Coords penguin, target;
-          if (bot_make_move(state.bot_state.get(), &penguin, &target)) {
-            this->move_penguin(penguin, target);
-          }
-          continue;
-        }
-      }
+  }
+}
+
+void GameFrame::execute_bot_turn() {
+  wxASSERT(this->get_current_player_type() == PLAYER_BOT);
+  wxASSERT(!this->executing_bot_turn);
+  this->executing_bot_turn = true;
+  Game* game = this->state.game.get();
+  if (game->phase == GAME_PHASE_PLACEMENT) {
+    this->run_bot_thread(new BotPlacementThread(this));
+  } else if (game->phase == GAME_PHASE_MOVEMENT) {
+    this->run_bot_thread(new BotMovementThread(this));
+  } else {
+    wxASSERT_MSG(false, "cannot execute a bot turn in the current game phase");
+  }
+}
+
+void GameFrame::on_bot_thread_done_work(bool cancelled) {
+  // Wait for the bot thread to stop completely.
+  this->stop_bot_thread();
+  this->executing_bot_turn = false;
+  if (!cancelled) {
+    this->update_game_state();
+  } else {
+    this->stop_bot_progress();
+  }
+}
+
+void GameFrame::run_bot_thread(BotThread* thread) {
+  wxASSERT(wxThread::IsMain());
+  wxCriticalSectionLocker enter(this->bot_thread_cs);
+  wxASSERT(this->bot_thread == nullptr);
+  this->bot_thread = thread;
+  wxASSERT(thread->Run() == wxTHREAD_NO_ERROR);
+}
+
+void GameFrame::stop_bot_thread() {
+  wxASSERT(wxThread::IsMain());
+  // Well, this ain't the best way of doing thread synchronization, but it sure
+  // does work.
+  std::shared_ptr<wxSemaphore> exit_semaphore = nullptr;
+  {
+    wxCriticalSectionLocker enter(this->bot_thread_cs);
+    if (this->bot_thread) {
+      this->bot_thread->cancel();
+      exit_semaphore = this->bot_thread->exit_semaphore;
+      this->bot_thread = nullptr;
     }
-    break;
+  }
+  if (exit_semaphore) {
+    exit_semaphore->Wait();
+  }
+}
+
+void GameFrame::on_bot_thread_exited(BotThread* thread) {
+  wxASSERT(wxThread::GetCurrentId() == thread->GetId());
+  {
+    wxCriticalSectionLocker enter(this->bot_thread_cs);
+    // Another bot thread might have just been spun up after cancelling this one,
+    // so check that we are unregistering the correct one to be sure.
+    if (this->bot_thread == thread) {
+      this->bot_thread = nullptr;
+    }
+  }
+  thread->exit_semaphore->Post();
+}
+
+void GameFrame::start_bot_progress() {
+  // The progress_container is shown by the timer.
+  if (!this->progress_timer.IsRunning()) {
+    this->progress_timer.Start(50);
+  }
+  if (!this->busy_cursor_changer) {
+    this->busy_cursor_changer.reset(new wxBusyCursor());
+  }
+}
+
+void GameFrame::stop_bot_progress() {
+  this->progress_container->Hide();
+  this->progress_timer.Stop();
+  this->busy_cursor_changer.reset(nullptr);
+}
+
+PlayerType GameFrame::get_current_player_type() const {
+  Game* game = this->state.game.get();
+  if (game_check_player_index(game, game->current_player_index)) {
+    return this->state.player_types[game->current_player_index];
+  } else {
+    return PLAYER_TYPE_MAX;
   }
 }
 
@@ -253,38 +395,30 @@ void GameFrame::move_penguin(Coords penguin, Coords target) {
 }
 
 void GameFrame::end_game() {
-  std::unique_ptr<GameEndDialog> dialog(new GameEndDialog(this, wxID_ANY, this->state));
+  std::unique_ptr<GameEndDialog> dialog(
+    new GameEndDialog(this, wxID_ANY, this->state.game.get(), this->state.player_names.get())
+  );
   dialog->ShowModal();
 }
 
 void GameFrame::close_game() {
-  this->state.game.reset(nullptr);
-  this->state.bot_params.reset(nullptr);
-  this->state.bot_state.reset(nullptr);
-  this->state.player_names.reset(nullptr);
-  this->state.player_types.reset(nullptr);
-  this->canvas_panel->tile_attributes.reset(nullptr);
+  if (this->canvas_panel) {
+    bool replaced = this->canvas_sizer->Replace(this->canvas_panel, this->empty_canvas_panel);
+    wxASSERT(replaced);
+    this->canvas_panel->Destroy();
+    this->canvas_panel = nullptr;
+    this->empty_canvas_panel->Show();
+  }
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes.reset(nullptr);
-
-  this->update_layout();
-  this->Refresh();
-  this->Centre();
+  this->state = GuiGameState();
 }
 
 void GameFrame::update_player_info_boxes() {
   Game* game = this->state.game.get();
-  if (!game) return;
-  auto& tileset = wxGetApp().tileset;
   for (int i = 0; i < game->players_count; i++) {
-    PlayerInfoBox* player_box = this->player_info_boxes[i];
-    Player* player = game_get_player(game, i);
-    player_box->is_current = i == game->current_player_index;
-    player_box->is_blocked =
-      game->phase == GAME_PHASE_MOVEMENT && !any_valid_player_move_exists(game, i);
-    player_box->set_score(player->points);
-    player_box->penguin_sprite = tileset.penguin_sprites[i % WXSIZEOF(tileset.penguin_sprites)];
-    player_box->Refresh();
+    this->player_info_boxes[i]->update_data(game, i, this->state.player_names[i]);
+    this->player_info_boxes[i]->Refresh();
   }
 }
 
@@ -295,10 +429,9 @@ wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
 wxEND_EVENT_TABLE();
 // clang-format on
 
-CanvasPanel::CanvasPanel(
-  wxWindow* parent, wxWindowID id, GameFrame* game_frame, GuiGameState& state
-)
-: wxPanel(parent, id), game_frame(game_frame), state(state) {
+CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame)
+: wxPanel(parent, id), game_frame(game_frame), game(game_frame->state.game.get()) {
+  this->SetInitialSize(this->get_canvas_size());
 #ifdef __WXMSW__
   // Necessary to avoid flicker on Windows, see <https://wiki.wxwidgets.org/Flicker-Free_Drawing>.
   this->SetDoubleBuffered(true);
@@ -306,11 +439,7 @@ CanvasPanel::CanvasPanel(
 }
 
 wxSize CanvasPanel::get_canvas_size() const {
-  if (Game* game = this->state.game.get()) {
-    return TILE_SIZE * wxSize(game->board_width, game->board_height);
-  } else {
-    return wxSize(0, 0);
-  }
+  return TILE_SIZE * wxSize(game->board_width, game->board_height);
 }
 
 Coords CanvasPanel::tile_coords_at_point(wxPoint point) const {
@@ -326,12 +455,11 @@ wxPoint CanvasPanel::get_tile_centre(Coords coords) const {
   return rect.GetPosition() + rect.GetSize() / 2;
 }
 
-Coords CanvasPanel::get_selected_penguin_coords(int player_index) const {
+Coords CanvasPanel::get_selected_penguin_coords() const {
   Coords null_coords = { -1, -1 };
-  Game* game = this->state.game.get();
-  if (!game) return null_coords;
-  if (!(0 <= player_index && player_index < game->players_count)) return null_coords;
-  int player_id = game_get_player(game, player_index)->id;
+  int player_idx = game->current_player_index;
+  if (!game_check_player_index(game, player_idx)) return null_coords;
+  int player_id = game_get_player(game, player_idx)->id;
   wxPoint curr_tile_pos = this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos;
   Coords curr_coords = this->tile_coords_at_point(curr_tile_pos);
   if (!is_tile_in_bounds(game, curr_coords)) return null_coords;
@@ -340,12 +468,8 @@ Coords CanvasPanel::get_selected_penguin_coords(int player_index) const {
 }
 
 wxByte* CanvasPanel::tile_attrs_ptr(Coords coords) const {
-  if (Game* game = this->state.game.get()) {
-    assert(is_tile_in_bounds(game, coords));
-    return &this->tile_attributes[coords.x + coords.y * game->board_width];
-  } else {
-    return nullptr;
-  }
+  assert(is_tile_in_bounds(game, coords));
+  return &this->tile_attributes[coords.x + coords.y * game->board_width];
 }
 
 void CanvasPanel::set_tile_attr(Coords coords, wxByte attr, bool value) {
@@ -357,27 +481,25 @@ void CanvasPanel::set_tile_neighbors_attr(Coords coords, wxByte attr, bool value
   for (int dir = 0; dir < NEIGHBOR_MAX; dir++) {
     Coords neighbor = NEIGHBOR_TO_COORDS[dir];
     neighbor.x += coords.x, neighbor.y += coords.y;
-    if (!is_tile_in_bounds(this->state.game.get(), neighbor)) continue;
+    if (!is_tile_in_bounds(game, neighbor)) continue;
     this->set_tile_attr(neighbor, attr, value);
   }
 }
 
 void CanvasPanel::set_all_tiles_attr(wxByte attr, bool value) {
-  if (Game* game = this->state.game.get()) {
-    for (int y = 0; y < game->board_height; y++) {
-      for (int x = 0; x < game->board_width; x++) {
-        Coords coords = { x, y };
-        this->set_tile_attr(coords, attr, value);
-      }
+  for (int y = 0; y < game->board_height; y++) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords coords = { x, y };
+      this->set_tile_attr(coords, attr, value);
     }
   }
 }
 
 void CanvasPanel::update_blocked_tiles() {
-  Game* game = this->state.game.get();
-  if (!game) return;
-
-  if (game->phase == GAME_PHASE_PLACEMENT) {
+  if (this->game_frame->get_current_player_type() != PLAYER_NORMAL) {
+    this->set_all_tiles_attr(TILE_BLOCKED, false);
+    this->set_all_tiles_attr(TILE_BLOCKED_FOR_CURSOR, true);
+  } else if (game->phase == GAME_PHASE_PLACEMENT) {
     Coords curr_coords = this->tile_coords_at_point(this->mouse_pos);
     bool is_a_tile_selected = this->mouse_within_window && is_tile_in_bounds(game, curr_coords);
     for (int y = 0; y < game->board_height; y++) {
@@ -389,7 +511,7 @@ void CanvasPanel::update_blocked_tiles() {
       }
     }
   } else if (game->phase == GAME_PHASE_MOVEMENT) {
-    Coords selected_penguin = this->get_selected_penguin_coords(game->current_player_index);
+    Coords selected_penguin = this->get_selected_penguin_coords();
     if (this->mouse_within_window && is_tile_in_bounds(game, selected_penguin)) {
       // A penguin is selected
       for (int y = 0; y < game->board_height; y++) {
@@ -443,14 +565,6 @@ void CanvasPanel::update_blocked_tiles() {
   }
 }
 
-wxSize CanvasPanel::DoGetBestClientSize() const {
-  if (!this->state.game.get()) {
-    wxSize default_size(NewGameDialog::DEFAULT_BOARD_WIDTH, NewGameDialog::DEFAULT_BOARD_HEIGHT);
-    return TILE_SIZE * default_size;
-  }
-  return this->get_canvas_size();
-}
-
 void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   wxPaintDC window_dc(this);
 
@@ -461,10 +575,9 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
     return;
   }
 
-  Game* game = this->state.game.get();
-  if (!game) return;
-
   wxRect update_region = GetUpdateRegion().GetBox();
+
+  this->update_blocked_tiles();
 
   if (!this->tiles_bitmap.IsOk() || this->tiles_bitmap.GetSize() != size) {
     this->tiles_bitmap.Create(size, 24);
@@ -497,8 +610,6 @@ void CanvasPanel::draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& p
 }
 
 void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
-  Game* game = this->state.game.get();
-  if (!game) return;
   auto& tileset = wxGetApp().tileset;
 
   for (int y = 0; y < game->board_height; y++) {
@@ -569,8 +680,6 @@ void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
 }
 
 void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles_dc) {
-  Game* game = this->state.game.get();
-  if (!game) return;
   auto& tileset = wxGetApp().tileset;
 
   Coords mouse_coords = this->tile_coords_at_point(this->mouse_pos);
@@ -578,7 +687,7 @@ void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles
   bool is_penguin_selected = false;
   Coords selected_penguin = { -1, -1 };
   if (game->phase == GAME_PHASE_MOVEMENT) {
-    selected_penguin = this->get_selected_penguin_coords(game->current_player_index);
+    selected_penguin = this->get_selected_penguin_coords();
     is_penguin_selected = is_tile_in_bounds(game, selected_penguin);
   }
 
@@ -647,8 +756,7 @@ static void draw_arrow_head(
 }
 
 void CanvasPanel::paint_overlay(wxDC& dc) {
-  Game* game = this->state.game.get();
-  if (!game) return;
+  if (this->game_frame->get_current_player_type() != PLAYER_NORMAL) return;
 
   if (this->mouse_within_window && game->phase != GAME_PHASE_END) {
     Coords current_coords = this->tile_coords_at_point(this->mouse_pos);
@@ -662,7 +770,7 @@ void CanvasPanel::paint_overlay(wxDC& dc) {
   }
 
   if (this->mouse_is_down && game->phase == GAME_PHASE_MOVEMENT) {
-    Coords penguin = this->get_selected_penguin_coords(game->current_player_index);
+    Coords penguin = this->get_selected_penguin_coords();
     Coords target = this->tile_coords_at_point(this->mouse_pos);
     if (is_tile_in_bounds(game, penguin) && is_tile_in_bounds(game, target)) {
       if (!coords_same(penguin, target)) {
@@ -723,11 +831,6 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
     this->mouse_within_window = false;
   }
 
-  if (!this->state.game.get()) {
-    event.Skip();
-    return;
-  }
-
   // NOTE: a `switch` is unusable here because the event types are defined as
   // `extern` variables. `switch` in C++ can only work with statically-known
   // constants.
@@ -748,31 +851,34 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
 }
 
 void CanvasPanel::on_mouse_down(wxMouseEvent& WXUNUSED(event)) {
-  Game* game = this->state.game.get();
-  if (game->phase == GAME_PHASE_MOVEMENT) {
-    this->update_blocked_tiles();
-    this->Refresh();
+  if (this->game_frame->get_current_player_type() == PLAYER_NORMAL) {
+    if (game->phase == GAME_PHASE_MOVEMENT) {
+      this->Refresh();
+    }
   }
 }
 
 void CanvasPanel::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
-  Game* game = this->state.game.get();
   Coords prev_coords = this->tile_coords_at_point(this->prev_mouse_pos);
   Coords curr_coords = this->tile_coords_at_point(this->mouse_pos);
   if (!coords_same(curr_coords, prev_coords)) {
-    if (is_tile_in_bounds(game, curr_coords)) {
-      this->update_blocked_tiles();
-    }
-    Coords selected_penguin = this->get_selected_penguin_coords(game->current_player_index);
-    if (is_tile_in_bounds(game, selected_penguin) && game->phase == GAME_PHASE_MOVEMENT) {
-      this->set_tile_attr(selected_penguin, TILE_DIRTY, true);
+    if (this->game_frame->get_current_player_type() == PLAYER_NORMAL) {
+      Coords selected_penguin = this->get_selected_penguin_coords();
+      if (is_tile_in_bounds(game, selected_penguin) && game->phase == GAME_PHASE_MOVEMENT) {
+        this->set_tile_attr(selected_penguin, TILE_DIRTY, true);
+      }
     }
     this->Refresh();
   }
 }
 
 void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
-  Game* game = this->state.game.get();
+  if (this->game_frame->get_current_player_type() == PLAYER_BOT) {
+    if (!this->game_frame->executing_bot_turn) {
+      this->game_frame->execute_bot_turn();
+    }
+    return;
+  }
   Coords prev_coords = this->tile_coords_at_point(this->mouse_drag_pos);
   Coords curr_coords = this->tile_coords_at_point(this->mouse_pos);
   if (game->phase == GAME_PHASE_PLACEMENT) {
@@ -780,7 +886,6 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
       if (validate_placement(game, curr_coords) == PLACEMENT_VALID) {
         this->game_frame->place_penguin(curr_coords);
         this->game_frame->update_game_state();
-        this->update_blocked_tiles();
         this->Refresh();
       }
     }
@@ -791,12 +896,10 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
         this->game_frame->update_game_state();
       }
     }
-    this->update_blocked_tiles();
     this->Refresh();
   }
 }
 
 void CanvasPanel::on_mouse_enter_leave(wxMouseEvent& WXUNUSED(event)) {
-  this->update_blocked_tiles();
   this->Refresh();
 }

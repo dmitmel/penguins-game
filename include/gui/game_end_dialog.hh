@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gui/game_state.hh"
+#include "game.h"
 #include <wx/defs.h>
 #include <wx/dialog.h>
 #include <wx/event.h>
@@ -30,7 +30,7 @@ protected:
 
 class GameEndDialog : public wxDialog {
 public:
-  GameEndDialog(wxWindow* parent, wxWindowID id, GuiGameState& state);
+  GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxString player_names[]);
 
 protected:
   wxStaticText* header_label;

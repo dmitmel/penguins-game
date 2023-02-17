@@ -28,6 +28,7 @@ BotState* bot_state_new(const BotParameters* params, Game* game) {
   BotState* self = malloc(sizeof(BotState));
   self->params = params;
   self->game = game;
+  self->cancelled = false;
 
   self->tile_coords_cap = 0;
   self->tile_coords = NULL;
@@ -140,6 +141,7 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
   bot_alloc_buf(self->tile_scores, self->tile_scores_cap, sizeof(int) * tiles_count);
   for (int i = 0; i < tiles_count; i++) {
     self->tile_scores[i] = bot_rate_placement(self, self->tile_coords[i]);
+    if (self->cancelled) return false;
   }
 
   if (strategy == BOT_PLACEMENT_MOST_FISH) {
@@ -192,8 +194,9 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
 }
 
 int bot_rate_placement(BotState* self, Coords penguin) {
-  Player* my_player = game_get_current_player(self->game);
   int score = 0;
+  if (self->cancelled) return score;
+  Player* my_player = game_get_current_player(self->game);
 
   int area_start_x = penguin.x - self->params->placement_scan_area;
   int area_start_y = penguin.y - self->params->placement_scan_area;
@@ -262,6 +265,7 @@ bool bot_make_move(BotState* self, Coords* out_penguin, Coords* out_target) {
   }
 
   int* move_scores = bot_rate_moves_list(self, moves_count, moves_list);
+  if (self->cancelled) return false;
 
   int best_indexes[BEST_MOVES_COUNT];
   int available_moves = pick_best_scores(moves_count, move_scores, BEST_MOVES_COUNT, best_indexes);
@@ -330,6 +334,7 @@ BotMove* bot_generate_all_moves_list(
 }
 
 int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
+  if (self->cancelled) return NULL;
   Coords prev_penguin = { -1, -1 };
   int fishes_per_dir[DIRECTION_MAX];
   int* fill_grid = NULL;
@@ -338,6 +343,7 @@ int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
   for (int i = 0; i < moves_count; i++) {
     BotMove move = moves_list[i];
     int score = bot_rate_move(self, move);
+    if (self->cancelled) return NULL;
     Coords penguin = move.penguin, target = move.target;
 
     if (self->depth == 0) {
@@ -381,9 +387,10 @@ int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
 }
 
 int bot_rate_move(BotState* self, BotMove move) {
+  int score = 0;
+  if (self->cancelled) return score;
   Coords penguin = move.penguin, target = move.target;
   Player* my_player = game_get_current_player(self->game);
-  int score = 0;
 
   int move_len = distance(penguin, target);
   score += 64 / move_len - 8;
@@ -486,9 +493,11 @@ int bot_rate_move(BotState* self, BotMove move) {
     int moves_count = 0;
     BotMove* moves_list = bot_generate_all_moves_list(sub, 1, &target, &moves_count);
     int* move_scores = bot_rate_moves_list(sub, moves_count, moves_list);
-    int best_index = 0;
-    if (pick_best_scores(moves_count, move_scores, 1, &best_index) == 1) {
-      score += move_scores[best_index] * 3 / 4;
+    if (!self->cancelled) {
+      int best_index = 0;
+      if (pick_best_scores(moves_count, move_scores, 1, &best_index) == 1) {
+        score += move_scores[best_index] * 3 / 4;
+      }
     }
 
     undo_move_penguin(self->game, penguin, target, undo_tile);

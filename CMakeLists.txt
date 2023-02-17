@@ -150,6 +150,7 @@ if(GRAPHICAL_MODE)
     resources_appicon_256_png.c
     resources_tileset_png.c
     src/gui/better_random.cc
+    src/gui/bot_thread.cc
     src/gui/game.cc
     src/gui/game_end_dialog.cc
     src/gui/main.cc

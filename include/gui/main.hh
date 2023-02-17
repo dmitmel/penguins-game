@@ -1,7 +1,6 @@
 #pragma once
 
 #include "gui/game.hh"
-#include "gui/game_state.hh"
 #include "gui/tileset.hh"
 #include <wx/app.h>
 
@@ -11,10 +10,7 @@ public:
 
   virtual bool OnInit() override;
 
-  GuiGameState game_state;
   TilesetHelper tileset{ CanvasPanel::TILE_SIZE / TilesetHelper::TILE_SIZE };
-
-protected:
   GameFrame* game_frame;
 };
 

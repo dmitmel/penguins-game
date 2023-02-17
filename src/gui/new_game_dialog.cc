@@ -185,7 +185,7 @@ void NewGameDialog::add_new_player_row(bool initial) {
 
   wxString player_types[PLAYER_TYPE_MAX];
   player_types[PLAYER_NORMAL] = "Normal";
-  player_types[PLAYER_SMART_BOT] = "Bot";
+  player_types[PLAYER_BOT] = "Bot";
   auto type_input =
     new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, PLAYER_TYPE_MAX, player_types);
   type_input->Select(0);

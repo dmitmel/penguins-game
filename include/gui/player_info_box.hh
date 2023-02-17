@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game.h"
 #include "gui/simple_static_box.hh"
 #include <wx/bitmap.h>
 #include <wx/dc.h>
@@ -15,15 +16,13 @@ class PlayerPenguinWindow;
 
 class PlayerInfoBox : public SimpleStaticBox {
 public:
-  PlayerInfoBox(wxWindow* parent, wxWindowID id, int player_id, wxString player_name);
+  PlayerInfoBox(wxWindow* parent, wxWindowID id);
 
-  const int player_id;
-  const wxString player_name;
-  bool is_blocked = false;
-  bool is_current = false;
-  wxBitmap penguin_sprite;
+  void update_data(Game* game, int idx, wxString name);
 
-  void set_score(int points);
+  const wxBitmap& get_penguin_sprite() const {
+    return this->penguin_sprite;
+  }
 
   void paint_penguin_window(wxDC& dc);
 
@@ -33,6 +32,10 @@ protected:
   PlayerPenguinWindow* penguin_window;
   wxStaticText* name_text;
   wxStaticText* score_text;
+
+  bool is_blocked = false;
+  bool is_current = false;
+  wxBitmap penguin_sprite;
 };
 
 class PlayerPenguinWindow : public wxWindow {

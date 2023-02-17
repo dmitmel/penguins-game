@@ -2,6 +2,7 @@
 
 #include "utils.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -41,6 +42,7 @@ typedef struct Game {
 } Game;
 
 Game* game_new(void);
+Game* game_clone(const Game* other);
 void game_free(Game* self);
 
 void game_begin_setup(Game* self);
@@ -55,8 +57,12 @@ void game_add_player_penguin(Game* self, int idx, Coords coords);
 void game_advance_state(Game* self);
 void game_end(Game* self);
 
+inline bool game_check_player_index(const Game* self, int idx) {
+  return 0 <= idx && idx < self->players_count;
+}
+
 inline Player* game_get_player(const Game* self, int idx) {
-  assert(0 <= idx && idx < self->players_count);
+  assert(game_check_player_index(self, idx));
   return &self->players[idx];
 }
 

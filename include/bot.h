@@ -46,6 +46,7 @@ typedef struct FillSpan {
 typedef struct BotState {
   const BotParameters* params;
   Game* game;
+  volatile bool cancelled;
 
   size_t tile_coords_cap;
   Coords* tile_coords;

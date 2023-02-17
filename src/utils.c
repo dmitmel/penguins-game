@@ -50,3 +50,10 @@ bool parse_number(const char* str, long* result) {
     *end != '\0'       // There is junk at the end of the string
   );
 }
+
+// Taken from <https://stackoverflow.com/a/29035370>.
+void* memdup(const void* src, size_t size) {
+  void* dest = malloc(size);
+  if (dest != NULL) memcpy(dest, src, size);
+  return dest;
+}

@@ -1,6 +1,8 @@
 #include "gui/player_info_box.hh"
+#include "game.h"
 #include "gui/main.hh"
 #include "gui/tileset.hh"
+#include "movement.h"
 #include <wx/bitmap.h>
 #include <wx/dcclient.h>
 #include <wx/defs.h>
@@ -9,10 +11,10 @@
 #include <wx/gdicmn.h>
 #include <wx/pen.h>
 #include <wx/stattext.h>
+#include <wx/string.h>
 #include <wx/window.h>
 
-PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id, int player_id, wxString player_name)
-: SimpleStaticBox(parent, id), player_id(player_id), player_name(player_name) {
+PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id) : SimpleStaticBox(parent, id) {
   this->root_hbox = new wxStaticBoxSizer(this, wxHORIZONTAL);
 
   this->penguin_window = new PlayerPenguinWindow(this, wxID_ANY);
@@ -20,7 +22,7 @@ PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id, int player_id, wxS
 
   this->info_vbox = new wxBoxSizer(wxVERTICAL);
 
-  this->name_text = new wxStaticText(this, wxID_ANY, player_name);
+  this->name_text = new wxStaticText(this, wxID_ANY, wxEmptyString);
   this->name_text->SetFont(this->name_text->GetFont().MakeBold());
   this->info_vbox->Add(this->name_text, wxSizerFlags().Border(wxRIGHT));
 
@@ -30,11 +32,22 @@ PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id, int player_id, wxS
   this->root_hbox->Add(this->info_vbox, wxSizerFlags().Border(wxALL & ~wxLEFT));
 }
 
-void PlayerInfoBox::set_score(int points) {
-  wxString str;
-  str << points << " point";
-  if (points != 1) str << "s";
-  this->score_text->SetLabel(str);
+void PlayerInfoBox::update_data(Game* game, int idx, wxString name) {
+  Player* player = game_get_player(game, idx);
+
+  this->is_current = idx == game->current_player_index;
+  this->is_blocked =
+    game->phase == GAME_PHASE_MOVEMENT && !any_valid_player_move_exists(game, idx);
+
+  this->name_text->SetLabel(name);
+
+  wxString score_str;
+  score_str << player->points << " point";
+  if (player->points != 1) score_str << "s";
+  this->score_text->SetLabel(score_str);
+
+  auto& tileset = wxGetApp().tileset;
+  this->penguin_sprite = tileset.penguin_sprites[idx % WXSIZEOF(tileset.penguin_sprites)];
 }
 
 void PlayerInfoBox::paint_penguin_window(wxDC& dc) {
@@ -62,7 +75,7 @@ PlayerPenguinWindow::PlayerPenguinWindow(PlayerInfoBox* parent, wxWindowID id)
 }
 
 wxSize PlayerPenguinWindow::DoGetBestSize() const {
-  const wxBitmap& bitmap = this->info_box->penguin_sprite;
+  const wxBitmap& bitmap = this->info_box->get_penguin_sprite();
   return this->FromPhys(bitmap.IsOk() ? bitmap.GetSize() : wxSize(0, 0));
 }
 

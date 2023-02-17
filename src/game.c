@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern bool game_check_player_index(const Game* self, int idx);
 extern Player* game_get_player(const Game* self, int idx);
 extern Player* game_get_current_player(const Game* self);
 extern int game_find_player_by_id(const Game* self, int id);
@@ -22,6 +23,24 @@ Game* game_new(void) {
   self->board_height = -1;
   self->board_grid = NULL;
   self->current_player_index = -1;
+  return self;
+}
+
+Game* game_clone(const Game* other) {
+  Game* self = memdup(other, sizeof(Game));
+  if (other->players) {
+    self->players = memdup(other->players, sizeof(Player) * other->players_count);
+    for (int i = 0; i < other->players_count; i++) {
+      Player *player = &self->players[i], *other_player = &other->players[i];
+      player->name = other_player->name ? strdup(other_player->name) : NULL;
+      player->penguins =
+        memdup(other_player->penguins, sizeof(Coords) * other_player->penguins_count);
+    }
+  }
+  if (other->board_grid) {
+    self->board_grid =
+      memdup(other->board_grid, sizeof(int) * other->board_width * other->board_height);
+  }
   return self;
 }
 
