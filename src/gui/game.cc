@@ -806,7 +806,6 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
   }
   if (event.ButtonDown()) {
     this->mouse_is_down = true;
-    this->mouse_drag_pos = this->mouse_pos;
   } else if (event.ButtonUp()) {
     this->mouse_is_down = false;
   }
@@ -877,7 +876,12 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
     }
   } else if (game->phase == GAME_PHASE_MOVEMENT) {
     if (is_tile_in_bounds(game, curr_coords) && is_tile_in_bounds(game, prev_coords)) {
-      if (validate_movement(game, prev_coords, curr_coords, nullptr) == VALID_INPUT) {
+      if (coords_same(prev_coords, curr_coords)) {
+        // This is a hacky way of doing what I want: when the user has simply
+        // clicked on a penguin, let them then move it without dragging the
+        // mouse all the way.
+        this->mouse_is_down = true;
+      } else if (validate_movement(game, prev_coords, curr_coords, nullptr) == VALID_INPUT) {
         this->game_frame->move_penguin(prev_coords, curr_coords);
         this->game_frame->update_game_state();
       }
