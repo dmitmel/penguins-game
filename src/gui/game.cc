@@ -876,7 +876,7 @@ void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
     }
   } else if (game->phase == GAME_PHASE_MOVEMENT) {
     if (is_tile_in_bounds(game, curr_coords) && is_tile_in_bounds(game, prev_coords)) {
-      if (coords_same(prev_coords, curr_coords)) {
+      if (coords_same(prev_coords, curr_coords) && validate_movement_start(game, curr_coords)) {
         // This is a hacky way of doing what I want: when the user has simply
         // clicked on a penguin, let them then move it without dragging the
         // mouse all the way.

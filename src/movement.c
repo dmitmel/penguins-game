@@ -44,6 +44,13 @@ bool any_valid_player_move_exists(const Game* game, int player_idx) {
   return false;
 }
 
+bool validate_movement_start(const Game* game, Coords start) {
+  if (!is_tile_in_bounds(game, start)) return false;
+  int tile = get_tile(game, start);
+  if (get_tile_player_id(tile) != game_get_current_player(game)->id) return false;
+  return count_obstructed_directions(game, start) < DIRECTION_MAX;
+}
+
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail) {
   int start_tile = is_tile_in_bounds(game, start) ? get_tile(game, start) : WATER_TILE;
   int target_tile = is_tile_in_bounds(game, target) ? get_tile(game, target) : WATER_TILE;
