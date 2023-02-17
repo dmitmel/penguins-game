@@ -6,7 +6,6 @@
 #include "utils.h"
 #include <memory>
 #include <wx/bitmap.h>
-#include <wx/button.h>
 #include <wx/dc.h>
 #include <wx/dcmemory.h>
 #include <wx/defs.h>
@@ -74,7 +73,6 @@ protected:
   wxTimer progress_timer;
   wxWindow* progress_container;
   wxGauge* progress_bar;
-  wxButton* stop_bot_button;
   std::unique_ptr<wxBusyCursor> busy_cursor_changer{ nullptr };
 };
 

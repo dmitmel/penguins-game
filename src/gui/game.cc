@@ -15,7 +15,6 @@
 #include "utils.h"
 #include <cassert>
 #include <memory>
-#include <wx/anybutton.h>
 #include <wx/bitmap.h>
 #include <wx/colour.h>
 #include <wx/dc.h>
@@ -104,22 +103,9 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Pen
     wxGA_HORIZONTAL | wxGA_SMOOTH
   );
 
-  this->stop_bot_button = new wxButton(
-    this->progress_container,
-    wxID_STOP,
-    wxEmptyString,
-    wxDefaultPosition,
-    wxDefaultSize,
-    wxBORDER_NONE | wxBU_EXACTFIT
-  );
-  this->stop_bot_button->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) -> void {
-    this->stop_bot_thread();
-  });
-
   auto progress_hbox = new wxBoxSizer(wxHORIZONTAL);
   progress_hbox->AddStretchSpacer(1);
   progress_hbox->Add(this->progress_bar, wxSizerFlags(1).Centre().HorzBorder());
-  progress_hbox->Add(this->stop_bot_button, wxSizerFlags().Centre().HorzBorder());
   this->progress_container->SetSizer(progress_hbox);
 
   this->GetStatusBar()->Bind(wxEVT_SIZE, [this](wxSizeEvent& event) -> void {
