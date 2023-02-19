@@ -9,7 +9,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Debug, Release]
-        use_sanitizers: [ON]
+        build_wxwidgets: [OFF]
+        include:
+          - os: ubuntu-latest
+            build_type: Release
+            build_wxwidgets: ON
+          - os: windows-latest
+            build_type: Release
+            build_wxwidgets: ON
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -18,6 +25,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - run: cmake -B build -DCMAKE_BUILD_TYPE='${{matrix.build_type}}' -DUSE_SANITIZERS='${{matrix.use_sanitizers}}' -DGENERATE_DOCUMENTATION=OFF
+      - if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install libgtk-3-dev
+      - if: matrix.os == 'ubuntu-latest' && matrix.build_wxwidgets == 'OFF'
+        run: |
+          sudo apt install libwxgtk3.0-gtk3-dev
+      - if: matrix.os == 'windows-latest' && matrix.build_wxwidgets == 'OFF'
+        run: |
+          wx_version="3.2.2"
+          cd "${RUNNER_TEMP}"
+          wget="C:/msys64/usr/bin/wget.exe"
+          "$wget" "https://github.com/wxWidgets/wxWidgets/releases/download/v${wx_version}/wxWidgets-${wx_version}-headers.7z"
+          "$wget" "https://github.com/wxWidgets/wxWidgets/releases/download/v${wx_version}/wxMSW-${wx_version}_vc14x_x64_Dev.7z"
+          "$wget" "https://github.com/wxWidgets/wxWidgets/releases/download/v${wx_version}/wxMSW-${wx_version}_vc14x_x64_ReleasePDB.7z"
+          wx_dir="${RUNNER_TEMP}/wxWidgets-${wx_version}"
+          mkdir -p "${wx_dir}"
+          cd "${wx_dir}"
+          7z x -y "${RUNNER_TEMP}/wxWidgets-${wx_version}-headers.7z"
+          7z x -y "${RUNNER_TEMP}/wxMSW-${wx_version}_vc14x_x64_Dev.7z"
+          7z x -y "${RUNNER_TEMP}/wxMSW-${wx_version}_vc14x_x64_ReleasePDB.7z"
+          echo "WXWIN=${wx_dir}" >> "${GITHUB_ENV}"
+      - run: cmake -B build -DCMAKE_BUILD_TYPE='${{matrix.build_type}}' -DBUILD_WXWIDGETS_FROM_SOURCE='${{matrix.build_wxwidgets}}' -DUSE_SANITIZERS=ON -DGENERATE_DOCUMENTATION=OFF
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}'
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}' --target run-tests
