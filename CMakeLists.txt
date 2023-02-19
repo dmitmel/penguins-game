@@ -15,6 +15,7 @@ option(INTERACTIVE_MODE "Build the interactive mode" ON)
 option(AUTONOMOUS_MODE "Build the autonomous mode" ON)
 option(GRAPHICAL_MODE "Build the graphical interface" ON)
 option(BUILD_TESTS "Build tests" ON)
+option(GENERATE_DOCUMENTATION "Generate developer documentation" ON)
 
 # These must be set before including FetchContent.
 option(FETCHCONTENT_QUIET "" OFF)
@@ -91,6 +92,7 @@ add_executable(penguins
   src/random.c
 )
 setup_penguins_target(penguins)
+add_custom_target(run COMMAND penguins USES_TERMINAL)
 if(INTERACTIVE_MODE)
   target_compile_definitions(penguins PUBLIC INTERACTIVE_MODE)
   target_sources(penguins PRIVATE
@@ -118,6 +120,7 @@ FetchContent_MakeAvailable(munit)
 if(BUILD_TESTS)
   add_executable(penguins-tests src/tests.c)
   setup_penguins_target(penguins-tests)
+  add_custom_target(run-tests COMMAND penguins-tests USES_TERMINAL)
   # add all of the libraries defined in penguins-lib
   target_link_libraries(penguins-tests PUBLIC munit penguins-lib)
 endif()
@@ -160,6 +163,7 @@ if(GRAPHICAL_MODE)
     src/gui/tileset.cc
   )
   setup_penguins_target(penguins-gui)
+  add_custom_target(run-gui COMMAND penguins-gui USES_TERMINAL)
   target_link_libraries(penguins-gui PUBLIC penguins-lib)
   target_include_directories(penguins-gui PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
   if(MSVC)
@@ -180,7 +184,7 @@ if(GRAPHICAL_MODE)
 endif()
 
 find_package(Doxygen)
-if(Doxygen_FOUND)
+if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
   FetchContent_Declare(doxygen-awesome-css
     URL "https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.1.0.tar.gz"
     URL_HASH SHA1=4986c8b81cdbdcc63d0788e2c8cdca4745ceb564

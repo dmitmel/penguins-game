@@ -1,0 +1,23 @@
+name: CI
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Debug, Release]
+        use_sanitizers: [ON]
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: cmake -B build -DCMAKE_BUILD_TYPE='${{matrix.build_type}}' -DUSE_SANITIZERS='${{matrix.use_sanitizers}}' -DGENERATE_DOCUMENTATION=OFF
+      - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}'
+      - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}' --target run-tests
