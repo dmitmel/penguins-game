@@ -24,7 +24,7 @@ public:
 
   bool game_ended = false;
   std::unique_ptr<Game, decltype(&game_free)> game{ nullptr, game_free };
-  std::unique_ptr<BotParameters> bot_params{ nullptr };
+  std::shared_ptr<BotParameters> bot_params{ nullptr };
   std::unique_ptr<wxString[]> player_names{ nullptr };
   std::unique_ptr<PlayerType[]> player_types{ nullptr };
 };

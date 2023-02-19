@@ -4,9 +4,9 @@
 #include "utils.h"
 #include <wx/thread.h>
 
-BotThread::BotThread(GameFrame* frame) : wxThread(wxTHREAD_DETACHED), frame(frame) {
+BotThread::BotThread(GameFrame* frame)
+: wxThread(wxTHREAD_DETACHED), frame(frame), bot_params(frame->state.bot_params) {
   this->game.reset(game_clone(frame->state.game.get()));
-  this->bot_params.reset(new BotParameters(*frame->state.bot_params));
   this->bot_state.reset(bot_state_new(this->bot_params.get(), this->game.get()));
   this->cancelled_ptr = &this->bot_state->cancelled;
 }
@@ -32,7 +32,6 @@ wxThread::ExitCode BotPlacementThread::Entry() {
   bool ok = bot_make_placement(this->bot_state.get(), &target);
   bool cancelled = this->bot_state->cancelled;
   auto frame = this->frame;
-  auto exit_semaphore = this->exit_semaphore;
   frame->CallAfter([=]() -> void {
     if (!cancelled && ok) frame->place_penguin(target);
     frame->on_bot_thread_done_work(cancelled);

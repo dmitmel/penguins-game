@@ -16,7 +16,7 @@ public:
     const wxPoint& pos = wxDefaultPosition,
     const wxSize& size = wxDefaultSize,
     long style = 0,
-    const wxString& name = wxASCII_STR(wxStaticBoxNameStr)
+    const wxString& name = wxStaticBoxNameStr
   ) {
     this->Create(parent, id, pos, size, style, name);
   }
@@ -27,12 +27,12 @@ public:
     const wxPoint& pos = wxDefaultPosition,
     const wxSize& size = wxDefaultSize,
     long style = 0,
-    const wxString& name = wxASCII_STR(wxStaticBoxNameStr)
+    const wxString& name = wxStaticBoxNameStr
   );
 
 protected:
 #ifdef __WXGTK__
-  virtual bool GTKWidgetNeedsMnemonic() const wxOVERRIDE;
-  virtual void GTKWidgetDoSetMnemonic(GtkWidget* w) wxOVERRIDE;
+  virtual bool GTKWidgetNeedsMnemonic() const override;
+  virtual void GTKWidgetDoSetMnemonic(GtkWidget* w) override;
 #endif
 };

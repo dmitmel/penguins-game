@@ -18,7 +18,7 @@ public:
     const wxPoint& pos = wxDefaultPosition,
     const wxSize& size = wxDefaultSize,
     long style = 0,
-    const wxString& name = wxASCII_STR(wxGridNameStr)
+    const wxString& name = wxGridNameStr
   );
 
   void equally_size_columns();
