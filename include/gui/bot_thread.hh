@@ -3,7 +3,6 @@
 #include "bot.h"
 #include "game.h"
 #include <memory>
-#include <wx/string.h>
 #include <wx/thread.h>
 #include <wx/version.h>
 

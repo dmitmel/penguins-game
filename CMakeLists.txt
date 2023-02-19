@@ -22,6 +22,7 @@ option(FETCHCONTENT_QUIET "" OFF)
 option(FETCHCONTENT_UPDATES_DISCONNECTED "" ON)
 
 option(BUILD_WXWIDGETS_FROM_SOURCE "Whether to download and build wxWidgets from source" OFF)
+option(BUILD_WXWIDGETS_MINIMAL "Whether to produce a minimal or a full build of wxWidgets" ON)
 option(BUILD_SHARED_LIBS "Whether to build shared or static libraries" OFF)
 
 include(FetchContent)
@@ -53,7 +54,7 @@ function(setup_penguins_target target)
   endif()
 
   if(IWYU AND CHECK_INCLUDES)
-    set(iwyu_command ${IWYU} -Xiwyu --mapping_file=${CMAKE_CURRENT_SOURCE_DIR}/iwyu-config.yml -Xiwyu --no_fwd_decls)
+    set(iwyu_command ${IWYU} -Xiwyu --mapping_file=${CMAKE_CURRENT_SOURCE_DIR}/cmake/iwyu_mapping.yml -Xiwyu --no_fwd_decls)
     set_target_properties(${target} PROPERTIES
       C_INCLUDE_WHAT_YOU_USE "${iwyu_command}"
       CXX_INCLUDE_WHAT_YOU_USE "${iwyu_command}"
@@ -113,7 +114,7 @@ target_link_libraries(penguins PUBLIC penguins-lib)
 FetchContent_Declare(munit
   URL "https://github.com/nemequ/munit/archive/fbbdf1467eb0d04a6ee465def2e529e4c87f2118.tar.gz"
   URL_HASH SHA1=bd1f917487c42bcee3f32c41f07bdafdc4765b13
-  PATCH_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/munit.cmake <SOURCE_DIR>/CMakeLists.txt
+  PATCH_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/cmake/munit.cmake <SOURCE_DIR>/CMakeLists.txt
 )
 FetchContent_MakeAvailable(munit)
 
@@ -136,6 +137,9 @@ if(GRAPHICAL_MODE)
       URL "https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.2.1/wxWidgets-3.2.2.1.tar.bz2"
       URL_HASH SHA1=d645cacbf2678cfc402ae163f2b0e0b05be5d239
     )
+    if(BUILD_WXWIDGETS_MINIMAL)
+      include(cmake/wxwidgets_config.cmake)
+    endif()
     FetchContent_MakeAvailable(wxWidgets)
     set_property(DIRECTORY ${wxWidgets_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL ON)
   endif()
