@@ -55,6 +55,16 @@ jobs:
       - if: runner.os == 'macOS' && matrix.build_wxwidgets == 'OFF'
         run: |
           brew install wxwidgets
-      - run: cmake -B build -DCMAKE_BUILD_TYPE='${{matrix.build_type}}' -DBUILD_WXWIDGETS_FROM_SOURCE='${{matrix.build_wxwidgets}}' -DUSE_SANITIZERS=ON -DGENERATE_DOCUMENTATION=OFF
+      - uses: actions/cache@v3
+        if: matrix.build_wxwidgets == 'ON'
+        with:
+          path: build
+          key: |
+            ${{github.workflow}}-${{runner.os}}-${{matrix.build_type}}-cmake-${{hashFiles('CMakeLists.txt', 'src/**/CMakeLists.txt', 'cmake/**/*')}}
+          restore-keys: |
+            ${{github.workflow}}-${{runner.os}}-${{matrix.build_type}}-cmake-
+      - run: |
+          cmake -B build -DCMAKE_BUILD_TYPE='${{matrix.build_type}}' -DBUILD_WXWIDGETS_FROM_SOURCE='${{matrix.build_wxwidgets}}' \
+            -DUSE_SANITIZERS=ON -DGENERATE_DOCUMENTATION=OFF
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}'
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}' --target run-tests
