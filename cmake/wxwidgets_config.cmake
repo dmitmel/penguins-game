@@ -254,7 +254,7 @@ set(wxUSE_PCX OFF)
 set(wxUSE_TGA OFF)
 set(wxUSE_IFF OFF)
 set(wxUSE_PNM OFF)
-set(wxUSE_XPM OFF)
+# set(wxUSE_XPM OFF)
 # set(wxUSE_ICO_CUR OFF)
 
 if(WIN32)
