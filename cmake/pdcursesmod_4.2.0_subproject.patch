@@ -1,0 +1,228 @@
+See <https://github.com/Bill-Gray/PDCursesMod/pull/204>
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ecfe49b2..880f762a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -5,7 +5,9 @@ if(NOT CMAKE_BUILD_TYPE)
+     message(STATUS "CMAKE_BUILD_TYPE not set, defaulting to MinSizeRel.")
+ endif()
+ 
+-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_SOURCE_DIR}/cmake")
++set(PDCURSES_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
++set(PDCURSES_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
++set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+ 
+ include (get_version)
+ project(pdcurses VERSION "${CURSES_VERSION}" LANGUAGES C)
+@@ -50,7 +52,9 @@ elseif(PDC_OS2_BUILD) # currently requires a unique toolchain file
+     
+ else()
+ 
+-    add_subdirectory(ncurses)
++    if (PDC_NCURSES_BUILD)
++        add_subdirectory(ncurses)
++    endif()
+     
+     if(PDC_SDL2_BUILD)
+     
+@@ -63,15 +67,19 @@ else()
+     endif()
+ 
+     if(WIN32)
+-    
+-        add_subdirectory(wincon)
+-        add_subdirectory(wingui)
+-        add_subdirectory(vt)
+-        
++        if (PDC_WINCON_BUILD)
++            add_subdirectory(wincon)
++        endif()
++        if (PDC_WINGUI_BUILD)
++            add_subdirectory(wingui)
++        endif()
++        if (PDC_VT_BUILD)
++            add_subdirectory(vt)
++        endif()
+     endif()
+    
+ endif()
+ 
+-add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_SOURCE_DIR}/cmake/make_uninstall.cmake")
++add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/make_uninstall.cmake")
+ 
+ set(CPACK_COMPONENTS_ALL applications)
+diff --git a/cmake/build_dependencies.cmake b/cmake/build_dependencies.cmake
+index 9f07dfe6..70440610 100644
+--- a/cmake/build_dependencies.cmake
++++ b/cmake/build_dependencies.cmake
+@@ -135,7 +135,7 @@ IF (PDC_SDL2_DEPS_BUILD)
+             URL https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-${SDL2_TTF_RELEASE}.zip
+             URL_HASH "SHA256=cdb72b5b1c3b27795fa128af36f369fee5d3e38a96c350855da0b81880555dbc"
+             PATCH_COMMAND cmake -E copy 
+-                ${CMAKE_SOURCE_DIR}/cmake/sdl2_ttf/CMakeLists.txt 
++                ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2_ttf/CMakeLists.txt 
+                 ${CMAKE_BINARY_DIR}/sdl2_ttf/CMakeLists.txt
+             UPDATE_COMMAND ""
+             DOWNLOAD_DIR ${CMAKE_BINARY_DIR}
+diff --git a/cmake/build_options.cmake b/cmake/build_options.cmake
+index 7fd25145..8e7483f2 100644
+--- a/cmake/build_options.cmake
++++ b/cmake/build_options.cmake
+@@ -10,6 +10,12 @@ option(PDC_DOSVGA_BUILD "Build DOSVGA Project" OFF)
+ option(PDC_DOSVT_BUILD "Build VT Project" OFF)
+ option(PDC_SDL2_BUILD "Build SDL2 Project" ON)
+ option(PDC_SDL2_DEPS_BUILD "Build SDL2 and dependencies" ON)
++option(PDC_NCURSES_BUILD "Build ncurses project" ON)
++option(PDC_DEMOS_BUILD "Build demo applications" ON)
++option(PDC_WINCON_BUILD "Build WinCon project" ON)
++option(PDC_WINGUI_BUILD "Build WinGUI project" ON)
++option(PDC_VT_BUILD "Build VT Win32 project" ON)
++option(PDC_INSTALL_TARGETS "Provide install targets" ON)
+ 
+ message(STATUS "PDC_BUILD_SHARED ....... ${PDC_BUILD_SHARED}")
+ message(STATUS "PDC_UTF8 ............... ${PDC_UTF8}")
+@@ -22,6 +28,12 @@ message(STATUS "PDC_DOSVGA_BUILD ....... ${PDC_DOSVGA_BUILD}")
+ message(STATUS "PDC_DOSVT_BUILD ........ ${PDC_DOSVT_BUILD}")
+ message(STATUS "PDC_SDL2_BUILD ......... ${PDC_SDL2_BUILD}")
+ message(STATUS "PDC_SDL2_DEPS_BUILD .... ${PDC_SDL2_DEPS_BUILD}")
++message(STATUS "PDC_NCURSES_BUILD ...... ${PDC_NCURSES_BUILD}")
++message(STATUS "PDC_DEMOS_BUILD ........ ${PDC_DEMOS_BUILD}")
++message(STATUS "PDC_WINCON_BUILD ....... ${PDC_WINCON_BUILD}")
++message(STATUS "PDC_WINGUI_BUILD ....... ${PDC_WINGUI_BUILD}")
++message(STATUS "PDC_VT_BUILD ........... ${PDC_VT_BUILD}")
++message(STATUS "PDC_INSTALL_TARGETS .... ${PDC_INSTALL_TARGETS}")
+ 
+ # normalize a windows path
+ file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
+diff --git a/cmake/dll_version.cmake b/cmake/dll_version.cmake
+index de6d6969..ffd08b00 100644
+--- a/cmake/dll_version.cmake
++++ b/cmake/dll_version.cmake
+@@ -20,5 +20,5 @@ endif()
+ 
+ set(PRODUCT_FILE_DESCRIPTION "${PRODUCT_FILE_DESCRIPTION} ${TOOL_NAME} ${TARGET_ARCH}")
+ 
+-configure_file ( ${CMAKE_SOURCE_DIR}/cmake/version.in.cmake ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY )
+-configure_file ( ${CMAKE_SOURCE_DIR}/cmake/resource.in.cmake ${CMAKE_CURRENT_BINARY_DIR}/resource.h @ONLY )
++configure_file ( ${PDCURSES_SOURCE_DIR}/cmake/version.in.cmake ${PDCURSES_BINARY_DIR}/version.rc @ONLY )
++configure_file ( ${PDCURSES_SOURCE_DIR}/cmake/resource.in.cmake ${PDCURSES_BINARY_DIR}/resource.h @ONLY )
+diff --git a/cmake/get_version.cmake b/cmake/get_version.cmake
+index 80b9edd9..dcd282a7 100644
+--- a/cmake/get_version.cmake
++++ b/cmake/get_version.cmake
+@@ -1,5 +1,5 @@
+ 
+-file(READ ${CMAKE_SOURCE_DIR}/curses.h _CURSES_H_CONTENTS)
++file(READ ${CMAKE_CURRENT_SOURCE_DIR}/curses.h _CURSES_H_CONTENTS)
+ 
+ string(REGEX MATCH "#define PDC_VER_MAJOR    ([a-zA-Z0-9_]+)" PDC_VER_MAJOR "${_CURSES_H_CONTENTS}")
+ string(REPLACE "#define PDC_VER_MAJOR    " "" PDC_VER_MAJOR "${PDC_VER_MAJOR}")
+diff --git a/cmake/project_common.cmake b/cmake/project_common.cmake
+index 1114dcf6..4c7ca570 100644
+--- a/cmake/project_common.cmake
++++ b/cmake/project_common.cmake
+@@ -1,9 +1,9 @@
+ message(STATUS "**** ${PROJECT_NAME} ****")
+ 
+-set(PDCURSES_SRCDIR ${CMAKE_SOURCE_DIR})
++set(PDCURSES_SRCDIR ${CMAKE_CURRENT_SOURCE_DIR})
+ set(PDCURSES_DIST ${CMAKE_INSTALL_PREFIX}/${CMAKE_BUILD_TYPE})
+ 
+-set(osdir ${PDCURSES_SRCDIR}/${PROJECT_NAME})
++set(osdir ${PDCURSES_SRCDIR})
+ set(demodir ${PDCURSES_SRCDIR}/demos)
+ 
+ set(pdc_src_files
+@@ -22,7 +22,7 @@ include_directories (${osdir})
+ 
+ if(WIN32 AND NOT WATCOM)
+     include(dll_version)
+-    list(APPEND pdc_src_files ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
++    list(APPEND pdc_src_files ${PDCURSES_BINARY_DIR}/version.rc)
+ 
+     add_definitions(-D_WIN32 -D_CRT_SECURE_NO_WARNINGS)
+ 
+@@ -99,36 +99,44 @@ if(PDC_BUILD_SHARED)
+         target_link_libraries(${PDCURSE_PROJ} ${EXTRA_LIBS})
+     endif()
+ 
+-    install(TARGETS ${PDCURSE_PROJ}
+-        ARCHIVE DESTINATION ${PDCURSES_DIST}/lib/${PROJECT_NAME}
+-        LIBRARY DESTINATION ${PDCURSES_DIST}/lib/${PROJECT_NAME}
+-        RUNTIME DESTINATION ${PDCURSES_DIST}/bin/${PROJECT_NAME} COMPONENT applications)
++    if(PDC_INSTALL_TARGETS)
++        install(TARGETS ${PDCURSE_PROJ}
++            ARCHIVE DESTINATION ${PDCURSES_DIST}/lib/${PROJECT_NAME}
++            LIBRARY DESTINATION ${PDCURSES_DIST}/lib/${PROJECT_NAME}
++            RUNTIME DESTINATION ${PDCURSES_DIST}/bin/${PROJECT_NAME} COMPONENT applications)
++    endif()
+     set_target_properties(${PDCURSE_PROJ} PROPERTIES OUTPUT_NAME "pdcurses")
+ else()
+     set(PDCURSE_PROJ ${PROJECT_NAME}_pdcursesstatic)
+     add_library (${PDCURSE_PROJ} STATIC ${pdc_src_files} ${pdcurses_src_files})
+-    install (TARGETS ${PDCURSE_PROJ} ARCHIVE DESTINATION ${PDCURSES_DIST}/lib/${PROJECT_NAME} COMPONENT applications)
++    if(PDC_INSTALL_TARGETS)
++        install (TARGETS ${PDCURSE_PROJ} ARCHIVE DESTINATION ${PDCURSES_DIST}/lib/${PROJECT_NAME} COMPONENT applications)
++    endif()
+     set_target_properties(${PDCURSE_PROJ} PROPERTIES OUTPUT_NAME "pdcursesstatic")
+ endif()
+ 
+ macro (demo_app dir targ)
+-    set(bin_name "${PROJECT_NAME}_${targ}")
+-    if(${targ} STREQUAL "tuidemo")
+-        set(src_files ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/tuidemo.c ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/tui.c)
+-    else()
+-        set(src_files ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${targ}.c)
+-    endif()
++    if (PDC_DEMOS_BUILD)
++        set(bin_name "${PROJECT_NAME}_${targ}")
++        if(${targ} STREQUAL "tuidemo")
++            set(src_files ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/tuidemo.c ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/tui.c)
++        else()
++            set(src_files ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${targ}.c)
++        endif()
+ 
+-    add_executable(${bin_name} ${ARGV2} ${src_files})
++        add_executable(${bin_name} ${ARGV2} ${src_files})
+ 
+-    if((${PROJECT_NAME} STREQUAL "wincon") OR (${PROJECT_NAME} STREQUAL "wingui"))
+-        target_link_libraries(${bin_name} ${PDCURSE_PROJ} ${EXTRA_LIBS} ${WINCON_WINGUI_DEP_LIBS})
+-    else()
+-        target_link_libraries(${bin_name} ${PDCURSE_PROJ} ${EXTRA_LIBS})
+-    endif()
++        if((${PROJECT_NAME} STREQUAL "wincon") OR (${PROJECT_NAME} STREQUAL "wingui"))
++            target_link_libraries(${bin_name} ${PDCURSE_PROJ} ${EXTRA_LIBS} ${WINCON_WINGUI_DEP_LIBS})
++        else()
++            target_link_libraries(${bin_name} ${PDCURSE_PROJ} ${EXTRA_LIBS})
++        endif()
+ 
+-    add_dependencies(${bin_name} ${PDCURSE_PROJ})
+-    set_target_properties(${bin_name} PROPERTIES OUTPUT_NAME ${targ})
++        add_dependencies(${bin_name} ${PDCURSE_PROJ})
++        set_target_properties(${bin_name} PROPERTIES OUTPUT_NAME ${targ})
+ 
+-    install(TARGETS ${bin_name} RUNTIME DESTINATION ${PDCURSES_DIST}/bin/${PROJECT_NAME} COMPONENT applications)
++        if(PDC_INSTALL_TARGETS)
++            install(TARGETS ${bin_name} RUNTIME DESTINATION ${PDCURSES_DIST}/bin/${PROJECT_NAME} COMPONENT applications)
++        endif()
++    endif()
+ endmacro ()
+diff --git a/cmake/sdl2_ttf/CMakeLists.txt b/cmake/sdl2_ttf/CMakeLists.txt
+index 38e61d12..5dce23bc 100644
+--- a/cmake/sdl2_ttf/CMakeLists.txt
++++ b/cmake/sdl2_ttf/CMakeLists.txt
+@@ -72,11 +72,11 @@ INSTALL (TARGETS SDL2_ttf
+     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+     COMPONENT libraries)
+ 
+-ADD_EXECUTABLE (showfont ${CMAKE_SOURCE_DIR}/showfont.c)
++ADD_EXECUTABLE (showfont ${CMAKE_CURRENT_SOURCE_DIR}/showfont.c)
+ TARGET_LINK_LIBRARIES (showfont SDL2_ttf  ${SDL2_LIBRARIES} ${FT2_LIBRARY} ${ZLIB_LIBRARY} ${EXTRA_LIBS})
+ INSTALL (TARGETS showfont RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin COMPONENT applications)
+ 
+-ADD_EXECUTABLE (glfont ${CMAKE_SOURCE_DIR}/glfont.c)
++ADD_EXECUTABLE (glfont ${CMAKE_CURRENT_SOURCE_DIR}/glfont.c)
+ TARGET_LINK_LIBRARIES (glfont SDL2_ttf ${SDL2_LIBRARIES} ${FT2_LIBRARY} ${ZLIB_LIBRARY} ${EXTRA_LIBS})
+ INSTALL (TARGETS glfont RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin COMPONENT applications)
+ 

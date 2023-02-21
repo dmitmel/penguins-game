@@ -86,6 +86,19 @@ add_library(penguins-lib STATIC
 )
 setup_penguins_target(penguins-lib)
 
+find_package(Patch REQUIRED)
+FetchContent_Declare(pdcurses
+  URL "https://github.com/Bill-Gray/PDCursesMod/archive/refs/tags/v4.3.5.tar.gz"
+  URL_HASH SHA1=b1790959b0bfd724a8ab4713f8f6ed1aff37bec5
+  PATCH_COMMAND
+    ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_wrapper.cmake
+    ${Patch_EXECUTABLE} --forward --reject-file=- --strip=1 --binary
+    --input=${CMAKE_CURRENT_SOURCE_DIR}/cmake/pdcursesmod_4.2.0_subproject.patch
+)
+include(cmake/pdcursesmod_config.cmake)
+FetchContent_MakeAvailable(pdcurses)
+set_property(DIRECTORY ${pdcurses_SOURCE_DIR} PROPERTY EXCLUDE_FROM_ALL ON)
+
 # add executables (implementations of the files defined in the header files)
 add_executable(penguins
   src/arguments.c
@@ -101,6 +114,7 @@ if(INTERACTIVE_MODE)
     src/interactive.c
     src/io.c
   )
+  target_link_libraries(penguins PUBLIC ${PENGUINS_SELECTED_PDCURSES_TARGET})
 endif()
 if(AUTONOMOUS_MODE)
   target_compile_definitions(penguins PUBLIC AUTONOMOUS_MODE)
