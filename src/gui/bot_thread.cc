@@ -2,7 +2,23 @@
 #include "gui/game.hh"
 #include "gui/game_state.hh"
 #include "utils.h"
+#include <wx/debug.h>
 #include <wx/thread.h>
+
+void BotThreadShared::wait_for_exit() {
+  wxMutexLocker lock(this->mutex);
+  while (!this->exited) {
+    wxCondError code WX_ATTRIBUTE_UNUSED = this->condvar.Wait();
+    wxASSERT(code == wxCOND_NO_ERROR);
+  }
+}
+
+void BotThreadShared::notify_exit() {
+  wxMutexLocker lock(this->mutex);
+  wxASSERT(!this->exited);
+  this->exited = true;
+  this->condvar.Broadcast();
+}
 
 BotThread::BotThread(GameFrame* frame)
 : wxThread(wxTHREAD_DETACHED), frame(frame), bot_params(frame->state.bot_params) {
@@ -23,7 +39,8 @@ void BotThread::OnExit() {
   // The thread is unregistered in the OnExit method instead of the destructor
   // so as to not accidentally use a half-destroyed object. And also because
   // joinable threads don't destruct themselves automatically.
-  this->frame->on_bot_thread_exited(this);
+  this->frame->unregister_bot_thread(this);
+  this->shared->notify_exit();
 }
 
 wxThread::ExitCode BotPlacementThread::Entry() {
@@ -32,7 +49,9 @@ wxThread::ExitCode BotPlacementThread::Entry() {
   bool ok = bot_make_placement(this->bot_state.get(), &target);
   bool cancelled = this->bot_state->cancelled;
   auto frame = this->frame;
+  auto shared = this->shared;
   frame->CallAfter([=]() -> void {
+    shared->wait_for_exit();
     if (!cancelled && ok) frame->place_penguin(target);
     frame->on_bot_thread_done_work(cancelled);
   });
@@ -45,7 +64,9 @@ wxThread::ExitCode BotMovementThread::Entry() {
   bool ok = bot_make_move(this->bot_state.get(), &penguin, &target);
   bool cancelled = this->bot_state->cancelled;
   auto frame = this->frame;
+  auto shared = this->shared;
   frame->CallAfter([=]() -> void {
+    shared->wait_for_exit();
     if (!cancelled && ok) frame->move_penguin(penguin, target);
     frame->on_bot_thread_done_work(cancelled);
   });

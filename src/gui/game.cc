@@ -292,8 +292,6 @@ void GameFrame::execute_bot_turn() {
 }
 
 void GameFrame::on_bot_thread_done_work(bool cancelled) {
-  // Wait for the bot thread to stop completely.
-  this->stop_bot_thread();
   this->executing_bot_turn = false;
   if (!cancelled) {
     this->update_game_state();
@@ -307,38 +305,36 @@ void GameFrame::run_bot_thread(BotThread* thread) {
   wxCriticalSectionLocker enter(this->bot_thread_cs);
   wxASSERT(this->bot_thread == nullptr);
   this->bot_thread = thread;
-  wxASSERT(thread->Run() == wxTHREAD_NO_ERROR);
+  wxThreadError code WX_ATTRIBUTE_UNUSED = thread->Run();
+  wxASSERT(code == wxTHREAD_NO_ERROR);
 }
 
 void GameFrame::stop_bot_thread() {
   wxASSERT(wxThread::IsMain());
   // Well, this ain't the best way of doing thread synchronization, but it sure
   // does work.
-  std::shared_ptr<wxSemaphore> exit_semaphore = nullptr;
+  std::shared_ptr<BotThreadShared> shared = nullptr;
   {
     wxCriticalSectionLocker enter(this->bot_thread_cs);
     if (this->bot_thread) {
       this->bot_thread->cancel();
-      exit_semaphore = this->bot_thread->exit_semaphore;
+      shared = this->bot_thread->shared;
       this->bot_thread = nullptr;
     }
   }
-  if (exit_semaphore) {
-    exit_semaphore->Wait();
+  if (shared) {
+    shared->wait_for_exit();
   }
 }
 
-void GameFrame::on_bot_thread_exited(BotThread* thread) {
+void GameFrame::unregister_bot_thread(BotThread* thread) {
   wxASSERT(wxThread::GetCurrentId() == thread->GetId());
-  {
-    wxCriticalSectionLocker enter(this->bot_thread_cs);
-    // Another bot thread might have just been spun up after cancelling this one,
-    // so check that we are unregistering the correct one to be sure.
-    if (this->bot_thread == thread) {
-      this->bot_thread = nullptr;
-    }
+  wxCriticalSectionLocker enter(this->bot_thread_cs);
+  // Another bot thread might have just been spun up after cancelling this one,
+  // so check that we are unregistering the correct one to be sure.
+  if (this->bot_thread == thread) {
+    this->bot_thread = nullptr;
   }
-  thread->exit_semaphore->Post();
 }
 
 void GameFrame::start_bot_progress() {
@@ -388,6 +384,9 @@ void GameFrame::end_game() {
 }
 
 void GameFrame::close_game() {
+  this->stop_bot_thread();
+  this->executing_bot_turn = false;
+  this->stop_bot_progress();
   if (this->canvas_panel) {
     bool replaced = this->canvas_sizer->Replace(this->canvas_panel, this->empty_canvas_panel);
     wxASSERT(replaced);

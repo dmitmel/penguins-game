@@ -3,10 +3,29 @@
 #include "bot.h"
 #include "game.h"
 #include <memory>
+#include <wx/defs.h>
 #include <wx/thread.h>
 #include <wx/version.h>
 
 class GameFrame;
+
+// The implementation of this class is somewhat based on
+// <https://github.com/wxWidgets/wxWidgets/blob/v3.2.2.1/src/unix/threadpsx.cpp#L576-L716>.
+class BotThreadShared {
+public:
+  BotThreadShared() {}
+
+  void notify_exit();
+  void wait_for_exit();
+
+  bool exited = false;
+
+protected:
+  wxMutex mutex{};
+  wxCondition condvar{ this->mutex };
+
+  wxDECLARE_NO_COPY_CLASS(BotThreadShared);
+};
 
 class BotThread : public wxThread {
 public:
@@ -14,7 +33,7 @@ public:
   ~BotThread();
   void cancel();
 
-  std::shared_ptr<wxSemaphore> exit_semaphore{ new wxSemaphore() };
+  std::shared_ptr<BotThreadShared> shared{ new BotThreadShared() };
 
 protected:
   virtual void OnExit() override;

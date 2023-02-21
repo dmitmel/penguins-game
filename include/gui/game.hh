@@ -43,7 +43,7 @@ public:
   void on_bot_thread_done_work(bool cancelled);
   void run_bot_thread(BotThread* thread);
   void stop_bot_thread();
-  void on_bot_thread_exited(BotThread* thread);
+  void unregister_bot_thread(BotThread* thread);
   void start_bot_progress();
   void stop_bot_progress();
 
