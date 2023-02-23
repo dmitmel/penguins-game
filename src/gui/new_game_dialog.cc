@@ -1,10 +1,10 @@
 #include "gui/new_game_dialog.hh"
 #include <cstddef>
-#include <wx/artprov.h>
 #include <wx/choice.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/math.h>
+#include <wx/sizer.h>
 #include <wx/spinbutt.h>
 #include <wx/spinctrl.h>
 #include <wx/statline.h>
@@ -12,7 +12,13 @@
 #include <wx/string.h>
 #include <wx/textctrl.h>
 #include <wx/version.h>
+#ifdef __WXGTK__
+#include <wx/artprov.h>
+#include <wx/bmpbuttn.h>
 // IWYU pragma: no_include <wx/bmpbndl.h>
+#else
+#include <wx/button.h>
+#endif
 
 NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
 : wxDialog(parent, id, "New game options", wxDefaultPosition, wxDefaultSize) {
@@ -70,7 +76,11 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   grids_vbox->Add(this->players_grid, wxSizerFlags().Expand());
 
   auto outer_vbox = new wxBoxSizer(wxVERTICAL);
-  outer_vbox->Add(grids_vbox, wxSizerFlags().Expand().DoubleBorder());
+  wxSizerFlags grids_vbox_sizer_flags = wxSizerFlags().Expand().DoubleBorder(wxALL);
+#ifdef __WXOSX__
+  grids_vbox_sizer_flags.Border(wxALL, wxRound(spacing * 4));
+#endif
+  outer_vbox->Add(grids_vbox, grids_vbox_sizer_flags);
   this->buttons_sizer = this->CreateStdDialogButtonSizer(wxOK | wxCLOSE);
   this->SetEscapeId(wxID_CLOSE);
   outer_vbox->Add(new wxStaticLine(this), wxSizerFlags().Expand());
@@ -165,6 +175,12 @@ void NewGameDialog::update_new_player_row() {
   bool show = this->player_rows.size() < size_t(this->players_number_input->GetMax());
   this->new_player_row.name_input->Show(show);
   this->new_player_row.type_input->Show(show);
+  this->new_player_row.delete_btn->Show(this->new_player_row.delete_btn->IsShown() && show);
+  wxSizerItem* delete_btn_item = this->players_grid->GetItem(this->new_player_row.delete_btn);
+  delete_btn_item->SetFlag(
+    (delete_btn_item->GetFlag() & ~wxRESERVE_SPACE_EVEN_IF_HIDDEN) |
+    (show ? wxRESERVE_SPACE_EVEN_IF_HIDDEN : 0)
+  );
 }
 
 void NewGameDialog::add_new_player_row(bool initial) {
@@ -191,12 +207,18 @@ void NewGameDialog::add_new_player_row(bool initial) {
   type_input->Select(0);
   grid->Add(type_input, wxSizerFlags().Expand());
 
+#ifdef __WXGTK__
   auto delete_btn = new wxBitmapButton(this, wxID_ANY, wxArtProvider::GetIcon(wxART_CROSS_MARK));
+#else
+  auto delete_btn =
+    new wxButton(this, wxID_ANY, " X ", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+#endif
   delete_btn->Bind(wxEVT_BUTTON, &NewGameDialog::on_player_delete_clicked, this);
   delete_btn->Hide();
-  grid->Add(delete_btn, wxSizerFlags().Expand().ReserveSpaceEvenIfHidden());
+  grid->Add(delete_btn, wxSizerFlags().Expand());
 
   this->new_player_row = { type_input, name_input, delete_btn };
+  this->update_new_player_row();
 }
 
 void NewGameDialog::realize_player_row(size_t index) {

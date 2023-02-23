@@ -73,7 +73,9 @@ protected:
   wxTimer progress_timer;
   wxWindow* progress_container;
   wxGauge* progress_bar;
+#ifndef __WXOSX__
   std::unique_ptr<wxBusyCursor> busy_cursor_changer{ nullptr };
+#endif
 };
 
 typedef enum TileAttribute {

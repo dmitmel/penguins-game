@@ -6,4 +6,6 @@
   { include: ['@<wx/generic/(.+)g\.h>', private, '<wx/\1.h>', public] },
   { include: ['@<wx/(generic|gtk|msw|qt|univ|unix)/(.+)\.h>', private, '<wx/\2.h>', public] },
   { include: ['@<wx/stringimpl.h>', private, '<wx/string.h>', public] },
+  { include: ['@<wx/anybutton.h>', private, '<wx/button.h>', public] },
+  { include: ['@<wx/anybutton.h>', private, '<wx/bmpbuttn.h>', public] },
 ]

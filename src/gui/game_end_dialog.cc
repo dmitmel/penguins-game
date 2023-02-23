@@ -75,12 +75,10 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxStri
 
   this->grid =
     new GameEndDialogGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
-  this->grid->CreateGrid(game->players_count, 3);
+  this->grid->CreateGrid(game->players_count, 3, wxGrid::wxGridSelectNone);
   this->grid->EnableEditing(false);
   this->grid->SetCellHighlightPenWidth(0);
   this->grid->SetCellHighlightROPenWidth(0);
-  this->grid->SetSelectionBackground(this->grid->GetDefaultCellBackgroundColour());
-  this->grid->SetSelectionForeground(this->grid->GetDefaultCellTextColour());
   this->grid->DisableDragGridSize();
   this->grid->DisableDragRowSize();
   this->grid->DisableDragColSize();
@@ -166,10 +164,14 @@ void GameEndDialogGrid::equally_size_columns() {
     return;
   }
   this->BeginBatch();
-  int growable_col_size = (growable_cols_total_size + cols_free_size) / growable_cols;
-  for (int i = 0; i < ncols; i++) {
+  // Width distribution algorithm was taken from
+  // <https://github.com/wxWidgets/wxWidgets/blob/v3.2.2.1/src/common/statbar.cpp#L200-L213>.
+  growable_cols_total_size += cols_free_size;
+  for (int i = ncols - 1; i >= 0; i--) {
     if (this->GetColSize(i) < cols_ideal_size) {
-      this->SetColSize(i, growable_col_size);
+      int size = growable_cols_total_size / (i + 1);
+      this->SetColSize(i, size);
+      growable_cols_total_size -= size;
     }
   }
   this->EndBatch();

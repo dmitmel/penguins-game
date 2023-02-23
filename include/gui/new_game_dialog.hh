@@ -2,7 +2,7 @@
 
 #include "gui/game_state.hh"
 #include <cstddef>
-#include <wx/bmpbuttn.h>
+#include <wx/button.h>
 #include <wx/choice.h>
 #include <wx/defs.h>
 #include <wx/dialog.h>
@@ -48,7 +48,7 @@ protected:
   struct PlayerRowWidgets {
     wxChoice* type_input;
     wxTextCtrl* name_input;
-    wxBitmapButton* delete_btn;
+    wxButton* delete_btn;
   };
   wxVector<PlayerRowWidgets> player_rows;
   PlayerRowWidgets new_player_row;

@@ -32,7 +32,7 @@ PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id) : SimpleStaticBox(
   this->root_hbox->Add(this->info_vbox, wxSizerFlags().Border(wxALL & ~wxLEFT));
 }
 
-void PlayerInfoBox::update_data(Game* game, int idx, wxString name) {
+void PlayerInfoBox::update_data(Game* game, int idx, const wxString& name) {
   Player* player = game_get_player(game, idx);
 
   this->is_current = idx == game->current_player_index;
