@@ -342,15 +342,19 @@ void GameFrame::start_bot_progress() {
   if (!this->progress_timer.IsRunning()) {
     this->progress_timer.Start(50);
   }
+#ifndef __WXOSX__
   if (!this->busy_cursor_changer) {
     this->busy_cursor_changer.reset(new wxBusyCursor());
   }
+#endif
 }
 
 void GameFrame::stop_bot_progress() {
   this->progress_container->Hide();
   this->progress_timer.Stop();
+#ifndef __WXOSX__
   this->busy_cursor_changer.reset(nullptr);
+#endif
 }
 
 PlayerType GameFrame::get_current_player_type() const {

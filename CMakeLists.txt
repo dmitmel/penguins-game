@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.11)
-project(penguins C CXX)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(APPLE)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10" CACHE STRING "The minimum supported macOS version")
+endif()
+
+project(penguins
+  LANGUAGES C CXX
+  VERSION 0.0.1
+)
 
 if(POLICY CMP0135)
   # Necessary for using ExternalProject and FetchContent.
@@ -162,11 +171,17 @@ endif()
 if(GRAPHICAL_MODE)
   embed_resource(resources/appicon_256.png)
   embed_resource(resources/tileset.png)
+  set(mac_resources)
+  if(APPLE)
+    list(APPEND mac_resources resources/appicon.icns)
+  endif()
   # Useful information about enabling High-DPI support on Windows:
   # <https://doc.magnum.graphics/magnum/platforms-windows.html#platforms-windows-hidpi>.
-  # Note that when compiling on an OS other than Windows, the Windows-specific options and source
-  # files (`*.rc`, `*.manifest`) will be ignored.
-  add_executable(penguins-gui WIN32
+  # Note that when compiling on an OS other than Windows, the Windows-specific
+  # options and source files (`*.rc`, `*.manifest`) will be ignored (same goes
+  # for macOS-specific options).
+  add_executable(penguins-gui WIN32 MACOSX_BUNDLE
+    ${mac_resources}
     resources/penguins.rc
     resources_appicon_256_png.c
     resources_tileset_png.c
@@ -188,6 +203,18 @@ if(GRAPHICAL_MODE)
     # We include our own manifest via the `.rc` file, so the default one has to be disabled.
     target_link_options(penguins-gui PRIVATE /MANIFEST:NO)
   endif()
+
+  set_target_properties(penguins-gui PROPERTIES
+    RESOURCE "${mac_resources}"
+    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/penguins.plist.in"
+    MACOSX_BUNDLE_BUNDLE_NAME "Penguins"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.github.dmitmel.penguins"
+    MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_INFO_STRING "${PROJECT_NAME} v${PROJECT_VERSION}"
+    MACOSX_BUNDLE_ICON_FILE "appicon"
+  )
 
   if(BUILD_WXWIDGETS_FROM_SOURCE)
     target_link_libraries(penguins-gui PUBLIC wx::core wx::base)

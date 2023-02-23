@@ -18,7 +18,7 @@ class PlayerInfoBox : public SimpleStaticBox {
 public:
   PlayerInfoBox(wxWindow* parent, wxWindowID id);
 
-  void update_data(Game* game, int idx, wxString name);
+  void update_data(Game* game, int idx, const wxString& name);
 
   const wxBitmap& get_penguin_sprite() const {
     return this->penguin_sprite;
