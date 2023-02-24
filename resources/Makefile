@@ -1,6 +1,8 @@
 .PHONY: all
 
-all: appicon_256.png
+all: appicon_64.png appicon_256.png
+appicon_64.png: appicon_16.png
+	convert $< -filter point -resize 64x64 $@
 appicon_256.png: appicon_16.png
 	convert $< -filter point -resize 256x256 $@
 

@@ -155,12 +155,41 @@ if(GRAPHICAL_MODE)
 endif()
 
 if(GRAPHICAL_MODE)
+  set(mac_resources)
+
+  if(APPLE)
+    set(iconset_dir "appicon.iconset")
+    add_custom_command(
+      OUTPUT "${iconset_dir}"
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${iconset_dir}"
+      VERBATIM
+    )
+
+    set(icns_icon_deps)
+    foreach(icon_size IN ITEMS 16 64 256)
+      set(icon_src "${CMAKE_CURRENT_SOURCE_DIR}/resources/appicon_${icon_size}.png")
+      set(icon_dst "${iconset_dir}/icon_${icon_size}x${icon_size}.png")
+      add_custom_command(
+        OUTPUT "${icon_dst}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${icon_src}" "${icon_dst}"
+        DEPENDS "${icon_src}" "${iconset_dir}"
+        VERBATIM
+      )
+      list(APPEND icns_icon_deps "${icon_dst}")
+    endforeach()
+
+    set(icns_icon "appicon.icns")
+    add_custom_command(
+      OUTPUT "${icns_icon}"
+      COMMAND iconutil -c icns -o "${icns_icon}" "${iconset_dir}"
+      DEPENDS "${iconset_dir}" "${icns_icon_deps}"
+      VERBATIM
+    )
+    list(APPEND mac_resources ${icns_icon})
+  endif()
+
   embed_resource(resources/appicon_256.png)
   embed_resource(resources/tileset.png)
-  set(mac_resources)
-  if(APPLE)
-    list(APPEND mac_resources resources/appicon.icns)
-  endif()
   # Useful information about enabling High-DPI support on Windows:
   # <https://doc.magnum.graphics/magnum/platforms-windows.html#platforms-windows-hidpi>.
   # Note that when compiling on an OS other than Windows, the Windows-specific
