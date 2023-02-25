@@ -1,4 +1,5 @@
 #include "gui/bot_thread.hh"
+#include "gui/controllers.hh"
 #include "gui/game.hh"
 #include "gui/game_state.hh"
 #include "utils.h"
@@ -20,9 +21,9 @@ void BotThreadShared::notify_exit() {
   this->condvar.Broadcast();
 }
 
-BotThread::BotThread(GameFrame* frame)
-: wxThread(wxTHREAD_DETACHED), frame(frame), bot_params(frame->state.bot_params) {
-  this->game.reset(game_clone(frame->state.game.get()));
+BotThread::BotThread(BotTurnController* controller)
+: wxThread(wxTHREAD_DETACHED), controller(controller), bot_params(controller->state.bot_params) {
+  this->game.reset(game_clone(controller->state.game.get()));
   this->bot_state.reset(bot_state_new(this->bot_params.get(), this->game.get()));
   this->cancelled_ptr = &this->bot_state->cancelled;
 }
@@ -39,7 +40,7 @@ void BotThread::OnExit() {
   // The thread is unregistered in the OnExit method instead of the destructor
   // so as to not accidentally use a half-destroyed object. And also because
   // joinable threads don't destruct themselves automatically.
-  this->frame->unregister_bot_thread(this);
+  this->controller->unregister_bot_thread(this);
   this->shared->notify_exit();
 }
 
@@ -48,12 +49,12 @@ wxThread::ExitCode BotPlacementThread::Entry() {
   Coords target;
   bool ok = bot_make_placement(this->bot_state.get(), &target);
   bool cancelled = this->bot_state->cancelled;
-  auto frame = this->frame;
+  auto controller = this->controller;
   auto shared = this->shared;
-  frame->CallAfter([=]() -> void {
+  controller->game_frame->CallAfter([=]() -> void {
     shared->wait_for_exit();
-    if (!cancelled && ok) frame->place_penguin(target);
-    frame->on_bot_thread_done_work(cancelled);
+    if (!cancelled && ok) controller->game_frame->place_penguin(target);
+    controller->on_bot_thread_done_work(cancelled);
   });
   return 0;
 }
@@ -63,12 +64,12 @@ wxThread::ExitCode BotMovementThread::Entry() {
   Coords penguin, target;
   bool ok = bot_make_move(this->bot_state.get(), &penguin, &target);
   bool cancelled = this->bot_state->cancelled;
-  auto frame = this->frame;
+  auto controller = this->controller;
   auto shared = this->shared;
-  frame->CallAfter([=]() -> void {
+  controller->game_frame->CallAfter([=]() -> void {
     shared->wait_for_exit();
-    if (!cancelled && ok) frame->move_penguin(penguin, target);
-    frame->on_bot_thread_done_work(cancelled);
+    if (!cancelled && ok) controller->game_frame->move_penguin(penguin, target);
+    controller->on_bot_thread_done_work(cancelled);
   });
   return 0;
 }

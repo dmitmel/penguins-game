@@ -2,7 +2,7 @@
 #include "board.h"
 #include "bot.h"
 #include "game.h"
-#include "gui/bot_thread.hh"
+#include "gui/controllers.hh"
 #include "gui/game_end_dialog.hh"
 #include "gui/game_state.hh"
 #include "gui/main.hh"
@@ -14,10 +14,8 @@
 #include "resources_appicon_256_png.h"
 #include "utils.h"
 #include <cassert>
-#include <cstring>
 #include <memory>
 #include <wx/bitmap.h>
-#include <wx/colour.h>
 #include <wx/dc.h>
 #include <wx/dcclient.h>
 #include <wx/dcmemory.h>
@@ -26,7 +24,6 @@
 #include <wx/event.h>
 #include <wx/gauge.h>
 #include <wx/gdicmn.h>
-#include <wx/geometry.h>
 #include <wx/icon.h>
 #include <wx/image.h>
 #include <wx/menu.h>
@@ -34,22 +31,16 @@
 #include <wx/msgdlg.h>
 #include <wx/mstream.h>
 #include <wx/panel.h>
-#include <wx/pen.h>
 #include <wx/persist.h>
 #include <wx/region.h>
 #include <wx/scrolwin.h>
 #include <wx/sizer.h>
 #include <wx/statusbr.h>
 #include <wx/string.h>
-#include <wx/thread.h>
 #include <wx/timer.h>
 #include <wx/types.h>
 #include <wx/utils.h>
 #include <wx/window.h>
-
-static inline bool coords_same(const Coords& a, const Coords& b) {
-  return a.x == b.x && a.y == b.y;
-}
 
 GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Penguins game") {
   this->Bind(wxEVT_DESTROY, &GameFrame::on_destroy, this);
@@ -130,10 +121,10 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Pen
   wxSize default_board_size(
     NewGameDialog::DEFAULT_BOARD_WIDTH, NewGameDialog::DEFAULT_BOARD_HEIGHT
   );
-  this->empty_canvas_panel = new wxPanel(
+  this->empty_canvas = new wxPanel(
     this->scrolled_panel, wxID_ANY, wxDefaultPosition, default_board_size * CanvasPanel::TILE_SIZE
   );
-  scroll_hbox->Add(this->empty_canvas_panel, wxSizerFlags(1).Centre());
+  scroll_hbox->Add(this->empty_canvas, wxSizerFlags(1).Centre());
   this->canvas_sizer = scroll_hbox;
   scroll_vbox->Add(scroll_hbox, wxSizerFlags(1).Centre());
   this->scrolled_panel->SetSizer(scroll_vbox);
@@ -141,7 +132,7 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Pen
   auto panel_vbox = new wxBoxSizer(wxVERTICAL);
 
   this->players_box = new wxBoxSizer(wxHORIZONTAL);
-  panel_vbox->Add(players_box, wxSizerFlags().Centre().Border(wxALL & ~wxDOWN));
+  panel_vbox->Add(this->players_box, wxSizerFlags().Centre().Border(wxALL & ~wxDOWN));
 
   auto canvas_hbox = new wxBoxSizer(wxHORIZONTAL);
   canvas_hbox->Add(this->scrolled_panel, wxSizerFlags(1).Expand().Border());
@@ -163,10 +154,11 @@ void GameFrame::update_layout() {
 
 GameFrame::~GameFrame() {
   this->SendDestroyEvent();
+  this->set_controller(nullptr);
 }
 
 void GameFrame::on_destroy(wxWindowDestroyEvent& WXUNUSED(event)) {
-  this->stop_bot_thread();
+  this->set_controller(nullptr);
 }
 
 void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
@@ -224,10 +216,10 @@ void GameFrame::start_new_game() {
   }
   game_end_setup(game);
 
-  this->canvas_panel = new CanvasPanel(this->scrolled_panel, wxID_ANY, this);
-  bool replaced = this->canvas_sizer->Replace(this->empty_canvas_panel, this->canvas_panel);
+  this->canvas = new CanvasPanel(this->scrolled_panel, wxID_ANY, this);
+  bool replaced = this->canvas_sizer->Replace(this->empty_canvas, this->canvas);
   wxASSERT(replaced);
-  this->empty_canvas_panel->Hide();
+  this->empty_canvas->Hide();
 
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes = wxVector<PlayerInfoBox*>(game->players_count);
@@ -248,19 +240,34 @@ void GameFrame::start_new_game() {
 }
 
 void GameFrame::update_game_state() {
+  this->set_controller(nullptr);
   Game* game = this->state.game.get();
   game_advance_state(game);
 
+  GameController* controller = nullptr;
+  PlayerType type = PLAYER_TYPE_MAX;
+  if (game_check_player_index(game, game->current_player_index)) {
+    type = this->state.player_types.at(game->current_player_index);
+  }
+  if (game->phase == GAME_PHASE_END) {
+    controller = new GameEndedController(this);
+  } else if (game->phase == GAME_PHASE_PLACEMENT && type == PLAYER_NORMAL) {
+    controller = new PlayerPlacementController(this);
+  } else if (game->phase == GAME_PHASE_PLACEMENT && type == PLAYER_BOT) {
+    controller = new BotPlacementController(this);
+  } else if (game->phase == GAME_PHASE_MOVEMENT && type == PLAYER_NORMAL) {
+    controller = new PlayerMovementController(this);
+  } else if (game->phase == GAME_PHASE_MOVEMENT && type == PLAYER_BOT) {
+    controller = new BotMovementController(this);
+  }
+
+  wxASSERT_MSG(controller != nullptr, "No appropriate controller for the current game state");
+  this->set_controller(controller);
+  controller->on_activated();
+
   // Repaint
   this->update_player_info_boxes();
-  this->canvas_panel->Refresh();
-
-  if (this->state.current_player_type_is(PLAYER_BOT)) {
-    this->start_bot_progress();
-    this->execute_bot_turn();
-  } else {
-    this->stop_bot_progress();
-  }
+  this->canvas->Refresh();
 
   if (game->phase == GAME_PHASE_END) {
     if (!this->state.game_ended) {
@@ -270,64 +277,9 @@ void GameFrame::update_game_state() {
   }
 }
 
-void GameFrame::execute_bot_turn() {
-  wxASSERT(this->state.current_player_type_is(PLAYER_BOT));
-  wxASSERT(!this->executing_bot_turn);
-  this->executing_bot_turn = true;
-  Game* game = this->state.game.get();
-  if (game->phase == GAME_PHASE_PLACEMENT) {
-    this->run_bot_thread(new BotPlacementThread(this));
-  } else if (game->phase == GAME_PHASE_MOVEMENT) {
-    this->run_bot_thread(new BotMovementThread(this));
-  } else {
-    wxASSERT_MSG(false, "cannot execute a bot turn in the current game phase");
-  }
-}
-
-void GameFrame::on_bot_thread_done_work(bool cancelled) {
-  this->executing_bot_turn = false;
-  if (!cancelled) {
-    this->update_game_state();
-  } else {
-    this->stop_bot_progress();
-  }
-}
-
-void GameFrame::run_bot_thread(BotThread* thread) {
-  wxASSERT(wxThread::IsMain());
-  wxCriticalSectionLocker enter(this->bot_thread_cs);
-  wxASSERT(this->bot_thread == nullptr);
-  this->bot_thread = thread;
-  wxThreadError code WX_ATTRIBUTE_UNUSED = thread->Run();
-  wxASSERT(code == wxTHREAD_NO_ERROR);
-}
-
-void GameFrame::stop_bot_thread() {
-  wxASSERT(wxThread::IsMain());
-  // Well, this ain't the best way of doing thread synchronization, but it sure
-  // does work.
-  std::shared_ptr<BotThreadShared> shared = nullptr;
-  {
-    wxCriticalSectionLocker enter(this->bot_thread_cs);
-    if (this->bot_thread) {
-      this->bot_thread->cancel();
-      shared = this->bot_thread->shared;
-      this->bot_thread = nullptr;
-    }
-  }
-  if (shared) {
-    shared->wait_for_exit();
-  }
-}
-
-void GameFrame::unregister_bot_thread(BotThread* thread) {
-  wxASSERT(wxThread::GetCurrentId() == thread->GetId());
-  wxCriticalSectionLocker enter(this->bot_thread_cs);
-  // Another bot thread might have just been spun up after cancelling this one,
-  // so check that we are unregistering the correct one to be sure.
-  if (this->bot_thread == thread) {
-    this->bot_thread = nullptr;
-  }
+void GameFrame::set_controller(GameController* controller) {
+  delete this->controller;
+  this->controller = controller;
 }
 
 void GameFrame::start_bot_progress() {
@@ -352,16 +304,16 @@ void GameFrame::stop_bot_progress() {
 
 void GameFrame::place_penguin(Coords target) {
   ::place_penguin(this->state.game.get(), target);
-  this->canvas_panel->set_tile_attr(target, TILE_DIRTY, true);
-  this->canvas_panel->set_tile_neighbors_attr(target, TILE_DIRTY, true);
+  this->canvas->set_tile_attr(target, TILE_DIRTY, true);
+  this->canvas->set_tile_neighbors_attr(target, TILE_DIRTY, true);
 }
 
 void GameFrame::move_penguin(Coords penguin, Coords target) {
   ::move_penguin(this->state.game.get(), penguin, target);
-  this->canvas_panel->set_tile_attr(penguin, TILE_DIRTY, true);
-  this->canvas_panel->set_tile_neighbors_attr(penguin, TILE_DIRTY, true);
-  this->canvas_panel->set_tile_attr(target, TILE_DIRTY, true);
-  this->canvas_panel->set_tile_neighbors_attr(target, TILE_DIRTY, true);
+  this->canvas->set_tile_attr(penguin, TILE_DIRTY, true);
+  this->canvas->set_tile_neighbors_attr(penguin, TILE_DIRTY, true);
+  this->canvas->set_tile_attr(target, TILE_DIRTY, true);
+  this->canvas->set_tile_neighbors_attr(target, TILE_DIRTY, true);
 }
 
 void GameFrame::end_game() {
@@ -372,15 +324,14 @@ void GameFrame::end_game() {
 }
 
 void GameFrame::close_game() {
-  this->stop_bot_thread();
-  this->executing_bot_turn = false;
+  this->set_controller(nullptr);
   this->stop_bot_progress();
-  if (this->canvas_panel) {
-    bool replaced = this->canvas_sizer->Replace(this->canvas_panel, this->empty_canvas_panel);
+  if (this->canvas) {
+    bool replaced = this->canvas_sizer->Replace(this->canvas, this->empty_canvas);
     wxASSERT(replaced);
-    this->canvas_panel->Destroy();
-    this->canvas_panel = nullptr;
-    this->empty_canvas_panel->Show();
+    this->canvas->Destroy();
+    this->canvas = nullptr;
+    this->empty_canvas->Show();
   }
   this->players_box->Clear(/* delete_windows */ true);
   this->player_info_boxes = wxVector<PlayerInfoBox*>();
@@ -407,8 +358,12 @@ CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame)
 , game_frame(game_frame)
 , game(game_frame->state.game.get())
 , tile_attributes(new wxByte[game->board_width * game->board_height]) {
-  memset(this->tile_attributes.get(), 0, game->board_width * game->board_height * sizeof(wxByte));
-  this->set_all_tiles_attr(TILE_DIRTY | TILE_BLOCKED_DIRTY, true);
+  for (int y = 0; y < game->board_height; y++) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords coords = { x, y };
+      *this->tile_attrs_ptr(coords) = TILE_DIRTY | TILE_BLOCKED_DIRTY;
+    }
+  }
   this->SetInitialSize(this->get_canvas_size());
 #ifdef __WXMSW__
   // Necessary to avoid flicker on Windows, see <https://wiki.wxwidgets.org/Flicker-Free_Drawing>.
@@ -435,12 +390,13 @@ wxPoint CanvasPanel::get_tile_centre(Coords coords) const {
 
 Coords CanvasPanel::get_selected_penguin_coords() const {
   Coords null_coords = { -1, -1 };
-  int player_idx = game->current_player_index;
-  if (!game_check_player_index(game, player_idx)) return null_coords;
-  int player_id = game_get_player(game, player_idx)->id;
+  if (!this->mouse_within_window) return null_coords;
   wxPoint curr_tile_pos = this->mouse_is_down ? this->mouse_drag_pos : this->mouse_pos;
   Coords curr_coords = this->tile_coords_at_point(curr_tile_pos);
   if (!is_tile_in_bounds(game, curr_coords)) return null_coords;
+  int player_idx = game->current_player_index;
+  if (!game_check_player_index(game, player_idx)) return null_coords;
+  int player_id = game_get_player(game, player_idx)->id;
   int tile = get_tile(game, curr_coords);
   return get_tile_player_id(tile) == player_id ? curr_coords : null_coords;
 }
@@ -473,71 +429,6 @@ void CanvasPanel::set_all_tiles_attr(wxByte attr, bool value) {
   }
 }
 
-void CanvasPanel::update_blocked_tiles() {
-  if (!this->game_frame->state.current_player_type_is(PLAYER_NORMAL)) {
-    this->set_all_tiles_attr(TILE_BLOCKED, false);
-    this->set_all_tiles_attr(TILE_BLOCKED_FOR_CURSOR, true);
-  } else if (game->phase == GAME_PHASE_PLACEMENT) {
-    Coords curr_coords = this->tile_coords_at_point(this->mouse_pos);
-    bool is_a_tile_selected = this->mouse_within_window && is_tile_in_bounds(game, curr_coords);
-    for (int y = 0; y < game->board_height; y++) {
-      for (int x = 0; x < game->board_width; x++) {
-        Coords coords = { x, y };
-        bool blocked = !validate_placement_simple(game, coords);
-        this->set_tile_attr(coords, TILE_BLOCKED_FOR_CURSOR, blocked);
-        this->set_tile_attr(coords, TILE_BLOCKED, blocked && is_a_tile_selected);
-      }
-    }
-  } else if (game->phase == GAME_PHASE_MOVEMENT) {
-    Coords selected_penguin = this->get_selected_penguin_coords();
-    if (this->mouse_within_window && is_tile_in_bounds(game, selected_penguin)) {
-      // A penguin is selected
-      this->set_all_tiles_attr(TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, true);
-      PossibleSteps moves = calculate_penguin_possible_moves(game, selected_penguin);
-      int steps_sum = 0;
-      for (int dir = 0; dir < DIRECTION_MAX; dir++) {
-        Coords coords = selected_penguin;
-        Coords d = DIRECTION_TO_COORDS[dir];
-        steps_sum += moves.steps[dir];
-        for (int steps = moves.steps[dir]; steps > 0; steps--) {
-          coords.x += d.x, coords.y += d.y;
-          this->set_tile_attr(coords, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
-        }
-      }
-      this->set_tile_attr(selected_penguin, TILE_BLOCKED, false);
-      if (steps_sum != 0 && !this->mouse_is_down) {
-        this->set_tile_attr(selected_penguin, TILE_BLOCKED_FOR_CURSOR, false);
-      }
-    } else {
-      int current_player_id = game_get_current_player(game)->id;
-      for (int y = 0; y < game->board_height; y++) {
-        for (int x = 0; x < game->board_width; x++) {
-          Coords coords = { x, y };
-          int tile = get_tile(game, coords);
-          bool blocked = get_tile_player_id(tile) != current_player_id;
-          this->set_tile_attr(coords, TILE_BLOCKED_FOR_CURSOR, blocked);
-          this->set_tile_attr(coords, TILE_BLOCKED, false);
-        }
-      }
-    }
-  } else {
-    this->set_all_tiles_attr(TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
-  }
-
-  for (int y = 0; y < game->board_height; y++) {
-    for (int x = 0; x < game->board_width; x++) {
-      Coords coords = { x, y };
-      wxByte* attrs = this->tile_attrs_ptr(coords);
-      bool was_blocked = (*attrs & TILE_BLOCKED_BEFORE) != 0;
-      bool is_blocked = (*attrs & TILE_BLOCKED) != 0;
-      if (is_blocked != was_blocked) {
-        this->set_tile_attr(coords, TILE_BLOCKED_DIRTY, true);
-      }
-      this->set_tile_attr(coords, TILE_BLOCKED_BEFORE, is_blocked);
-    }
-  }
-}
-
 void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   wxPaintDC window_dc(this);
 
@@ -550,7 +441,19 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
 
   wxRect update_region = GetUpdateRegion().GetBox();
 
-  this->update_blocked_tiles();
+  this->game_frame->controller->update_tile_attributes();
+  for (int y = 0; y < game->board_height; y++) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords coords = { x, y };
+      wxByte attrs = *this->tile_attrs_ptr(coords);
+      bool was_blocked = (attrs & TILE_BLOCKED_BEFORE) != 0;
+      bool is_blocked = (attrs & TILE_BLOCKED) != 0;
+      if (is_blocked != was_blocked) {
+        this->set_tile_attr(coords, TILE_BLOCKED_DIRTY, true);
+      }
+      this->set_tile_attr(coords, TILE_BLOCKED_BEFORE, is_blocked);
+    }
+  }
 
   if (!this->tiles_bitmap.IsOk() || this->tiles_bitmap.GetSize() != size) {
     this->tiles_bitmap.Create(size, 24);
@@ -568,7 +471,7 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   this->board_dc.SelectObject(wxNullBitmap);
   this->tiles_dc.SelectObject(wxNullBitmap);
 
-  this->paint_overlay(window_dc);
+  this->game_frame->controller->paint_overlay(window_dc);
 }
 
 void CanvasPanel::draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& pos) {
@@ -700,90 +603,6 @@ void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles
   }
 }
 
-enum ArrowHeadType {
-  ARROW_HEAD_NORMAL = 1,
-  ARROW_HEAD_CROSS = 2,
-};
-
-static void draw_arrow_head(
-  wxDC& dc,
-  wxPoint start,
-  wxPoint end,
-  wxSize head_size,
-  ArrowHeadType head_type = ARROW_HEAD_NORMAL
-) {
-  if (start == end) return;
-  wxPoint2DDouble norm(end - start);
-  norm.Normalize();
-  wxPoint2DDouble perp(-norm.m_y, norm.m_x);
-  wxPoint2DDouble head1 = -norm * head_size.x + perp * head_size.y;
-  wxPoint2DDouble head2 = -norm * head_size.x - perp * head_size.y;
-  wxPoint head1i(head1.m_x, head1.m_y), head2i(head2.m_x, head2.m_y);
-  if (head_type == ARROW_HEAD_NORMAL) {
-    dc.DrawLine(end, end + head1i);
-    dc.DrawLine(end, end + head2i);
-  } else if (head_type == ARROW_HEAD_CROSS) {
-    dc.DrawLine(end - head1i, end + head1i);
-    dc.DrawLine(end - head2i, end + head2i);
-  }
-}
-
-void CanvasPanel::paint_overlay(wxDC& dc) {
-  if (!this->game_frame->state.current_player_type_is(PLAYER_NORMAL)) return;
-
-  if (this->mouse_within_window && game->phase != GAME_PHASE_END) {
-    Coords current_coords = this->tile_coords_at_point(this->mouse_pos);
-    if (is_tile_in_bounds(game, current_coords)) {
-      wxByte tile_attrs = *this->tile_attrs_ptr(current_coords);
-      dc.SetBrush(*wxTRANSPARENT_BRUSH);
-      dc.SetPen(wxPen((tile_attrs & TILE_BLOCKED_FOR_CURSOR) != 0 ? *wxRED : *wxGREEN, 5));
-      wxRect rect = this->get_tile_rect(current_coords);
-      dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height);
-    }
-  }
-
-  if (this->mouse_is_down && game->phase == GAME_PHASE_MOVEMENT) {
-    Coords penguin = this->get_selected_penguin_coords();
-    Coords target = this->tile_coords_at_point(this->mouse_pos);
-    if (is_tile_in_bounds(game, penguin) && is_tile_in_bounds(game, target)) {
-      if (!coords_same(penguin, target)) {
-        Coords move_fail = penguin;
-        MovementError result = validate_movement(game, penguin, target, &move_fail);
-        wxPoint arrow_start = this->get_tile_centre(penguin);
-        wxPoint arrow_fail = this->get_tile_centre(move_fail);
-        wxPoint arrow_end = this->get_tile_centre(target);
-
-        wxSize head_size(8, 8);
-        wxPen bg_pen(*wxBLACK, 6);
-        wxPen green_pen((*wxGREEN).ChangeLightness(75), 4);
-        wxPen red_pen((*wxRED).ChangeLightness(75), 4);
-
-        if (result != VALID_INPUT && !coords_same(move_fail, penguin)) {
-          dc.SetPen(bg_pen);
-          dc.DrawLine(arrow_start, arrow_fail);
-          dc.SetPen(green_pen);
-          dc.DrawLine(arrow_start, arrow_fail);
-          dc.SetPen(bg_pen);
-          draw_arrow_head(dc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
-          dc.DrawLine(arrow_fail, arrow_end);
-          draw_arrow_head(dc, arrow_fail, arrow_end, head_size);
-          dc.SetPen(red_pen);
-          draw_arrow_head(dc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
-          dc.DrawLine(arrow_fail, arrow_end);
-          draw_arrow_head(dc, arrow_fail, arrow_end, head_size);
-        } else {
-          dc.SetPen(bg_pen);
-          dc.DrawLine(arrow_start, arrow_end);
-          draw_arrow_head(dc, arrow_start, arrow_end, head_size);
-          dc.SetPen(result == VALID_INPUT ? green_pen : red_pen);
-          dc.DrawLine(arrow_start, arrow_end);
-          draw_arrow_head(dc, arrow_start, arrow_end, head_size);
-        }
-      }
-    }
-  }
-}
-
 void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
   this->prev_mouse_pos = this->mouse_pos;
   this->mouse_pos = event.GetPosition();
@@ -808,75 +627,16 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
   // constants.
   auto event_type = event.GetEventType();
   if (event_type == wxEVT_LEFT_DOWN) {
-    this->on_mouse_down(event);
+    this->game_frame->controller->on_mouse_down(event);
   } else if (event_type == wxEVT_MOTION) {
-    this->on_mouse_move(event);
+    this->game_frame->controller->on_mouse_move(event);
   } else if (event_type == wxEVT_LEFT_UP) {
-    this->on_mouse_up(event);
+    this->game_frame->controller->on_mouse_up(event);
   } else if (event_type == wxEVT_ENTER_WINDOW) {
-    this->on_mouse_enter_leave(event);
+    this->Refresh();
   } else if (event_type == wxEVT_LEAVE_WINDOW) {
-    this->on_mouse_enter_leave(event);
+    this->Refresh();
   } else {
     event.Skip();
   }
-}
-
-void CanvasPanel::on_mouse_down(wxMouseEvent& WXUNUSED(event)) {
-  if (this->game_frame->state.current_player_type_is(PLAYER_NORMAL)) {
-    if (game->phase == GAME_PHASE_MOVEMENT) {
-      this->Refresh();
-    }
-  }
-}
-
-void CanvasPanel::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
-  Coords prev_coords = this->tile_coords_at_point(this->prev_mouse_pos);
-  Coords curr_coords = this->tile_coords_at_point(this->mouse_pos);
-  if (!coords_same(curr_coords, prev_coords)) {
-    if (this->game_frame->state.current_player_type_is(PLAYER_NORMAL)) {
-      Coords selected_penguin = this->get_selected_penguin_coords();
-      if (is_tile_in_bounds(game, selected_penguin) && game->phase == GAME_PHASE_MOVEMENT) {
-        this->set_tile_attr(selected_penguin, TILE_DIRTY, true);
-      }
-    }
-    this->Refresh();
-  }
-}
-
-void CanvasPanel::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
-  if (this->game_frame->state.current_player_type_is(PLAYER_BOT)) {
-    if (!this->game_frame->executing_bot_turn) {
-      this->game_frame->execute_bot_turn();
-    }
-    return;
-  }
-  Coords prev_coords = this->tile_coords_at_point(this->mouse_drag_pos);
-  Coords curr_coords = this->tile_coords_at_point(this->mouse_pos);
-  if (game->phase == GAME_PHASE_PLACEMENT) {
-    if (is_tile_in_bounds(game, curr_coords) && coords_same(prev_coords, curr_coords)) {
-      if (validate_placement(game, curr_coords) == PLACEMENT_VALID) {
-        this->game_frame->place_penguin(curr_coords);
-        this->game_frame->update_game_state();
-        this->Refresh();
-      }
-    }
-  } else if (game->phase == GAME_PHASE_MOVEMENT) {
-    if (is_tile_in_bounds(game, curr_coords) && is_tile_in_bounds(game, prev_coords)) {
-      if (coords_same(prev_coords, curr_coords) && validate_movement_start(game, curr_coords)) {
-        // This is a hacky way of doing what I want: when the user has simply
-        // clicked on a penguin, let them then move it without dragging the
-        // mouse all the way.
-        this->mouse_is_down = true;
-      } else if (validate_movement(game, prev_coords, curr_coords, nullptr) == VALID_INPUT) {
-        this->game_frame->move_penguin(prev_coords, curr_coords);
-        this->game_frame->update_game_state();
-      }
-    }
-    this->Refresh();
-  }
-}
-
-void CanvasPanel::on_mouse_enter_leave(wxMouseEvent& WXUNUSED(event)) {
-  this->Refresh();
 }

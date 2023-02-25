@@ -16,35 +16,29 @@
 #include <wx/panel.h>
 #include <wx/scrolwin.h>
 #include <wx/sizer.h>
-#include <wx/thread.h>
 #include <wx/timer.h>
 #include <wx/types.h>
 #include <wx/utils.h>
 #include <wx/vector.h>
 #include <wx/window.h>
 
+class GameController;
 class CanvasPanel;
-class BotThread;
 
 class GameFrame : public wxFrame {
 public:
   GameFrame(wxWindow* parent, wxWindowID id);
-  ~GameFrame();
+  virtual ~GameFrame();
 
   void update_layout();
 
   void start_new_game();
   void update_game_state();
+  void set_controller(GameController* controller);
   void end_game();
   void close_game();
   void update_player_info_boxes();
 
-  bool executing_bot_turn = false;
-  void execute_bot_turn();
-  void on_bot_thread_done_work(bool cancelled);
-  void run_bot_thread(BotThread* thread);
-  void stop_bot_thread();
-  void unregister_bot_thread(BotThread* thread);
   void start_bot_progress();
   void stop_bot_progress();
 
@@ -52,6 +46,8 @@ public:
   void move_penguin(Coords penguin, Coords target);
 
   GuiGameState state{};
+  CanvasPanel* canvas = nullptr;
+  GameController* controller = nullptr;
 
 protected:
   void on_destroy(wxWindowDestroyEvent& event);
@@ -63,13 +59,10 @@ protected:
   wxPanel* root_panel;
   wxScrolledWindow* scrolled_panel;
   wxBoxSizer* canvas_sizer;
-  wxPanel* empty_canvas_panel;
-  CanvasPanel* canvas_panel = nullptr;
+  wxPanel* empty_canvas;
   wxBoxSizer* players_box;
   wxVector<PlayerInfoBox*> player_info_boxes;
 
-  wxCriticalSection bot_thread_cs;
-  BotThread* bot_thread = nullptr;
   wxTimer progress_timer;
   wxWindow* progress_container;
   wxGauge* progress_bar;
@@ -96,7 +89,6 @@ public:
   void set_tile_attr(Coords coords, wxByte attr, bool value);
   void set_tile_neighbors_attr(Coords coords, wxByte attr, bool value);
   void set_all_tiles_attr(wxByte attr, bool value);
-  void update_blocked_tiles();
 
   wxSize get_canvas_size() const;
   Coords tile_coords_at_point(wxPoint point) const;
@@ -105,18 +97,19 @@ public:
 
   Coords get_selected_penguin_coords() const;
 
+  bool mouse_within_window = false;
+  bool mouse_is_down = false;
+  wxPoint mouse_pos = wxDefaultPosition;
+  wxPoint prev_mouse_pos = wxDefaultPosition;
+  wxPoint mouse_drag_pos = wxDefaultPosition;
+
 protected:
   void on_paint(wxPaintEvent& event);
   void draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& pos);
   void paint_tiles(wxDC& dc, const wxRect& update_region);
   void paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles_dc);
-  void paint_overlay(wxDC& dc);
 
   void on_any_mouse_event(wxMouseEvent& event);
-  void on_mouse_down(wxMouseEvent& event);
-  void on_mouse_move(wxMouseEvent& event);
-  void on_mouse_up(wxMouseEvent& event);
-  void on_mouse_enter_leave(wxMouseEvent& event);
 
   wxBitmap board_bitmap;
   wxMemoryDC board_dc;
@@ -126,12 +119,6 @@ protected:
 #ifdef __WXMSW__
   wxMemoryDC draw_bitmap_dc;
 #endif
-
-  bool mouse_within_window = false;
-  bool mouse_is_down = false;
-  wxPoint mouse_pos = wxDefaultPosition;
-  wxPoint prev_mouse_pos = wxDefaultPosition;
-  wxPoint mouse_drag_pos = wxDefaultPosition;
 
   GameFrame* game_frame;
   Game* game;

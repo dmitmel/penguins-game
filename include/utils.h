@@ -36,6 +36,10 @@ extern const Coords DIRECTION_TO_COORDS[DIRECTION_MAX];
 extern const Coords NEIGHBOR_TO_COORDS[NEIGHBOR_MAX];
 extern const Neighbor DIRECTION_TO_NEIGHBOR[DIRECTION_MAX];
 
+inline bool coords_same(Coords a, Coords b) {
+  return a.x == b.x && a.y == b.y;
+}
+
 // Generally several approaches are possible for implementing this macro:
 // <https://stackoverflow.com/a/3599170/12005228>
 // <https://stackoverflow.com/a/3599203/12005228>
