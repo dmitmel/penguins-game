@@ -1,7 +1,6 @@
 #include "gui/game_end_dialog.hh"
 #include "game.h"
 #include <algorithm>
-#include <memory>
 #include <wx/event.h>
 #include <wx/font.h>
 #include <wx/gdicmn.h>
@@ -10,18 +9,21 @@
 #include <wx/statline.h>
 #include <wx/stattext.h>
 #include <wx/string.h>
+#include <wx/vector.h>
 
-GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxString player_names[])
+GameEndDialog::GameEndDialog(
+  wxWindow* parent, wxWindowID id, const Game* game, const wxVector<wxString>& player_names
+)
 : wxDialog(parent, id, "Game summary", wxDefaultPosition, wxDefaultSize) {
   this->Bind(wxEVT_BUTTON, &GameEndDialog::on_ok, this, wxID_OK);
 
-  std::unique_ptr<int[]> players_by_score(new int[game->players_count]);
+  wxVector<int> players_by_score(game->players_count);
   for (int i = 0; i < game->players_count; i++) {
     players_by_score[i] = i;
   }
   std::sort(
-    players_by_score.get(),
-    players_by_score.get() + game->players_count,
+    players_by_score.begin(),
+    players_by_score.end(),
     [&](const int& a, const int& b) -> bool {
       return game_get_player(game, a)->points > game_get_player(game, b)->points;
     }
@@ -30,7 +32,7 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxStri
   int winners_count = 0;
   int max_score = 0;
   for (int i = 0; i < game->players_count; i++) {
-    Player* player = game_get_player(game, players_by_score[i]);
+    Player* player = game_get_player(game, players_by_score.at(i));
     if (i == 0) {
       max_score = player->points;
     }
@@ -49,7 +51,7 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxStri
       winners_str << "The winners are ";
     }
     for (int i = 0; i < winners_count; i++) {
-      winners_str << player_names[players_by_score[i]];
+      winners_str << player_names.at(players_by_score.at(i));
       if (i < winners_count - 2) {
         winners_str << ", ";
       } else if (i < winners_count - 1) {
@@ -58,7 +60,7 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxStri
     }
     winners_str << "!";
   } else if (winners_count == 1) {
-    winners_str << "The winner is " << player_names[players_by_score[0]] << "!";
+    winners_str << "The winner is " << player_names.at(players_by_score.at(0)) << "!";
   } else {
     winners_str << "There are no winners???";
   }
@@ -89,9 +91,9 @@ GameEndDialog::GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxStri
   this->grid->SetColLabelValue(2, "Moves");
   this->grid->SetDefaultCellAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
   for (int j = 0; j < game->players_count; j++) {
-    int i = players_by_score[j];
+    int i = players_by_score.at(j);
     Player* player = game_get_player(game, i);
-    this->grid->SetCellValue(j, 0, player_names[i]);
+    this->grid->SetCellValue(j, 0, player_names.at(i));
     this->grid->SetCellValue(j, 1, wxString::Format("%d", player->points));
     this->grid->SetCellValue(j, 2, wxString::Format("%d", player->moves_count));
   }

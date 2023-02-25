@@ -20,6 +20,7 @@
 #include <wx/timer.h>
 #include <wx/types.h>
 #include <wx/utils.h>
+#include <wx/vector.h>
 #include <wx/window.h>
 
 class CanvasPanel;
@@ -47,7 +48,6 @@ public:
   void start_bot_progress();
   void stop_bot_progress();
 
-  PlayerType get_current_player_type() const;
   void place_penguin(Coords target);
   void move_penguin(Coords penguin, Coords target);
 
@@ -66,7 +66,7 @@ protected:
   wxPanel* empty_canvas_panel;
   CanvasPanel* canvas_panel = nullptr;
   wxBoxSizer* players_box;
-  std::unique_ptr<PlayerInfoBox*[]> player_info_boxes;
+  wxVector<PlayerInfoBox*> player_info_boxes;
 
   wxCriticalSection bot_thread_cs;
   BotThread* bot_thread = nullptr;
@@ -92,7 +92,6 @@ public:
 
   CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame);
 
-  std::unique_ptr<wxByte[]> tile_attributes{ nullptr };
   wxByte* tile_attrs_ptr(Coords coords) const;
   void set_tile_attr(Coords coords, wxByte attr, bool value);
   void set_tile_neighbors_attr(Coords coords, wxByte attr, bool value);
@@ -136,6 +135,7 @@ protected:
 
   GameFrame* game_frame;
   Game* game;
+  std::unique_ptr<wxByte[]> tile_attributes{ nullptr };
 
   wxDECLARE_EVENT_TABLE();
 };
