@@ -7,7 +7,7 @@
 #include <wx/thread.h>
 #include <wx/version.h>
 
-class GameFrame;
+class BotTurnController;
 
 // The implementation of this class is somewhat based on
 // <https://github.com/wxWidgets/wxWidgets/blob/v3.2.2.1/src/unix/threadpsx.cpp#L576-L716>.
@@ -29,8 +29,8 @@ protected:
 
 class BotThread : public wxThread {
 public:
-  BotThread(GameFrame* frame);
-  ~BotThread();
+  BotThread(BotTurnController* controller);
+  virtual ~BotThread();
   void cancel();
 
   std::shared_ptr<BotThreadShared> shared{ new BotThreadShared() };
@@ -45,7 +45,7 @@ protected:
   }
 #endif
 
-  GameFrame* frame;
+  BotTurnController* controller;
   std::unique_ptr<Game, decltype(&game_free)> game{ nullptr, game_free };
   std::shared_ptr<BotParameters> bot_params{ nullptr };
   std::unique_ptr<BotState, decltype(&bot_state_free)> bot_state{ nullptr, bot_state_free };
@@ -54,7 +54,7 @@ protected:
 
 class BotPlacementThread : public BotThread {
 public:
-  BotPlacementThread(GameFrame* frame) : BotThread(frame) {}
+  BotPlacementThread(BotTurnController* controller) : BotThread(controller) {}
 
 protected:
   virtual ExitCode Entry() override;
@@ -62,7 +62,7 @@ protected:
 
 class BotMovementThread : public BotThread {
 public:
-  BotMovementThread(GameFrame* frame) : BotThread(frame) {}
+  BotMovementThread(BotTurnController* controller) : BotThread(controller) {}
 
 protected:
   virtual ExitCode Entry() override;

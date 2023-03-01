@@ -8,6 +8,7 @@
 #include <wx/grid.h>
 #include <wx/stattext.h>
 #include <wx/string.h>
+#include <wx/vector.h>
 #include <wx/window.h>
 
 class GameEndDialogGrid : public wxGrid {
@@ -30,7 +31,9 @@ protected:
 
 class GameEndDialog : public wxDialog {
 public:
-  GameEndDialog(wxWindow* parent, wxWindowID id, Game* game, wxString player_names[]);
+  GameEndDialog(
+    wxWindow* parent, wxWindowID id, const Game* game, const wxVector<wxString>& player_names
+  );
 
 protected:
   wxStaticText* header_label;

@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern bool coords_same(Coords a, Coords b);
+
 const Coords DIRECTION_TO_COORDS[DIRECTION_MAX] = {
   [DIRECTION_RIGHT] = { 1, 0 },
   [DIRECTION_DOWN] = { 0, 1 },

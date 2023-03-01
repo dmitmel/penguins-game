@@ -20,7 +20,7 @@
 class NewGameDialog : public wxDialog {
 public:
   NewGameDialog(wxWindow* parent, wxWindowID id);
-  ~NewGameDialog();
+  virtual ~NewGameDialog();
 
   static const int DEFAULT_BOARD_WIDTH = 16;
   static const int DEFAULT_BOARD_HEIGHT = 16;
