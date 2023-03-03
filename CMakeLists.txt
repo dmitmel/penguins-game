@@ -6,6 +6,13 @@ if(APPLE)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10" CACHE STRING "The minimum supported macOS version")
 endif()
 
+if(POLICY CMP0092)
+  # Don't add warning flags for MSVC (/W3) by default. Must be turned on prior
+  # to calling project().
+  # <https://cmake.org/cmake/help/latest/policy/CMP0092.html>
+  cmake_policy(SET CMP0092 NEW)
+endif()
+
 project(penguins
   LANGUAGES C CXX
   VERSION 0.0.1
@@ -49,7 +56,22 @@ function(setup_penguins_target target)
   )
 
   if(MSVC)
-    target_compile_options(${target} PRIVATE /W4)
+    target_compile_definitions(${target} PRIVATE
+      # <https://learn.microsoft.com/en-us/cpp/c-runtime-library/security-features-in-the-crt?view=msvc-170>
+      _CRT_SECURE_NO_WARNINGS
+      # <https://learn.microsoft.com/en-us/cpp/c-runtime-library/compatibility?view=msvc-170>
+      # <https://learn.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-3-c4996?view=msvc-170#posix-function-names>
+      _CRT_NONSTDC_NO_WARNINGS
+    )
+    target_compile_options(${target} PRIVATE
+      /W4
+      /we4013  # 'function' undefined; assuming extern returning int
+      /we4716  # 'function' must return a value
+      /wd4706  # assignment within conditional expression
+      /wd4456  # declaration of 'identifier' hides previous local declaration
+      /wd4457  # declaration of 'identifier' hides function parameter
+      /wd4458  # declaration of 'identifier' hides class member
+    )
   else()
     target_compile_options(${target} PRIVATE
       -Wall -Wextra -Wpedantic -Werror=return-type
@@ -57,9 +79,15 @@ function(setup_penguins_target target)
     )
   endif()
 
-  if(USE_SANITIZERS AND NOT MSVC)
-    target_compile_options(${target} PRIVATE -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all)
-    target_link_options(${target} PRIVATE -fsanitize=address -fsanitize=undefined)
+  if(USE_SANITIZERS)
+    if(MSVC)
+      target_compile_options(${target} PRIVATE /fsanitize=address)
+    else()
+      target_compile_options(${target} PRIVATE
+        -fno-omit-frame-pointer -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all
+      )
+      target_link_options(${target} PRIVATE -fsanitize=address -fsanitize=undefined)
+    endif()
   endif()
 
   if(IWYU AND CHECK_INCLUDES)

@@ -10,9 +10,10 @@ int main(int argc, char* argv[]) {
   if (argc <= 1) {
 #ifdef INTERACTIVE_MODE
     return run_interactive_mode();
-#endif
+#else
     fprintf(stderr, "The app has been compiled without the interactive mode!\n");
     return EXIT_INTERNAL_ERROR;
+#endif
   }
 
   Arguments args;
@@ -24,14 +25,16 @@ int main(int argc, char* argv[]) {
   if (args.action == ACTION_ARG_INTERACTIVE) {
 #ifdef INTERACTIVE_MODE
     return run_interactive_mode();
-#endif
+#else
     fprintf(stderr, "The app has been compiled without the interactive mode!\n");
     return EXIT_INTERNAL_ERROR;
+#endif
   } else {
 #ifdef AUTONOMOUS_MODE
     return run_autonomous_mode(&args);
-#endif
+#else
     fprintf(stderr, "The app has been compiled without the autonomous mode!\n");
     return EXIT_INTERNAL_ERROR;
+#endif
   }
 }
