@@ -63,8 +63,12 @@ jobs:
             ${{github.workflow}}-${{runner.os}}-${{matrix.build_type}}-cmake-${{hashFiles('CMakeLists.txt', 'src/**/CMakeLists.txt', 'cmake/**/*')}}
           restore-keys: |
             ${{github.workflow}}-${{runner.os}}-${{matrix.build_type}}-cmake-
+      - id: build_cfg
+        run: |
+          use_sanitizers="ON"; if [[ "${RUNNER_OS}" == "Windows" ]]; then use_sanitizers="OFF"; fi
+          echo "use_sanitizers=${use_sanitizers}" >> "${GITHUB_OUTPUT}"
       - run: |
           cmake -B build -DCMAKE_BUILD_TYPE='${{matrix.build_type}}' -DBUILD_WXWIDGETS_FROM_SOURCE='${{matrix.build_wxwidgets}}' \
-            -DUSE_SANITIZERS=ON -DGENERATE_DOCUMENTATION=OFF
+            -DUSE_SANITIZERS='${{steps.build_cfg.outputs.use_sanitizers}}' -DGENERATE_DOCUMENTATION=OFF
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}'
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}' --target run-tests
