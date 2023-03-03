@@ -1,0 +1,125 @@
+This patch fixes the problem that dependent targets (which use
+target_link_libraries) wouldn't get PDCursesMod's include paths,
+preprocessor definitions and so on and so on.
+
+diff --git a/cmake/gen_config_header.cmake b/cmake/gen_config_header.cmake
+index 69b82bd2..22e7e464 100644
+--- a/cmake/gen_config_header.cmake
++++ b/cmake/gen_config_header.cmake
+@@ -3,35 +3,39 @@ INCLUDE(CheckFunctionExists)
+ CHECK_FUNCTION_EXISTS(vsnprintf PDC_HAVE_VSNPRINTF)
+ CHECK_FUNCTION_EXISTS(vsscanf PDC_HAVE_VSSCANF)
+ 
++macro(pdc_target_definitions target)
++
+ IF(PDC_HAVE_VSNPRINTF)
+-    ADD_DEFINITIONS(-DHAVE_VSNPRINTF)
++    target_compile_definitions(${target} PRIVATE -DHAVE_VSNPRINTF)
+ ENDIF(PDC_HAVE_VSNPRINTF)
+ IF(PDC_HAVE_VSSCANF)
+-    ADD_DEFINITIONS(-DHAVE_VSSCANF)
++    target_compile_definitions(${target} PRIVATE -DHAVE_VSSCANF)
+ ENDIF(PDC_HAVE_VSSCANF)
+ 
+ if (PDC_BUILD_SHARED)
+     if(MSVC)
+-        add_definitions(-DPDC_DLL_BUILD)
++        target_compile_definitions(${target} PUBLIC -DPDC_DLL_BUILD)
+     endif()
+ endif (PDC_BUILD_SHARED)
+ IF (PDC_WIDE)
+-    ADD_DEFINITIONS(-DPDC_WIDE)
++    target_compile_definitions(${target} PUBLIC -DPDC_WIDE)
+ ENDIF(PDC_WIDE)
+ IF (PDC_UTF8)
+-    ADD_DEFINITIONS(-DPDC_FORCE_UTF8)
++    target_compile_definitions(${target} PUBLIC -DPDC_FORCE_UTF8)
+ ENDIF (PDC_UTF8)
+ IF (PDC_CHTYPE_32)
+-    ADD_DEFINITIONS(-DCHTYPE_32)
++    target_compile_definitions(${target} PUBLIC -DCHTYPE_32)
+ ENDIF (PDC_CHTYPE_32)
+ IF(PDCDEBUG)
+-    ADD_DEFINITIONS(-DPDCDEBUG)
++    target_compile_definitions(${target} PUBLIC -DPDCDEBUG)
+ ENDIF(PDCDEBUG)
+ 
+ IF ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+-    ADD_DEFINITIONS(-D_DEBUG)
++    target_compile_definitions(${target} PRIVATE -D_DEBUG)
+ ENDIF ()
+ 
++endmacro()
++
+ #################################
+ # Target Arch                   #
+ #################################
+diff --git a/cmake/project_common.cmake b/cmake/project_common.cmake
+index eef605a5..44a8f509 100644
+--- a/cmake/project_common.cmake
++++ b/cmake/project_common.cmake
+@@ -16,10 +16,6 @@ set(pdc_src_files
+     ${osdir}/pdcutil.c
+ )
+ 
+-include_directories (..)
+-include_directories (${osdir})
+-
+-
+ if(WIN32 AND NOT WATCOM)
+     include(dll_version)
+     list(APPEND pdc_src_files ${PDCURSES_BINARY_DIR}/version.rc)
+@@ -84,21 +80,6 @@ if(PDC_BUILD_SHARED)
+         set_target_properties(${PDCURSE_PROJ} PROPERTIES MACOSX_RPATH 1)
+     endif()
+ 
+-    if(${PROJECT_NAME} STREQUAL "sdl2")
+-        if(PDC_WIDE OR PDC_UTF8)
+-            target_link_libraries(${PDCURSE_PROJ} ${EXTRA_LIBS}
+-                ${SDL2_LIBRARIES} ${SDL2_TTF_LIBRARY} ${FT2_LIBRARY} ${ZLIB_LIBRARY}
+-                ${SDL2_DEP_LIBRARIES})
+-        else()
+-            target_link_libraries(${PDCURSE_PROJ} ${EXTRA_LIBS}
+-                ${SDL2_LIBRARIES} ${SDL2_DEP_LIBRARIES})
+-        endif()
+-    elseif((${PROJECT_NAME} STREQUAL "wincon") OR (${PROJECT_NAME} STREQUAL "wingui"))
+-        target_link_libraries(${PDCURSE_PROJ} ${EXTRA_LIBS} ${WINCON_WINGUI_DEP_LIBS})
+-    else()
+-        target_link_libraries(${PDCURSE_PROJ} ${EXTRA_LIBS})
+-    endif()
+-
+     if(PDC_INSTALL_TARGETS)
+         install(TARGETS ${PDCURSE_PROJ}
+             ARCHIVE DESTINATION ${PDCURSES_DIST}/lib/${PROJECT_NAME}
+@@ -115,6 +96,19 @@ else()
+     set_target_properties(${PDCURSE_PROJ} PROPERTIES OUTPUT_NAME "pdcursesstatic")
+ endif()
+ 
++target_include_directories(${PDCURSE_PROJ} PUBLIC ${PDCURSES_SOURCE_DIR} ${osdir})
++pdc_target_definitions(${PDCURSE_PROJ})
++
++target_link_libraries(${PDCURSE_PROJ} PRIVATE ${EXTRA_LIBS})
++if(${PROJECT_NAME} STREQUAL "sdl2")
++    target_link_libraries(${PDCURSE_PROJ} PRIVATE ${SDL2_LIBRARIES} ${SDL2_DEP_LIBRARIES})
++    if(PDC_WIDE OR PDC_UTF8)
++        target_link_libraries(${PDCURSE_PROJ} PRIVATE ${SDL2_TTF_LIBRARY} ${FT2_LIBRARY} ${ZLIB_LIBRARY})
++    endif()
++elseif((${PROJECT_NAME} STREQUAL "wincon") OR (${PROJECT_NAME} STREQUAL "wingui"))
++    target_link_libraries(${PDCURSE_PROJ} PRIVATE ${WINCON_WINGUI_DEP_LIBS})
++endif()
++
+ macro (demo_app dir targ)
+     if (PDC_DEMOS_BUILD)
+         set(bin_name "${PROJECT_NAME}_${targ}")
+diff --git a/ncurses/CMakeLists.txt b/ncurses/CMakeLists.txt
+index c84007bc..4c690c07 100644
+--- a/ncurses/CMakeLists.txt
++++ b/ncurses/CMakeLists.txt
+@@ -42,6 +42,7 @@ if(CURSES_FOUND)
+         add_executable(${bin_name} ${src_files})
+ 
+         target_compile_options(${bin_name} PUBLIC -Wall)
++        pdc_target_definitions(${bin_name})
+         target_compile_definitions(${bin_name} PUBLIC -D_XOPEN_SOURCE_EXTENDED)
+         if(PDC_WIDE)
+             target_compile_definitions(${bin_name} PUBLIC -DHAVE_NCURSESW)

@@ -96,13 +96,15 @@ add_library(penguins-lib STATIC
 setup_penguins_target(penguins-lib)
 
 find_package(Patch REQUIRED)
+set(pdcurses_patch_command
+  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_wrapper.cmake"
+  "${Patch_EXECUTABLE}" --forward --reject-file=- --strip=1 --binary
+)
 FetchContent_Declare(pdcurses
   URL "https://github.com/Bill-Gray/PDCursesMod/archive/refs/tags/v4.3.5.tar.gz"
   URL_HASH SHA1=b1790959b0bfd724a8ab4713f8f6ed1aff37bec5
-  PATCH_COMMAND
-    ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch_wrapper.cmake
-    ${Patch_EXECUTABLE} --forward --reject-file=- --strip=1 --binary
-    --input=${CMAKE_CURRENT_SOURCE_DIR}/cmake/pdcursesmod_4.2.0_subproject.patch
+  PATCH_COMMAND ${pdcurses_patch_command} "--input=${CMAKE_CURRENT_SOURCE_DIR}/cmake/pdcursesmod_4.2.0_subproject.patch"
+        COMMAND ${pdcurses_patch_command} "--input=${CMAKE_CURRENT_SOURCE_DIR}/cmake/pdcursesmod_4.3.5_subproject_targets.patch"
 )
 include(cmake/pdcursesmod_config.cmake)
 FetchContent_MakeAvailable(pdcurses)

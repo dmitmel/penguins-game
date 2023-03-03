@@ -1,4 +1,5 @@
-See <https://github.com/Bill-Gray/PDCursesMod/pull/204>
+This patch enables usage of PDCursesMod with add_subdirectory.
+Taken from <https://github.com/Bill-Gray/PDCursesMod/pull/204>.
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 index ecfe49b2..880f762a 100644

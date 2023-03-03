@@ -1,1 +1,1 @@
-cmake/pdcursesmod_4.2.0_subproject.patch -text
+cmake/pdcursesmod_*.patch -text
