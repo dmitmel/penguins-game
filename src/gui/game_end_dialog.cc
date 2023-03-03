@@ -68,11 +68,11 @@ GameEndDialog::GameEndDialog(
   auto content_vbox = new wxBoxSizer(wxVERTICAL);
 
   this->header_label = new wxStaticText(this, wxID_ANY, "The game has ended");
-  this->header_label->SetFont(this->header_label->GetFont().MakeBold().Scale(1.4));
+  this->header_label->SetFont(this->header_label->GetFont().MakeBold().Scale(1.4f));
   content_vbox->Add(this->header_label, wxSizerFlags().Centre().DoubleBorder(wxBOTTOM));
 
   this->winner_label = new wxStaticText(this, wxID_ANY, winners_str);
-  this->winner_label->SetFont(this->winner_label->GetFont().MakeBold().Scale(1.2));
+  this->winner_label->SetFont(this->winner_label->GetFont().MakeBold().Scale(1.2f));
   content_vbox->Add(this->winner_label, wxSizerFlags().Centre().DoubleBorder(wxBOTTOM));
 
   this->grid =

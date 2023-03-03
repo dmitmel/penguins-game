@@ -146,8 +146,8 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
 
   if (strategy == BOT_PLACEMENT_MOST_FISH) {
     int best_tile_idx = 0;
-    int available_tiles UNUSED_ATTR =
-      pick_best_scores(tiles_count, self->tile_scores, 1, &best_tile_idx);
+    int available_tiles = pick_best_scores(tiles_count, self->tile_scores, 1, &best_tile_idx);
+    UNUSED(available_tiles);
     assert(available_tiles == 1);
     *out_target = self->tile_coords[best_tile_idx];
     return true;
