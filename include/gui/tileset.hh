@@ -25,7 +25,7 @@ class TilesetHelper {
   wxDECLARE_NO_COPY_CLASS(TilesetHelper);
 
 public:
-  TilesetHelper(int scaling);
+  TilesetHelper();
 
   void load();
 

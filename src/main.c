@@ -2,7 +2,7 @@
 #include "autonomous.h"
 #include "interactive.h"
 #include "random.h"
-#include <stdio.h>
+#include <stdio.h> // IWYU pragma: keep
 
 int main(int argc, char* argv[]) {
   random_init();

@@ -1,6 +1,7 @@
 #include "gui/controllers.hh"
 #include "board.h"
 #include "gui/bot_thread.hh"
+#include "gui/canvas.hh"
 #include "gui/game.hh"
 #include "gui/game_state.hh"
 #include "movement.h"
