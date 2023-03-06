@@ -1,3 +1,4 @@
+#include "tui/main.h"
 #include "arguments.h"
 #include "autonomous.h"
 #include "interactive.h"
@@ -8,7 +9,9 @@ int main(int argc, char* argv[]) {
   random_init();
 
   if (argc <= 1) {
-#ifdef INTERACTIVE_MODE
+#if defined(PSEUDOGRAPHICAL_MODE)
+    return run_pseudographical_mode();
+#elif defined(INTERACTIVE_MODE)
     return run_interactive_mode();
 #else
     fprintf(stderr, "The app has been compiled without the interactive mode!\n");
@@ -22,7 +25,13 @@ int main(int argc, char* argv[]) {
     return EXIT_INTERNAL_ERROR;
   }
 
-  if (args.action == ACTION_ARG_INTERACTIVE) {
+  if (args.action == ACTION_ARG_PSEUDOGRAPHICAL) {
+#ifdef PSEUDOGRAPHICAL_MODE
+    return run_pseudographical_mode();
+#endif
+    fprintf(stderr, "The app has been compiled without the pseudographical interface!\n");
+    return EXIT_INTERNAL_ERROR;
+  } else if (args.action == ACTION_ARG_INTERACTIVE) {
 #ifdef INTERACTIVE_MODE
     return run_interactive_mode();
 #else

@@ -30,6 +30,7 @@ option(CHECK_INCLUDES "Check #include directives with include-what-you-use" ON)
 option(INTERACTIVE_MODE "Build the interactive mode" ON)
 option(AUTONOMOUS_MODE "Build the autonomous mode" ON)
 option(GRAPHICAL_MODE "Build the graphical interface" ON)
+option(PSEUDOGRAPHICAL_MODE "Build the pseudographical terminal interface" ON)
 option(BUILD_TESTS "Build tests" ON)
 option(GENERATE_DOCUMENTATION "Generate developer documentation" ON)
 
@@ -159,6 +160,13 @@ if(AUTONOMOUS_MODE)
   target_compile_definitions(penguins PUBLIC AUTONOMOUS_MODE)
   target_sources(penguins PRIVATE
     src/autonomous.c
+  )
+endif()
+if(PSEUDOGRAPHICAL_MODE)
+  target_compile_definitions(penguins PUBLIC PSEUDOGRAPHICAL_MODE)
+  target_sources(penguins PRIVATE
+    src/tui/main.c
+    src/tui/screen.c
   )
 endif()
 # link all the

@@ -6,7 +6,11 @@
 #include <string.h>
 
 void init_arguments(Arguments* self) {
+#ifdef PSEUDOGRAPHICAL_MODE
+  self->action = ACTION_ARG_PSEUDOGRAPHICAL;
+#else
   self->action = ACTION_ARG_INTERACTIVE;
+#endif
   self->penguins = 0;
   self->input_board_file = NULL;
   self->output_board_file = NULL;
@@ -23,6 +27,9 @@ void print_usage(const char* prog_name) {
 #endif
 #ifdef INTERACTIVE_MODE
   fprintf(stderr, "%s interactive\n", prog_name);
+#endif
+#ifdef PSEUDOGRAPHICAL_MODE
+  fprintf(stderr, "%s tui\n", prog_name);
 #endif
 }
 
@@ -57,6 +64,8 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
       result->action = ACTION_ARG_PRINT_NAME;
     } else if (strcmp(arg, "interactive") == 0) {
       result->action = ACTION_ARG_INTERACTIVE;
+    } else if (strcmp(arg, "tui") == 0) {
+      result->action = ACTION_ARG_PSEUDOGRAPHICAL;
     } else if ((arg_value = strip_prefix(arg, "name="))) {
       if (*arg_value != '\0') {
         result->set_name = arg_value;
