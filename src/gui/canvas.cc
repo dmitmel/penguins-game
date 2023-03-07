@@ -6,6 +6,7 @@
 #include "gui/main.hh"
 #include "gui/tileset.hh"
 #include <cassert>
+#include <memory>
 #include <wx/bitmap.h>
 #include <wx/dc.h>
 #include <wx/dcclient.h>
@@ -15,7 +16,6 @@
 #include <wx/gdicmn.h>
 #include <wx/panel.h>
 #include <wx/region.h>
-#include <wx/types.h>
 #include <wx/window.h>
 
 // clang-format off
@@ -26,16 +26,7 @@ wxEND_EVENT_TABLE();
 // clang-format on
 
 CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame)
-: wxPanel(parent, id)
-, game_frame(game_frame)
-, game(game_frame->state.game.get())
-, tile_attributes(new wxByte[game->board_width * game->board_height]) {
-  for (int y = 0; y < game->board_height; y++) {
-    for (int x = 0; x < game->board_width; x++) {
-      Coords coords = { x, y };
-      *this->tile_attrs_ptr(coords) = TILE_DIRTY | TILE_BLOCKED_DIRTY;
-    }
-  }
+: wxPanel(parent, id), game_frame(game_frame), game(game_frame->state.game.get()) {
   this->SetInitialSize(this->get_canvas_size());
 #ifdef __WXMSW__
   // Necessary to avoid flicker on Windows, see <https://wiki.wxwidgets.org/Flicker-Free_Drawing>.
@@ -73,34 +64,6 @@ Coords CanvasPanel::get_selected_penguin_coords() const {
   return get_tile_player_id(tile) == player_id ? curr_coords : null_coords;
 }
 
-wxByte* CanvasPanel::tile_attrs_ptr(Coords coords) const {
-  assert(is_tile_in_bounds(game, coords));
-  return &this->tile_attributes[coords.x + coords.y * game->board_width];
-}
-
-void CanvasPanel::set_tile_attr(Coords coords, wxByte attr, bool value) {
-  wxByte* tile_attrs = this->tile_attrs_ptr(coords);
-  *tile_attrs = (*tile_attrs & ~attr) | (value ? attr : 0);
-}
-
-void CanvasPanel::set_tile_neighbors_attr(Coords coords, wxByte attr, bool value) {
-  for (int dir = 0; dir < NEIGHBOR_MAX; dir++) {
-    Coords neighbor = NEIGHBOR_TO_COORDS[dir];
-    neighbor.x += coords.x, neighbor.y += coords.y;
-    if (!is_tile_in_bounds(game, neighbor)) continue;
-    this->set_tile_attr(neighbor, attr, value);
-  }
-}
-
-void CanvasPanel::set_all_tiles_attr(wxByte attr, bool value) {
-  for (int y = 0; y < game->board_height; y++) {
-    for (int x = 0; x < game->board_width; x++) {
-      Coords coords = { x, y };
-      this->set_tile_attr(coords, attr, value);
-    }
-  }
-}
-
 void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   wxPaintDC window_dc(this);
 
@@ -114,16 +77,29 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   wxRect update_region = GetUpdateRegion().GetBox();
 
   this->game_frame->controller->update_tile_attributes();
+
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      wxByte attrs = *this->tile_attrs_ptr(coords);
-      bool was_blocked = (attrs & TILE_BLOCKED_BEFORE) != 0;
-      bool is_blocked = (attrs & TILE_BLOCKED) != 0;
-      if (is_blocked != was_blocked) {
-        this->set_tile_attr(coords, TILE_BLOCKED_DIRTY, true);
+
+      if (get_tile_attr(game, coords, TILE_DIRTY)) {
+        set_tile_attr(game, coords, TILE_DIRTY, false);
+        set_tile_attr(game, coords, TILE_NEEDS_REDRAW, true);
+        // Request repainting of the neighboring tiles too.
+        for (int dir = 0; dir < NEIGHBOR_MAX; dir++) {
+          Coords neighbor = NEIGHBOR_TO_COORDS[dir];
+          neighbor.x += coords.x, neighbor.y += coords.y;
+          if (!is_tile_in_bounds(game, neighbor)) continue;
+          set_tile_attr(game, neighbor, TILE_NEEDS_REDRAW, true);
+        }
       }
-      this->set_tile_attr(coords, TILE_BLOCKED_BEFORE, is_blocked);
+
+      bool was_blocked = get_tile_attr(game, coords, TILE_WAS_BLOCKED);
+      bool is_blocked = get_tile_attr(game, coords, TILE_BLOCKED);
+      if (is_blocked != was_blocked) {
+        set_tile_attr(game, coords, TILE_OVERLAY_NEEDS_REDRAW, true);
+      }
+      set_tile_attr(game, coords, TILE_WAS_BLOCKED, is_blocked);
     }
   }
 
@@ -163,12 +139,12 @@ void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      if ((*this->tile_attrs_ptr(coords) & TILE_DIRTY) == 0) continue;
+      if (!get_tile_attr(game, coords, TILE_NEEDS_REDRAW)) continue;
       wxRect tile_rect = this->get_tile_rect(coords);
       if (!update_region.Intersects(tile_rect)) continue;
-      this->set_tile_attr(coords, TILE_DIRTY, false);
-      // The next layer of the board has to be repainted though.
-      this->set_tile_attr(coords, TILE_BLOCKED_DIRTY, true);
+      set_tile_attr(game, coords, TILE_NEEDS_REDRAW, false);
+      // The next layer of the board has to be repainted as well.
+      set_tile_attr(game, coords, TILE_OVERLAY_NEEDS_REDRAW, true);
 
       int tile = get_tile(game, coords);
       wxPoint tile_pos = tile_rect.GetPosition();
@@ -242,17 +218,16 @@ void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      wxByte tile_attrs = *this->tile_attrs_ptr(coords);
-      if ((tile_attrs & TILE_BLOCKED_DIRTY) == 0) continue;
+      if (!get_tile_attr(game, coords, TILE_OVERLAY_NEEDS_REDRAW)) continue;
       wxRect tile_rect = this->get_tile_rect(coords);
       if (!update_region.Intersects(tile_rect)) continue;
-      this->set_tile_attr(coords, TILE_BLOCKED_DIRTY, false);
+      set_tile_attr(game, coords, TILE_OVERLAY_NEEDS_REDRAW, false);
 
       int tile = get_tile(game, coords);
       wxPoint tile_pos = tile_rect.GetPosition();
       dc.Blit(tile_pos, tile_rect.GetSize(), &tiles_dc, tile_pos);
 
-      if ((tile_attrs & TILE_BLOCKED) != 0) {
+      if (get_tile_attr(game, coords, TILE_BLOCKED)) {
         this->draw_bitmap(dc, tileset.blocked_tile, tile_pos);
       }
 

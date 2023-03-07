@@ -2,6 +2,8 @@
 #include "gui/controllers.hh"
 #include "gui/game.hh"
 #include "gui/game_state.hh"
+#include "movement.h"
+#include "placement.h"
 #include "utils.h"
 #include <wx/debug.h>
 #include <wx/thread.h>
@@ -53,7 +55,7 @@ wxThread::ExitCode BotPlacementThread::Entry() {
   auto shared = this->shared;
   controller->game_frame->CallAfter([=]() -> void {
     shared->wait_for_exit();
-    if (!cancelled && ok) controller->game_frame->place_penguin(target);
+    if (!cancelled && ok) place_penguin(controller->game, target);
     controller->on_bot_thread_done_work(cancelled);
   });
   return 0;
@@ -68,7 +70,7 @@ wxThread::ExitCode BotMovementThread::Entry() {
   auto shared = this->shared;
   controller->game_frame->CallAfter([=]() -> void {
     shared->wait_for_exit();
-    if (!cancelled && ok) controller->game_frame->move_penguin(penguin, target);
+    if (!cancelled && ok) move_penguin(controller->game, penguin, target);
     controller->on_bot_thread_done_work(cancelled);
   });
   return 0;

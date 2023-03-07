@@ -22,6 +22,7 @@ Game* game_new(void) {
   self->board_width = -1;
   self->board_height = -1;
   self->board_grid = NULL;
+  self->tile_attributes = NULL;
   self->current_player_index = -1;
   return self;
 }
@@ -41,6 +42,10 @@ Game* game_clone(const Game* other) {
     self->board_grid =
       memdup(other->board_grid, sizeof(int) * other->board_width * other->board_height);
   }
+  if (other->tile_attributes) {
+    self->tile_attributes =
+      memdup(other->tile_attributes, sizeof(int) * other->board_width * other->board_height);
+  }
   return self;
 }
 
@@ -54,6 +59,7 @@ void game_free(Game* self) {
     free_and_clear(self->players);
   }
   free_and_clear(self->board_grid);
+  free_and_clear(self->tile_attributes);
   free(self);
 }
 
@@ -67,6 +73,7 @@ void game_end_setup(Game* self) {
   assert(self->board_width > 0);
   assert(self->board_height > 0);
   assert(self->board_grid != NULL);
+  assert(self->tile_attributes != NULL);
   assert(self->players != NULL);
   assert(self->players_count > 0);
   assert(self->penguins_per_player >= 0);

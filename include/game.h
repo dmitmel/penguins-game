@@ -38,6 +38,7 @@ typedef struct Game {
   int board_width;
   int board_height;
   int* board_grid;
+  int* tile_attributes;
   int current_player_index;
 } Game;
 

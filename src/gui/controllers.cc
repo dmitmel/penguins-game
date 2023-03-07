@@ -13,7 +13,6 @@
 #include <wx/gdicmn.h>
 #include <wx/geometry.h>
 #include <wx/pen.h>
-#include <wx/types.h>
 
 GameController::GameController(GameFrame* game_frame)
 : game_frame(game_frame)
@@ -99,7 +98,7 @@ void BotTurnController::unregister_bot_thread(BotThread* thread) {
 }
 
 void GameController::update_tile_attributes() {
-  this->canvas->set_all_tiles_attr(TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
+  set_all_tiles_attr(game, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
 }
 
 void PlayerPlacementController::update_tile_attributes() {
@@ -110,8 +109,8 @@ void PlayerPlacementController::update_tile_attributes() {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
       bool blocked = !validate_placement_simple(game, coords);
-      this->canvas->set_tile_attr(coords, TILE_BLOCKED_FOR_CURSOR, blocked);
-      this->canvas->set_tile_attr(coords, TILE_BLOCKED, blocked && is_a_tile_selected);
+      set_tile_attr(game, coords, TILE_BLOCKED_FOR_CURSOR, blocked);
+      set_tile_attr(game, coords, TILE_BLOCKED, blocked && is_a_tile_selected);
     }
   }
 }
@@ -125,14 +124,14 @@ void PlayerMovementController::update_tile_attributes() {
         Coords coords = { x, y };
         int tile = get_tile(game, coords);
         bool blocked = get_tile_player_id(tile) != current_player_id;
-        this->canvas->set_tile_attr(coords, TILE_BLOCKED_FOR_CURSOR, blocked);
-        this->canvas->set_tile_attr(coords, TILE_BLOCKED, false);
+        set_tile_attr(game, coords, TILE_BLOCKED_FOR_CURSOR, blocked);
+        set_tile_attr(game, coords, TILE_BLOCKED, false);
       }
     }
     return;
   }
   // A penguin is selected
-  this->canvas->set_all_tiles_attr(TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, true);
+  set_all_tiles_attr(game, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, true);
   PossibleSteps moves = calculate_penguin_possible_moves(game, selected_penguin);
   bool any_steps = false;
   for (int dir = 0; dir < DIRECTION_MAX; dir++) {
@@ -141,26 +140,26 @@ void PlayerMovementController::update_tile_attributes() {
     any_steps = any_steps || moves.steps[dir] != 0;
     for (int steps = moves.steps[dir]; steps > 0; steps--) {
       coords.x += d.x, coords.y += d.y;
-      this->canvas->set_tile_attr(coords, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
+      set_tile_attr(game, coords, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
     }
   }
-  this->canvas->set_tile_attr(selected_penguin, TILE_BLOCKED, false);
+  set_tile_attr(game, selected_penguin, TILE_BLOCKED, false);
   if (any_steps && !this->canvas->mouse_is_down) {
-    this->canvas->set_tile_attr(selected_penguin, TILE_BLOCKED_FOR_CURSOR, false);
+    set_tile_attr(game, selected_penguin, TILE_BLOCKED_FOR_CURSOR, false);
   }
 }
 
 void BotTurnController::update_tile_attributes() {
-  this->canvas->set_all_tiles_attr(TILE_BLOCKED, false);
-  this->canvas->set_all_tiles_attr(TILE_BLOCKED_FOR_CURSOR, true);
+  set_all_tiles_attr(game, TILE_BLOCKED, false);
+  set_all_tiles_attr(game, TILE_BLOCKED_FOR_CURSOR, true);
 }
 
 void PlayerTurnController::paint_overlay(wxDC& dc) {
   Coords current_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
   if (is_tile_in_bounds(game, current_coords) && this->canvas->mouse_within_window) {
-    wxByte tile_attrs = *this->canvas->tile_attrs_ptr(current_coords);
+    bool blocked = get_tile_attr(game, current_coords, TILE_BLOCKED_FOR_CURSOR);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.SetPen(wxPen((tile_attrs & TILE_BLOCKED_FOR_CURSOR) != 0 ? *wxRED : *wxGREEN, 5));
+    dc.SetPen(wxPen(blocked ? *wxRED : *wxGREEN, 5));
     dc.DrawRectangle(this->canvas->get_tile_rect(current_coords));
   }
 }
@@ -253,7 +252,7 @@ void PlayerMovementController::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
   if (coords_same(curr_coords, prev_coords)) return;
   Coords selected_penguin = this->canvas->get_selected_penguin_coords();
   if (is_tile_in_bounds(game, selected_penguin)) {
-    this->canvas->set_tile_attr(selected_penguin, TILE_DIRTY, true);
+    set_tile_attr(game, selected_penguin, TILE_DIRTY, true);
   }
   this->canvas->Refresh();
 }
@@ -263,7 +262,7 @@ void PlayerPlacementController::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
   Coords curr_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
   if (is_tile_in_bounds(game, curr_coords) && coords_same(prev_coords, curr_coords)) {
     if (validate_placement(game, curr_coords) == PLACEMENT_VALID) {
-      this->game_frame->place_penguin(curr_coords);
+      place_penguin(game, curr_coords);
       this->update_game_state_and_indirectly_delete_this();
       return;
     }
@@ -280,7 +279,7 @@ void PlayerMovementController::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
       // all the way.
       this->canvas->mouse_is_down = true;
     } else if (validate_movement(game, prev_coords, curr_coords, nullptr) == VALID_INPUT) {
-      this->game_frame->move_penguin(prev_coords, curr_coords);
+      move_penguin(game, prev_coords, curr_coords);
       this->update_game_state_and_indirectly_delete_this();
       return;
     }

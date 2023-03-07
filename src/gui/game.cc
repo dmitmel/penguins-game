@@ -8,10 +8,7 @@
 #include "gui/game_state.hh"
 #include "gui/new_game_dialog.hh"
 #include "gui/player_info_box.hh"
-#include "movement.h"
-#include "placement.h"
 #include "resources_appicon_256_png.h"
-#include "utils.h"
 #include <memory>
 #include <wx/bitmap.h>
 #include <wx/debug.h>
@@ -293,20 +290,6 @@ void GameFrame::stop_bot_progress() {
 #ifndef __WXOSX__
   this->busy_cursor_changer.reset(nullptr);
 #endif
-}
-
-void GameFrame::place_penguin(Coords target) {
-  ::place_penguin(this->state.game.get(), target);
-  this->canvas->set_tile_attr(target, TILE_DIRTY, true);
-  this->canvas->set_tile_neighbors_attr(target, TILE_DIRTY, true);
-}
-
-void GameFrame::move_penguin(Coords penguin, Coords target) {
-  ::move_penguin(this->state.game.get(), penguin, target);
-  this->canvas->set_tile_attr(penguin, TILE_DIRTY, true);
-  this->canvas->set_tile_neighbors_attr(penguin, TILE_DIRTY, true);
-  this->canvas->set_tile_attr(target, TILE_DIRTY, true);
-  this->canvas->set_tile_neighbors_attr(target, TILE_DIRTY, true);
 }
 
 void GameFrame::end_game() {

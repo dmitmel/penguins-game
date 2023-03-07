@@ -2,7 +2,6 @@
 
 #include "game.h"
 #include "utils.h"
-#include <memory>
 #include <wx/bitmap.h>
 #include <wx/dc.h>
 #include <wx/dcmemory.h>
@@ -15,24 +14,19 @@
 
 class GameFrame;
 
-typedef enum TileAttribute {
-  TILE_DIRTY = 1 << 1,
+enum GuiTileAttribute {
   TILE_BLOCKED = 1 << 2,
-  TILE_BLOCKED_BEFORE = 1 << 3,
+  TILE_WAS_BLOCKED = 1 << 3,
   TILE_BLOCKED_FOR_CURSOR = 1 << 4,
-  TILE_BLOCKED_DIRTY = 1 << 5,
-} TileAttribute;
+  TILE_NEEDS_REDRAW = 1 << 5,
+  TILE_OVERLAY_NEEDS_REDRAW = 1 << 6,
+};
 
 class CanvasPanel : public wxPanel {
 public:
   static const wxCoord TILE_SIZE = 40;
 
   CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame);
-
-  wxByte* tile_attrs_ptr(Coords coords) const;
-  void set_tile_attr(Coords coords, wxByte attr, bool value);
-  void set_tile_neighbors_attr(Coords coords, wxByte attr, bool value);
-  void set_all_tiles_attr(wxByte attr, bool value);
 
   wxSize get_canvas_size() const;
   Coords tile_coords_at_point(wxPoint point) const;
@@ -66,7 +60,6 @@ protected:
 
   GameFrame* game_frame;
   Game* game;
-  std::unique_ptr<wxByte[]> tile_attributes{ nullptr };
 
   wxDECLARE_EVENT_TABLE();
 };

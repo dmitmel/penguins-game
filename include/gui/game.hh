@@ -1,7 +1,6 @@
 #pragma once
 
 #include "gui/game_state.hh"
-#include "utils.h"
 #include <memory>
 #include <wx/defs.h>
 #include <wx/event.h>
@@ -35,9 +34,6 @@ public:
 
   void start_bot_progress();
   void stop_bot_progress();
-
-  void place_penguin(Coords target);
-  void move_penguin(Coords penguin, Coords target);
 
   GuiGameState state{};
   CanvasPanel* canvas = nullptr;
