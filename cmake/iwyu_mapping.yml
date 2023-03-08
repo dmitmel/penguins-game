@@ -8,4 +8,5 @@
   { include: ['@<wx/stringimpl.h>', private, '<wx/string.h>', public] },
   { include: ['@<wx/anybutton.h>', private, '<wx/button.h>', public] },
   { include: ['@<wx/anybutton.h>', private, '<wx/bmpbuttn.h>', public] },
+  { include: ['<stddef.h>', public, '<wx/defs.h>', public] },
 ]

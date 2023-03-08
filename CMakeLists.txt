@@ -254,6 +254,7 @@ if(GRAPHICAL_MODE)
     resources_tileset_png.c
     src/gui/better_random.cc
     src/gui/bot_thread.cc
+    src/gui/canvas.cc
     src/gui/controllers.cc
     src/gui/game.cc
     src/gui/game_end_dialog.cc

@@ -48,6 +48,8 @@ void PlayerInfoBox::update_data(Game* game, int idx, const wxString& name) {
 
   auto& tileset = wxGetApp().tileset;
   this->penguin_sprite = tileset.penguin_sprites[idx % WXSIZEOF(tileset.penguin_sprites)];
+
+  this->Refresh();
 }
 
 void PlayerInfoBox::paint_penguin_window(wxDC& dc) {

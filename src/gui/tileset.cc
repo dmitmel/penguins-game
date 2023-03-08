@@ -1,4 +1,5 @@
 #include "gui/tileset.hh"
+#include "gui/canvas.hh"
 #include "resources_tileset_png.h"
 #include <wx/debug.h>
 #include <wx/defs.h>
@@ -6,7 +7,7 @@
 #include <wx/image.h>
 #include <wx/mstream.h>
 
-TilesetHelper::TilesetHelper(int scaling) : scaling(scaling) {}
+TilesetHelper::TilesetHelper() : scaling(CanvasPanel::TILE_SIZE / TilesetHelper::TILE_SIZE) {}
 
 void TilesetHelper::load() {
   wxMemoryInputStream stream(resources_tileset_png, resources_tileset_png_size);

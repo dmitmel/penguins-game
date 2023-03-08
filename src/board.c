@@ -7,6 +7,9 @@
 #include <stdlib.h>
 
 extern bool is_tile_in_bounds(const Game* game, Coords coords);
+extern bool get_tile_attr(const Game* game, Coords coords, int attr);
+extern void set_tile_attr(Game* game, Coords coords, int attr, bool value);
+extern void set_all_tiles_attr(Game* game, int attr, bool value);
 extern int get_tile(const Game* game, Coords coords);
 extern void set_tile(Game* game, Coords coords, int value);
 
@@ -14,9 +17,12 @@ void setup_board(Game* game, int width, int height) {
   assert(game->phase == GAME_PHASE_SETUP);
   assert(width > 0 && height > 0);
   free_and_clear(game->board_grid);
+  free_and_clear(game->tile_attributes);
   game->board_width = width;
   game->board_height = height;
   game->board_grid = calloc(game->board_width * game->board_height, sizeof(int));
+  game->tile_attributes = calloc(game->board_width * game->board_height, sizeof(int));
+  set_all_tiles_attr(game, TILE_DIRTY, true);
 }
 
 void generate_board_random(Game* game) {

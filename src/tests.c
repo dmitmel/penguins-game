@@ -186,6 +186,7 @@ static MunitResult
 test_move_penguin_and_calculate_points(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
   int grid[] = { -1, 1, 3 };
+  int attrs[] = { 0, 0, 0 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -199,12 +200,14 @@ test_move_penguin_and_calculate_points(const MunitParameter* params, void* data)
                 .board_width = 3,
                 .board_height = 1,
                 .board_grid = grid,
+                .tile_attributes = attrs,
                 .current_player_index = 0 };
 
-  assert_int(move_penguin(&game, (Coords){ 0, 0 }, (Coords){ 2, 0 }), ==, 3);
-  // assert_int(game.board_grid[0], ==, 0);
-  // assert_int(game.board_grid[1], ==, 1);
-  // assert_int(game.board_grid[2], ==, -1);
+  move_penguin(&game, (Coords){ 0, 0 }, (Coords){ 2, 0 });
+  assert_int(game.board_grid[0], ==, 0);
+  assert_int(game.board_grid[1], ==, 1);
+  assert_int(game.board_grid[2], ==, -1);
+  free(game.log_buffer);
   return MUNIT_OK;
 }
 

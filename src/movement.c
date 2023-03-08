@@ -10,13 +10,13 @@ extern PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords s
 
 void movement_begin(Game* game) {
   assert(game->phase >= GAME_PHASE_SETUP_DONE);
-  game->phase = GAME_PHASE_MOVEMENT;
-  game->current_player_index = -1;
+  game_set_current_player(game, -1);
+  game_set_phase(game, GAME_PHASE_MOVEMENT);
 }
 
 void movement_end(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
-  game->phase = GAME_PHASE_MOVEMENT_DONE;
+  game_set_phase(game, GAME_PHASE_MOVEMENT_DONE);
 }
 
 int movement_switch_player(Game* game) {
@@ -26,7 +26,7 @@ int movement_switch_player(Game* game) {
   while (checked_players < game->players_count) {
     index = (index + 1) % game->players_count;
     if (any_valid_player_move_exists(game, index)) {
-      game->current_player_index = index;
+      game_set_current_player(game, index);
       return index;
     }
     checked_players++;
@@ -87,32 +87,33 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
   return VALID_INPUT;
 }
 
-int move_penguin(Game* game, Coords start, Coords target) {
+void move_penguin(Game* game, Coords start, Coords target) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   assert(validate_movement(game, start, target, NULL) == VALID_INPUT);
   Player* player = game_get_current_player(game);
-  int tile = get_tile(game, target);
-  assert(is_fish_tile(tile));
+  int target_tile = get_tile(game, target);
+  assert(is_fish_tile(target_tile));
+
+  GameLogMovement* entry = &game_push_log_entry(game, GAME_LOG_ENTRY_MOVEMENT)->data.movement;
+  entry->penguin = start;
+  entry->target = target;
+  entry->undo_tile = target_tile;
+
   *game_find_player_penguin(game, game->current_player_index, start) = target;
   set_tile(game, target, PENGUIN_TILE(player->id));
   set_tile(game, start, WATER_TILE);
-  player->points += get_tile_fish(tile);
+  player->points += get_tile_fish(target_tile);
   player->moves_count += 1;
-  return tile;
 }
 
-void undo_move_penguin(Game* game, Coords start, Coords target, int prev_target_tile) {
+void undo_move_penguin(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
-  int start_tile = get_tile(game, start);
-  UNUSED(start_tile);
-  assert(is_water_tile(start_tile));
+  const GameLogMovement* entry = &game_pop_log_entry(game, GAME_LOG_ENTRY_MOVEMENT)->data.movement;
+
   Player* player = game_get_current_player(game);
-  int target_tile = get_tile(game, target);
-  UNUSED(target_tile);
-  assert(get_tile_player_id(target_tile) == player->id);
-  *game_find_player_penguin(game, game->current_player_index, target) = start;
-  set_tile(game, start, PENGUIN_TILE(player->id));
-  set_tile(game, target, prev_target_tile);
-  player->points -= get_tile_fish(prev_target_tile);
+  *game_find_player_penguin(game, game->current_player_index, entry->target) = entry->penguin;
+  set_tile(game, entry->penguin, PENGUIN_TILE(player->id));
+  set_tile(game, entry->target, entry->undo_tile);
+  player->points -= get_tile_fish(entry->undo_tile);
   player->moves_count -= 1;
 }

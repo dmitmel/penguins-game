@@ -42,6 +42,10 @@ class PlayerPenguinWindow : public wxWindow {
 public:
   PlayerPenguinWindow(PlayerInfoBox* parent, wxWindowID id);
 
+  virtual bool AcceptsFocus() const override {
+    return false;
+  }
+
 protected:
   virtual wxSize DoGetBestSize() const override;
 

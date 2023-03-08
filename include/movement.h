@@ -33,8 +33,8 @@ int movement_switch_player(Game* game);
 bool any_valid_player_move_exists(const Game* game, int player_idx);
 bool validate_movement_start(const Game* game, Coords start);
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail);
-int move_penguin(Game* game, Coords start, Coords target);
-void undo_move_penguin(Game* game, Coords start, Coords target, int prev_target_tile);
+void move_penguin(Game* game, Coords start, Coords target);
+void undo_move_penguin(Game* game);
 
 inline int count_obstructed_directions(const Game* game, Coords penguin) {
   assert(is_tile_in_bounds(game, penguin));

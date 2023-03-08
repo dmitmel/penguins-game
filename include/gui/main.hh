@@ -1,8 +1,9 @@
 #pragma once
 
-#include "gui/game.hh"
 #include "gui/tileset.hh"
 #include <wx/app.h>
+
+class GameFrame;
 
 class PenguinsApp : public wxApp {
 public:
@@ -10,7 +11,7 @@ public:
 
   virtual bool OnInit() override;
 
-  TilesetHelper tileset{ CanvasPanel::TILE_SIZE / TilesetHelper::TILE_SIZE };
+  TilesetHelper tileset;
   GameFrame* game_frame;
 };
 
