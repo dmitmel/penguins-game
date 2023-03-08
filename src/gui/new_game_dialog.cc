@@ -1,4 +1,5 @@
 #include "gui/new_game_dialog.hh"
+#include "utils.h"
 #include <cstddef>
 #include <wx/choice.h>
 #include <wx/event.h>
@@ -178,8 +179,7 @@ void NewGameDialog::update_new_player_row() {
   this->new_player_row.delete_btn->Show(this->new_player_row.delete_btn->IsShown() && show);
   wxSizerItem* delete_btn_item = this->players_grid->GetItem(this->new_player_row.delete_btn);
   delete_btn_item->SetFlag(
-    (delete_btn_item->GetFlag() & ~wxRESERVE_SPACE_EVEN_IF_HIDDEN) |
-    (show ? wxRESERVE_SPACE_EVEN_IF_HIDDEN : 0)
+    change_bit(delete_btn_item->GetFlag(), wxRESERVE_SPACE_EVEN_IF_HIDDEN, show)
   );
 }
 
@@ -207,8 +207,11 @@ void NewGameDialog::add_new_player_row(bool initial) {
   type_input->Select(0);
   grid->Add(type_input, wxSizerFlags().Expand());
 
-#ifdef __WXGTK__
+#if defined(__WXGTK__)
   auto delete_btn = new wxBitmapButton(this, wxID_ANY, wxArtProvider::GetIcon(wxART_CROSS_MARK));
+#elif defined(__WXOSX__)
+  auto delete_btn =
+    new wxButton(this, wxID_ANY, "X", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
 #else
   auto delete_btn =
     new wxButton(this, wxID_ANY, " X ", wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);

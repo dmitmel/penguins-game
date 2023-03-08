@@ -60,6 +60,11 @@ inline bool coords_same(Coords a, Coords b) {
 #define my_max(x, y) (((x) > (y)) ? (x) : (y))
 #define my_min(x, y) (((x) < (y)) ? (x) : (y))
 
+#define set_bit(num, bit) ((num) | (bit))
+#define clear_bit(num, bit) ((num) & ~(bit))
+#define toggle_bit(num, bit) ((num) ^ (bit))
+#define change_bit(num, bit, val) (((num) & ~(bit)) | ((val) ? (bit) : 0))
+
 const char* strip_prefix(const char* str, const char* prefix);
 bool parse_number(const char* str, long* result);
 void* memdup(const void* src, size_t size);
