@@ -141,7 +141,6 @@ void BotTurnController::unregister_bot_thread(BotThread* thread) {
 }
 
 void LogEntryViewerController::on_activated() {
-  this->GameController::on_activated();
   const GameLogEntry* entry = game_get_log_entry(game, this->entry_index);
   size_t adjusted_index = this->entry_index;
   if (entry->type == GAME_LOG_ENTRY_PHASE_CHANGE) {
@@ -152,6 +151,7 @@ void LogEntryViewerController::on_activated() {
     adjusted_index += 1;
   }
   game_rewind_state_to_log_entry(game, adjusted_index);
+  this->GameController::on_activated();
 }
 
 void LogEntryViewerController::configure_log_viewer_ui() {
