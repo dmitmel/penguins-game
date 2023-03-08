@@ -26,7 +26,6 @@ class GameLogListBoxEntry : public wxClientData {
 public:
   explicit GameLogListBoxEntry(size_t index) : index(index) {}
   const size_t index;
-  static const size_t CURRENT_TURN = -1;
 };
 
 class GameFrame : public wxFrame {
