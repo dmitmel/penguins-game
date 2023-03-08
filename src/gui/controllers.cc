@@ -54,10 +54,6 @@ void BotTurnController::configure_bot_turn_ui() {
   this->game_frame->start_bot_progress();
 }
 
-void BotTurnController::on_deactivated(GameController* WXUNUSED(next_controller)) {
-  this->stop_bot_thread();
-}
-
 void BotPlacementController::on_activated() {
   this->BotTurnController::on_activated();
   wxASSERT(!this->executing_bot_turn);
@@ -70,6 +66,11 @@ void BotMovementController::on_activated() {
   wxASSERT(!this->executing_bot_turn);
   this->executing_bot_turn = true;
   this->run_bot_thread(new BotMovementThread(this));
+}
+
+void BotTurnController::on_deactivated(GameController* WXUNUSED(next_controller)) {
+  this->stop_bot_thread();
+  this->executing_bot_turn = false;
 }
 
 BotTurnController::~BotTurnController() {

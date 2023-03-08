@@ -11,7 +11,7 @@ class GameFrame;
 class CanvasPanel;
 class BotThread;
 
-class GameController {
+class GameController : public wxEvtHandler {
 public:
   GameController(GameFrame* game_frame);
   virtual ~GameController() {}
