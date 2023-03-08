@@ -108,17 +108,27 @@ void handle_movement_input(Game* game, Coords* penguin, Coords* target) {
     get_data_for_movement(penguin, target);
     MovementError input = validate_movement(game, *penguin, *target, NULL);
     switch (input) {
-      case VALID_INPUT: return;
-      case OUT_OF_BOUNDS_MOVEMENT:
+      case MOVEMENT_VALID: return;
+      case MOVEMENT_OUT_OF_BOUNDS:
         display_error_message("You cant move oustide the board!");
         break;
-      case CURRENT_LOCATION: display_error_message("Thats your current location"); break;
-      case DIAGONAL_MOVE: display_error_message("You cant move diagonaly!"); break;
-      case NOT_YOUR_PENGUIN: display_error_message("Chose YOUR PENGUIN for movement"); break;
-      case MOVE_ONTO_EMPTY_TILE: display_error_message("Can't move onto an empty tile"); break;
-      case MOVE_ONTO_PENGUIN: display_error_message("Can't move onto another penguin!"); break;
-      case MOVE_OVER_EMPTY_TILE: display_error_message("You cant move over an empty tile!"); break;
-      case MOVE_OVER_PENGUIN: display_error_message("You cant move over another penguin!"); break;
+      case MOVEMENT_CURRENT_LOCATION: display_error_message("Thats your current location"); break;
+      case MOVEMENT_DIAGONAL: display_error_message("You cant move diagonaly!"); break;
+      case MOVEMENT_NOT_A_PENGUIN: display_error_message("Chose a penguin for movement"); break;
+      case MOVEMENT_NOT_YOUR_PENGUIN:
+        display_error_message("Chose YOUR PENGUIN for movement");
+        break;
+      case MOVEMENT_ONTO_EMPTY_TILE: display_error_message("Can't move onto an empty tile"); break;
+      case MOVEMENT_ONTO_PENGUIN: display_error_message("Can't move onto another penguin!"); break;
+      case MOVEMENT_OVER_EMPTY_TILE:
+        display_error_message("You cant move over an empty tile!");
+        break;
+      case MOVEMENT_OVER_PENGUIN:
+        display_error_message("You cant move over another penguin!");
+        break;
+      case MOVEMENT_PENGUIN_BLOCKED:
+        display_error_message("There are no possible moves for this penguin!");
+        break;
     }
   }
 }

@@ -11,15 +11,17 @@ extern "C" {
 #endif
 
 typedef enum MovementError {
-  VALID_INPUT = 0,
-  OUT_OF_BOUNDS_MOVEMENT,
-  CURRENT_LOCATION,
-  DIAGONAL_MOVE,
-  NOT_YOUR_PENGUIN,
-  MOVE_ONTO_EMPTY_TILE,
-  MOVE_ONTO_PENGUIN,
-  MOVE_OVER_EMPTY_TILE,
-  MOVE_OVER_PENGUIN,
+  MOVEMENT_VALID = 0,
+  MOVEMENT_OUT_OF_BOUNDS,
+  MOVEMENT_CURRENT_LOCATION,
+  MOVEMENT_DIAGONAL,
+  MOVEMENT_NOT_A_PENGUIN,
+  MOVEMENT_NOT_YOUR_PENGUIN,
+  MOVEMENT_ONTO_EMPTY_TILE,
+  MOVEMENT_ONTO_PENGUIN,
+  MOVEMENT_OVER_EMPTY_TILE,
+  MOVEMENT_OVER_PENGUIN,
+  MOVEMENT_PENGUIN_BLOCKED,
 } MovementError;
 
 typedef struct PossibleSteps {
@@ -31,7 +33,7 @@ void movement_end(Game* game);
 
 int movement_switch_player(Game* game);
 bool any_valid_player_move_exists(const Game* game, int player_idx);
-bool validate_movement_start(const Game* game, Coords start);
+MovementError validate_movement_start(const Game* game, Coords start);
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail);
 void move_penguin(Game* game, Coords start, Coords target);
 void undo_move_penguin(Game* game);

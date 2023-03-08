@@ -48,6 +48,7 @@ find_program(IWYU NAMES include-what-you-use iwyu)
 
 function(setup_penguins_target target)
   target_include_directories(${target} PUBLIC include)
+  target_compile_definitions(${target} PUBLIC PENGUINS_VERSION_STRING="${PROJECT_VERSION}")
 
   set_target_properties(${target} PROPERTIES
     C_STANDARD 99

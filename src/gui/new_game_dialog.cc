@@ -225,9 +225,7 @@ void NewGameDialog::add_new_player_row(bool initial) {
 
 void NewGameDialog::realize_player_row(size_t index) {
   PlayerRowWidgets& row = this->player_rows.at(index);
-  wxString hint("Name of player ");
-  hint << (index + 1);
-  row.name_input->SetHint(hint);
+  row.name_input->SetHint(wxString::Format("Name of player %zd", index + 1));
   row.delete_btn->Show();
 }
 

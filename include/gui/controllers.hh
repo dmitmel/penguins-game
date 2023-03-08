@@ -24,6 +24,8 @@ public:
   virtual void on_deactivated(GameController* next_controller);
   virtual void update_tile_attributes();
   virtual void paint_overlay(wxDC& dc);
+  virtual void update_status_bar();
+  virtual void on_mouse_enter_leave(wxMouseEvent& event);
   virtual void on_mouse_down(wxMouseEvent& event);
   virtual void on_mouse_move(wxMouseEvent& event);
   virtual void on_mouse_up(wxMouseEvent& event);
@@ -46,6 +48,7 @@ public:
   virtual void update_tile_attributes() override;
   virtual void on_mouse_move(wxMouseEvent& event) override;
   virtual void on_mouse_up(wxMouseEvent& event) override;
+  virtual void update_status_bar() override;
 };
 
 class PlayerMovementController : public PlayerTurnController {
@@ -53,6 +56,7 @@ public:
   PlayerMovementController(GameFrame* game_frame) : PlayerTurnController(game_frame) {}
   virtual void update_tile_attributes() override;
   virtual void paint_overlay(wxDC& dc) override;
+  virtual void update_status_bar() override;
   virtual void on_mouse_down(wxMouseEvent& event) override;
   virtual void on_mouse_move(wxMouseEvent& event) override;
   virtual void on_mouse_up(wxMouseEvent& event) override;
@@ -63,14 +67,17 @@ public:
   BotTurnController(GameFrame* game_frame) : GameController(game_frame) {}
   virtual ~BotTurnController();
   virtual void configure_bot_turn_ui() override;
+  virtual void on_activated() override;
   virtual void on_deactivated(GameController* next_controller) override;
   virtual void update_tile_attributes() override;
+  virtual void update_status_bar() override;
   virtual void on_mouse_up(wxMouseEvent& event) override;
 
-  void unregister_bot_thread(BotThread* thread);
+  virtual BotThread* create_bot_thread() = 0;
   void on_bot_thread_done_work(bool cancelled);
-  void run_bot_thread(BotThread* thread);
+  void start_bot_thread();
   void stop_bot_thread();
+  void unregister_bot_thread(BotThread* thread);
 
   bool executing_bot_turn = false;
   wxCriticalSection bot_thread_cs;
@@ -80,19 +87,20 @@ public:
 class BotPlacementController : public BotTurnController {
 public:
   BotPlacementController(GameFrame* game_frame) : BotTurnController(game_frame) {}
-  virtual void on_activated() override;
+  virtual BotThread* create_bot_thread() override;
 };
 
 class BotMovementController : public BotTurnController {
 public:
   BotMovementController(GameFrame* game_frame) : BotTurnController(game_frame) {}
-  virtual void on_activated() override;
+  virtual BotThread* create_bot_thread() override;
 };
 
 class GameEndedController : public GameController {
 public:
   GameEndedController(GameFrame* game_frame) : GameController(game_frame) {}
   virtual void on_activated() override;
+  virtual void update_status_bar() override;
 };
 
 class LogEntryViewerController : public GameController {
@@ -101,6 +109,7 @@ public:
   : GameController(game_frame), entry_index(entry_index) {}
   virtual ~LogEntryViewerController() {}
   virtual void on_activated() override;
+  virtual void update_status_bar() override;
   virtual void configure_log_viewer_ui() override;
   virtual void paint_overlay(wxDC& dc) override;
   size_t entry_index;

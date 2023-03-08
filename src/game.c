@@ -125,7 +125,6 @@ GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type) {
 }
 
 const GameLogEntry* game_pop_log_entry(Game* self, GameLogEntryType expected_type) {
-  UNUSED(expected_type);
   assert(self->log_current > 0);
   self->log_current -= 1;
   const GameLogEntry* entry = &self->log_buffer[self->log_current];
@@ -225,8 +224,8 @@ void game_remove_player_penguin(Game* self, int idx, Coords coords) {
   assert(penguin != NULL);
   // The penguin pointer will be within the boundaries of the penguins array,
   // this is legal.
-  int penguin_idx = penguin - player->penguins;
-  for (int i = penguin_idx; i < player->penguins_count - 1; i++) {
+  size_t penguin_idx = penguin - player->penguins;
+  for (size_t i = penguin_idx; i < player->penguins_count - 1; i++) {
     player->penguins[i] = player->penguins[i + 1];
   }
   player->penguins_count -= 1;

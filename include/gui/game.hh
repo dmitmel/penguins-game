@@ -26,7 +26,6 @@ class GameLogListBoxEntry : public wxClientData {
 public:
   explicit GameLogListBoxEntry(size_t index) : index(index) {}
   const size_t index;
-  static const size_t CURRENT_TURN = -1;
 };
 
 class GameFrame : public wxFrame {
@@ -44,6 +43,7 @@ public:
   void set_controller(GameController* next_controller);
   void end_game();
   void close_game();
+  void clear_status_bar();
   void update_player_info_boxes();
 
   void start_bot_progress();

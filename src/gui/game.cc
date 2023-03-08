@@ -6,24 +6,20 @@
 #include "gui/controllers.hh"
 #include "gui/game_end_dialog.hh"
 #include "gui/game_state.hh"
+#include "gui/main.hh"
 #include "gui/new_game_dialog.hh"
 #include "gui/player_info_box.hh"
-#include "resources_appicon_256_png.h"
 #include "utils.h"
 #include <memory>
-#include <wx/bitmap.h>
+#include <wx/aboutdlg.h>
 #include <wx/debug.h>
 #include <wx/defs.h>
 #include <wx/event.h>
 #include <wx/gauge.h>
 #include <wx/gdicmn.h>
-#include <wx/icon.h>
-#include <wx/image.h>
 #include <wx/listbox.h>
 #include <wx/menu.h>
 #include <wx/menuitem.h>
-#include <wx/msgdlg.h>
-#include <wx/mstream.h>
 #include <wx/panel.h>
 #include <wx/persist.h>
 #include <wx/scrolwin.h>
@@ -38,11 +34,7 @@
 GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Penguins game") {
   this->Bind(wxEVT_DESTROY, &GameFrame::on_destroy, this);
 
-  wxMemoryInputStream icon_stream(resources_appicon_256_png, resources_appicon_256_png_size);
-  wxIcon app_icon;
-  // The triple conversion necessary to load the icon here is... meh.
-  app_icon.CopyFromBitmap(wxBitmap(wxImage(icon_stream, wxBITMAP_TYPE_PNG)));
-  this->SetIcon(app_icon);
+  this->SetIcon(wxGetApp().app_icon);
 
   this->root_panel = new wxPanel(this, wxID_ANY);
 
@@ -72,9 +64,9 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Pen
   this->SetMenuBar(menu_bar);
 
   this->CreateStatusBar(2);
-  this->SetStatusText("Welcome to wxWidgets!");
   int status_bar_widths[2] = { -3, -1 };
   this->SetStatusWidths(2, status_bar_widths);
+  this->clear_status_bar();
 
   this->progress_container = new wxWindow(this->GetStatusBar(), wxID_ANY);
   this->progress_container->Hide();
@@ -185,9 +177,13 @@ void GameFrame::on_exit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
-  wxMessageBox(
-    "This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION, this
-  );
+  wxAboutDialogInfo info;
+  info.SetName("Penguins game");
+  info.SetVersion(PENGUINS_VERSION_STRING);
+#if !defined(__WXOSX__)
+  info.SetIcon(wxGetApp().app_icon);
+#endif
+  wxAboutBox(info, this);
 }
 
 void GameFrame::start_new_game() {
@@ -260,8 +256,6 @@ void GameFrame::update_game_state() {
   game_advance_state(game);
   this->update_game_log();
   this->set_controller(this->get_controller_for_current_turn());
-  this->update_player_info_boxes();
-  this->canvas->Refresh();
 }
 
 GameController* GameFrame::get_controller_for_current_turn() {
@@ -320,19 +314,15 @@ void GameFrame::stop_bot_progress() {
 void GameFrame::on_game_log_select(wxCommandEvent& event) {
   if (auto list_entry = dynamic_cast<GameLogListBoxEntry*>(event.GetClientObject())) {
     this->set_controller(new LogEntryViewerController(this, list_entry->index));
-    this->update_player_info_boxes();
-    this->canvas->Refresh();
   }
 }
 
 void GameFrame::on_show_current_turn_clicked(wxCommandEvent& WXUNUSED(event)) {
-  this->game_log->DeselectAll();
+  this->game_log->SetSelection(-1); // works more reliably than DeselectAll
   this->canvas->CallAfter(&CanvasPanel::SetFocus);
   Game* game = this->state.game.get();
   game_rewind_state_to_log_entry(game, game->log_length);
   this->set_controller(this->get_controller_for_current_turn());
-  this->update_player_info_boxes();
-  this->canvas->Refresh();
 }
 
 void GameFrame::update_game_log() {
@@ -340,7 +330,7 @@ void GameFrame::update_game_log() {
   size_t new_count = this->state.game->log_length;
   for (size_t i = old_count; i < new_count; i++) {
     this->state.displayed_log_entries += 1;
-    wxString description = describe_game_log_entry(i);
+    wxString description = this->describe_game_log_entry(i);
     if (description.IsEmpty()) continue;
     int item_index = this->game_log->Append(description, new GameLogListBoxEntry(i));
     this->game_log->EnsureVisible(item_index);
@@ -364,11 +354,13 @@ wxString GameFrame::describe_game_log_entry(size_t index) const {
   } else if (entry->type == GAME_LOG_ENTRY_PLACEMENT) {
     auto entry_data = &entry->data.placement;
     Coords target = entry_data->target;
-    return wxString::Format("@ (%d, %d)", target.x, target.y);
+    return wxString::Format("@ (%d, %d)", target.x + 1, target.y + 1);
   } else if (entry->type == GAME_LOG_ENTRY_MOVEMENT) {
     auto entry_data = &entry->data.movement;
     Coords penguin = entry_data->penguin, target = entry_data->target;
-    return wxString::Format("(%d, %d) -> (%d, %d)", penguin.x, penguin.y, target.x, target.y);
+    return wxString::Format(
+      "(%d, %d) -> (%d, %d)", penguin.x + 1, penguin.y + 1, target.x + 1, target.y + 1
+    );
   }
   return "";
 }
@@ -396,7 +388,13 @@ void GameFrame::close_game() {
   this->game_log->Hide();
   this->show_current_turn_btn->Hide();
   this->show_current_turn_btn->Disable();
+  this->clear_status_bar();
   this->state = GuiGameState();
+}
+
+void GameFrame::clear_status_bar() {
+  this->SetStatusText("", 0);
+  this->SetStatusText("", 1);
 }
 
 void GameFrame::update_player_info_boxes() {

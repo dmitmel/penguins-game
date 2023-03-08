@@ -12,6 +12,8 @@
 #include <wx/button.h>
 #include <wx/debug.h>
 #include <wx/defs.h>
+#include <wx/string.h>
+#include <wx/utils.h>
 
 GameController::GameController(GameFrame* game_frame)
 : game_frame(game_frame)
@@ -26,6 +28,9 @@ void GameController::update_game_state_and_indirectly_delete_this() {
 void GameController::on_activated() {
   this->configure_bot_turn_ui();
   this->configure_log_viewer_ui();
+  this->update_status_bar();
+  this->game_frame->update_player_info_boxes();
+  this->canvas->Refresh();
 }
 
 void GameController::configure_bot_turn_ui() {
@@ -42,6 +47,15 @@ void GameController::on_mouse_down(wxMouseEvent& WXUNUSED(event)) {}
 void GameController::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {}
 void GameController::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {}
 
+void GameController::update_status_bar() {
+  this->game_frame->clear_status_bar();
+}
+
+void GameController::on_mouse_enter_leave(wxMouseEvent& WXUNUSED(event)) {
+  this->update_status_bar();
+  this->canvas->Refresh();
+}
+
 void GameEndedController::on_activated() {
   this->GameController::on_activated();
   if (!this->state.game_ended) {
@@ -54,28 +68,25 @@ void BotTurnController::configure_bot_turn_ui() {
   this->game_frame->start_bot_progress();
 }
 
-void BotPlacementController::on_activated() {
-  this->BotTurnController::on_activated();
-  wxASSERT(!this->executing_bot_turn);
-  this->executing_bot_turn = true;
-  this->run_bot_thread(new BotPlacementThread(this));
+BotThread* BotPlacementController::create_bot_thread() {
+  return new BotPlacementThread(this);
 }
 
-void BotMovementController::on_activated() {
-  this->BotTurnController::on_activated();
-  wxASSERT(!this->executing_bot_turn);
-  this->executing_bot_turn = true;
-  this->run_bot_thread(new BotMovementThread(this));
+BotThread* BotMovementController::create_bot_thread() {
+  return new BotMovementThread(this);
+}
+
+void BotTurnController::on_activated() {
+  this->GameController::on_activated();
+  this->start_bot_thread();
 }
 
 void BotTurnController::on_deactivated(GameController* WXUNUSED(next_controller)) {
   this->stop_bot_thread();
-  this->executing_bot_turn = false;
 }
 
 BotTurnController::~BotTurnController() {
   this->stop_bot_thread();
-  this->executing_bot_turn = false;
 }
 
 void BotTurnController::on_bot_thread_done_work(bool cancelled) {
@@ -87,11 +98,15 @@ void BotTurnController::on_bot_thread_done_work(bool cancelled) {
   }
 }
 
-void BotTurnController::run_bot_thread(BotThread* thread) {
+void BotTurnController::start_bot_thread() {
   wxASSERT(wxThread::IsMain());
-  wxCriticalSectionLocker enter(this->bot_thread_cs);
-  wxASSERT(this->bot_thread == nullptr);
-  this->bot_thread = thread;
+  this->executing_bot_turn = true;
+  BotThread* thread = this->create_bot_thread();
+  {
+    wxCriticalSectionLocker enter(this->bot_thread_cs);
+    wxASSERT(this->bot_thread == nullptr);
+    this->bot_thread = thread;
+  }
   wxThreadError code WX_ATTRIBUTE_UNUSED = thread->Run();
   wxASSERT(code == wxTHREAD_NO_ERROR);
 }
@@ -112,6 +127,7 @@ void BotTurnController::stop_bot_thread() {
   if (shared) {
     shared->wait_for_exit();
   }
+  this->executing_bot_turn = false;
 }
 
 void BotTurnController::unregister_bot_thread(BotThread* thread) {
@@ -125,7 +141,6 @@ void BotTurnController::unregister_bot_thread(BotThread* thread) {
 }
 
 void LogEntryViewerController::on_activated() {
-  this->GameController::on_activated();
   const GameLogEntry* entry = game_get_log_entry(game, this->entry_index);
   size_t adjusted_index = this->entry_index;
   if (entry->type == GAME_LOG_ENTRY_PHASE_CHANGE) {
@@ -136,6 +151,7 @@ void LogEntryViewerController::on_activated() {
     adjusted_index += 1;
   }
   game_rewind_state_to_log_entry(game, adjusted_index);
+  this->GameController::on_activated();
 }
 
 void LogEntryViewerController::configure_log_viewer_ui() {
@@ -218,7 +234,7 @@ void PlayerMovementController::paint_overlay(wxDC& dc) {
 
   Coords move_fail = penguin;
   MovementError result = validate_movement(game, penguin, target, &move_fail);
-  this->canvas->paint_move_arrow(dc, penguin, target, move_fail, result == VALID_INPUT);
+  this->canvas->paint_move_arrow(dc, penguin, target, move_fail, result == MOVEMENT_VALID);
 }
 
 void LogEntryViewerController::paint_overlay(wxDC& dc) {
@@ -226,11 +242,114 @@ void LogEntryViewerController::paint_overlay(wxDC& dc) {
   if (entry->type == GAME_LOG_ENTRY_PLACEMENT) {
     this->canvas->paint_selected_tile_outline(dc, entry->data.placement.target);
   } else if (entry->type == GAME_LOG_ENTRY_MOVEMENT) {
+    this->canvas->paint_selected_tile_outline(dc, entry->data.movement.target);
     this->canvas->paint_move_arrow(dc, entry->data.movement.penguin, entry->data.movement.target);
   }
 }
 
+static wxString describe_placement_result(PlacementError result) {
+  switch (result) {
+    case PLACEMENT_VALID: return "You can place your penguin here!";
+    case PLACEMENT_OUT_OF_BOUNDS: return "A tile outside the board has been selected.";
+    case PLACEMENT_EMPTY_TILE: return "Penguins can only be placed on ice tiles with one fish.";
+    case PLACEMENT_ENEMY_PENGUIN: return "This tile is already occupied by a penguin.";
+    case PLACEMENT_OWN_PENGUIN: return "This tile is already occupied by your own penguin.";
+    case PLACEMENT_MULTIPLE_FISH: return "Penguins may only be placed on tiles with one fish.";
+  }
+  return "";
+}
+
+void PlayerPlacementController::update_status_bar() {
+  GameFrame* frame = this->game_frame;
+  Coords curr_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
+  if (!(this->canvas->mouse_within_window && is_tile_in_bounds(game, curr_coords))) {
+    frame->clear_status_bar();
+    return;
+  }
+  frame->SetStatusText(wxString::Format("(%d, %d)", curr_coords.x + 1, curr_coords.y + 1), 1);
+  PlacementError result = validate_placement(game, curr_coords);
+  frame->SetStatusText(describe_placement_result(result), 0);
+}
+
+static wxString describe_movement_result(MovementError result) {
+  switch (result) {
+    case MOVEMENT_VALID: return "This is a valid move!";
+    case MOVEMENT_OUT_OF_BOUNDS: return "A tile outside the board has been selected.";
+    case MOVEMENT_CURRENT_LOCATION: return "Drag the mouse to a desired tile to make a move.";
+    case MOVEMENT_DIAGONAL:
+      return "Penguins cannot move diagonally, only horizontally or vertically.";
+    case MOVEMENT_NOT_A_PENGUIN: return "You must select a penguin to make a move.";
+    case MOVEMENT_NOT_YOUR_PENGUIN: return "You must select your own penguin to make a move.";
+    case MOVEMENT_ONTO_EMPTY_TILE: return "You can't move onto a water tile.";
+    case MOVEMENT_ONTO_PENGUIN: return "You can't move onto another penguin.";
+    case MOVEMENT_OVER_EMPTY_TILE: return "You can't jump over a water tile.";
+    case MOVEMENT_OVER_PENGUIN: return "You can't jump over another penguin.";
+    case MOVEMENT_PENGUIN_BLOCKED:
+      return "There are no possible moves for this penguin, it is blocked on all sides.";
+  }
+  return "";
+}
+
+void PlayerMovementController::update_status_bar() {
+  GameFrame* frame = this->game_frame;
+  Coords prev_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_drag_pos);
+  Coords curr_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
+  if (!(this->canvas->mouse_within_window && is_tile_in_bounds(game, curr_coords))) {
+    frame->clear_status_bar();
+    return;
+  }
+  if (this->canvas->mouse_is_down && is_tile_in_bounds(game, prev_coords)) {
+    MovementError result = validate_movement(game, prev_coords, curr_coords, nullptr);
+    if (result != MOVEMENT_VALID) {
+      frame->SetStatusText(describe_movement_result(result), 0);
+    } else if (this->canvas->mouse_is_down_real) {
+      frame->SetStatusText("This is a valid move! Release the mouse to confirm it.", 0);
+    } else {
+      frame->SetStatusText("This is a valid move! Click on the tile to confirm it.", 0);
+    }
+    frame->SetStatusText(
+      wxString::Format(
+        "(%d, %d) -> (%d, %d)",
+        prev_coords.x + 1,
+        prev_coords.y + 1,
+        curr_coords.x + 1,
+        curr_coords.y + 1
+      ),
+      1
+    );
+  } else {
+    MovementError result = MOVEMENT_VALID;
+    if (is_tile_in_bounds(game, curr_coords) && is_penguin_tile(get_tile(game, curr_coords))) {
+      result = validate_movement_start(game, curr_coords);
+    }
+    if (result != MOVEMENT_VALID) {
+      frame->SetStatusText(describe_movement_result(result), 0);
+    } else {
+      frame->SetStatusText("Either drag or click on a penguin to make a move.", 0);
+    }
+    frame->SetStatusText(wxString::Format("(%d, %d)", curr_coords.x + 1, curr_coords.y + 1), 1);
+  }
+}
+
+void BotTurnController::update_status_bar() {
+  this->game_frame->SetStatusText("The bot is thinking...", 0);
+  this->game_frame->SetStatusText("", 1);
+}
+
+void GameEndedController::update_status_bar() {
+  this->game_frame->SetStatusText("The game has ended!", 0);
+  this->game_frame->SetStatusText("", 1);
+}
+
+void LogEntryViewerController::update_status_bar() {
+  this->game_frame->SetStatusText(
+    wxString::Format("Viewing a previous turn (entry #%zd)", this->entry_index + 1), 0
+  );
+  this->game_frame->SetStatusText("", 1);
+}
+
 void PlayerMovementController::on_mouse_down(wxMouseEvent& WXUNUSED(event)) {
+  this->update_status_bar();
   this->canvas->Refresh();
 }
 
@@ -238,6 +357,7 @@ void PlayerPlacementController::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
   Coords prev_coords = this->canvas->tile_coords_at_point(this->canvas->prev_mouse_pos);
   Coords curr_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
   if (coords_same(curr_coords, prev_coords)) return;
+  this->update_status_bar();
   this->canvas->Refresh();
 }
 
@@ -247,8 +367,9 @@ void PlayerMovementController::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {
   if (coords_same(curr_coords, prev_coords)) return;
   Coords selected_penguin = this->canvas->get_selected_penguin_coords();
   if (is_tile_in_bounds(game, selected_penguin)) {
-    set_tile_attr(game, selected_penguin, TILE_DIRTY, true);
+    set_tile_attr(game, selected_penguin, TILE_NEEDS_REDRAW, true);
   }
+  this->update_status_bar();
   this->canvas->Refresh();
 }
 
@@ -260,25 +381,37 @@ void PlayerPlacementController::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
       place_penguin(game, curr_coords);
       this->update_game_state_and_indirectly_delete_this();
       return;
+    } else {
+      wxBell();
     }
   }
+  this->update_status_bar();
 }
 
 void PlayerMovementController::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {
   Coords prev_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_drag_pos);
   Coords curr_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
   if (is_tile_in_bounds(game, curr_coords) && is_tile_in_bounds(game, prev_coords)) {
-    if (coords_same(prev_coords, curr_coords) && validate_movement_start(game, curr_coords)) {
-      // This is a hacky way of doing what I want: when the user has simply
-      // clicked on a penguin, let them then move it without dragging the mouse
-      // all the way.
-      this->canvas->mouse_is_down = true;
-    } else if (validate_movement(game, prev_coords, curr_coords, nullptr) == VALID_INPUT) {
-      move_penguin(game, prev_coords, curr_coords);
-      this->update_game_state_and_indirectly_delete_this();
-      return;
+    if (coords_same(prev_coords, curr_coords)) {
+      if (validate_movement_start(game, curr_coords) == MOVEMENT_VALID) {
+        // This is a hacky way of doing what I want: when the user has simply
+        // clicked on a penguin, let them then move it without dragging the
+        // mouse all the way.
+        this->canvas->mouse_is_down = true;
+      } else {
+        wxBell();
+      }
+    } else {
+      if (validate_movement(game, prev_coords, curr_coords, nullptr) == MOVEMENT_VALID) {
+        move_penguin(game, prev_coords, curr_coords);
+        this->update_game_state_and_indirectly_delete_this();
+        return;
+      } else {
+        wxBell();
+      }
     }
   }
+  this->update_status_bar();
   this->canvas->Refresh();
 }
 

@@ -40,6 +40,7 @@ public:
 
   bool mouse_within_window = false;
   bool mouse_is_down = false;
+  bool mouse_is_down_real = false;
   wxPoint mouse_pos = wxDefaultPosition;
   wxPoint prev_mouse_pos = wxDefaultPosition;
   wxPoint mouse_drag_pos = wxDefaultPosition;
