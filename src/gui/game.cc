@@ -6,24 +6,20 @@
 #include "gui/controllers.hh"
 #include "gui/game_end_dialog.hh"
 #include "gui/game_state.hh"
+#include "gui/main.hh"
 #include "gui/new_game_dialog.hh"
 #include "gui/player_info_box.hh"
-#include "resources_appicon_256_png.h"
 #include "utils.h"
 #include <memory>
-#include <wx/bitmap.h>
+#include <wx/aboutdlg.h>
 #include <wx/debug.h>
 #include <wx/defs.h>
 #include <wx/event.h>
 #include <wx/gauge.h>
 #include <wx/gdicmn.h>
-#include <wx/icon.h>
-#include <wx/image.h>
 #include <wx/listbox.h>
 #include <wx/menu.h>
 #include <wx/menuitem.h>
-#include <wx/msgdlg.h>
-#include <wx/mstream.h>
 #include <wx/panel.h>
 #include <wx/persist.h>
 #include <wx/scrolwin.h>
@@ -38,11 +34,7 @@
 GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Penguins game") {
   this->Bind(wxEVT_DESTROY, &GameFrame::on_destroy, this);
 
-  wxMemoryInputStream icon_stream(resources_appicon_256_png, resources_appicon_256_png_size);
-  wxIcon app_icon;
-  // The triple conversion necessary to load the icon here is... meh.
-  app_icon.CopyFromBitmap(wxBitmap(wxImage(icon_stream, wxBITMAP_TYPE_PNG)));
-  this->SetIcon(app_icon);
+  this->SetIcon(wxGetApp().app_icon);
 
   this->root_panel = new wxPanel(this, wxID_ANY);
 
@@ -185,9 +177,13 @@ void GameFrame::on_exit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
-  wxMessageBox(
-    "This is a wxWidgets Hello World example", "About Hello World", wxOK | wxICON_INFORMATION, this
-  );
+  wxAboutDialogInfo info;
+  info.SetName("Penguins game");
+  info.SetVersion(PENGUINS_VERSION_STRING);
+#if !defined(__WXOSX__)
+  info.SetIcon(wxGetApp().app_icon);
+#endif
+  wxAboutBox(info, this);
 }
 
 void GameFrame::start_new_game() {

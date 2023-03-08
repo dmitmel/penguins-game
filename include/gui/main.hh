@@ -2,6 +2,7 @@
 
 #include "gui/tileset.hh"
 #include <wx/app.h>
+#include <wx/icon.h>
 
 class GameFrame;
 
@@ -11,6 +12,7 @@ public:
 
   virtual bool OnInit() override;
 
+  wxIcon app_icon;
   TilesetHelper tileset;
   GameFrame* game_frame;
 };
