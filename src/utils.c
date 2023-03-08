@@ -3,10 +3,12 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 extern bool coords_same(Coords a, Coords b);
+extern uint32_t fnv32_hash(uint32_t state, const void* buf, size_t len);
 
 const Coords DIRECTION_TO_COORDS[DIRECTION_MAX] = {
   [DIRECTION_RIGHT] = { 1, 0 },

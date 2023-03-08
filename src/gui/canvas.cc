@@ -1,32 +1,37 @@
 #include "gui/canvas.hh"
 #include "board.h"
+#include "game.h"
 #include "gui/controllers.hh"
 #include "gui/game.hh"
 #include "gui/game_state.hh"
 #include "gui/main.hh"
 #include "gui/tileset.hh"
+#include "utils.h"
 #include <cassert>
+#include <cstdint>
 #include <memory>
 #include <wx/bitmap.h>
+#include <wx/colour.h>
 #include <wx/dc.h>
 #include <wx/dcclient.h>
 #include <wx/dcmemory.h>
 #include <wx/defs.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
-#include <wx/panel.h>
+#include <wx/geometry.h>
+#include <wx/pen.h>
 #include <wx/region.h>
 #include <wx/window.h>
 
 // clang-format off
-wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
+wxBEGIN_EVENT_TABLE(CanvasPanel, wxWindow)
   EVT_PAINT(CanvasPanel::on_paint)
   EVT_MOUSE_EVENTS(CanvasPanel::on_any_mouse_event)
 wxEND_EVENT_TABLE();
 // clang-format on
 
 CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame)
-: wxPanel(parent, id), game_frame(game_frame), game(game_frame->state.game.get()) {
+: wxWindow(parent, id), game_frame(game_frame), game(game_frame->state.game.get()) {
   this->SetInitialSize(this->get_canvas_size());
 #ifdef __WXMSW__
   // Necessary to avoid flicker on Windows, see <https://wiki.wxwidgets.org/Flicker-Free_Drawing>.
@@ -149,14 +154,18 @@ void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
       int tile = get_tile(game, coords);
       wxPoint tile_pos = tile_rect.GetPosition();
 
+      uint32_t coords_hash = fnv32_hash(FNV32_INITIAL_STATE, &coords, sizeof(Coords));
+
       if (is_water_tile(tile)) {
         this->draw_bitmap(
-          dc, tileset.water_tiles[(x ^ y) % WXSIZEOF(tileset.water_tiles)], tile_pos
+          dc, tileset.water_tiles[coords_hash % WXSIZEOF(tileset.water_tiles)], tile_pos
         );
         continue;
       }
 
-      this->draw_bitmap(dc, tileset.ice_tiles[(x ^ y) % WXSIZEOF(tileset.ice_tiles)], tile_pos);
+      this->draw_bitmap(
+        dc, tileset.ice_tiles[coords_hash % WXSIZEOF(tileset.ice_tiles)], tile_pos
+      );
 
       auto check_water = [&](int dx, int dy) -> bool {
         Coords neighbor = { coords.x + dx, coords.y + dy };
@@ -250,6 +259,68 @@ void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles
   }
 }
 
+void CanvasPanel::paint_selected_tile_outline(wxDC& dc, Coords coords, bool blocked) {
+  dc.SetBrush(*wxTRANSPARENT_BRUSH);
+  dc.SetPen(wxPen(blocked ? *wxRED : *wxGREEN, 5));
+  dc.DrawRectangle(this->get_tile_rect(coords));
+}
+
+void CanvasPanel::paint_move_arrow(wxDC& dc, Coords start, Coords end) {
+  this->paint_move_arrow(dc, start, end, start, true);
+}
+
+void CanvasPanel::paint_move_arrow(wxDC& dc, Coords start, Coords end, Coords fail, bool valid) {
+  wxPoint arrow_start = this->get_tile_centre(start);
+  wxPoint arrow_fail = this->get_tile_centre(fail);
+  wxPoint arrow_end = this->get_tile_centre(end);
+
+  wxSize head_size(8, 8);
+  wxPen bg_pen(*wxBLACK, 6);
+  wxPen green_pen((*wxGREEN).ChangeLightness(75), 4);
+  wxPen red_pen((*wxRED).ChangeLightness(75), 4);
+
+  if (!valid && !coords_same(fail, start)) {
+    dc.SetPen(bg_pen);
+    dc.DrawLine(arrow_start, arrow_fail);
+    dc.SetPen(green_pen);
+    dc.DrawLine(arrow_start, arrow_fail);
+    dc.SetPen(bg_pen);
+    this->paint_arrow_head(dc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
+    dc.DrawLine(arrow_fail, arrow_end);
+    this->paint_arrow_head(dc, arrow_fail, arrow_end, head_size);
+    dc.SetPen(red_pen);
+    this->paint_arrow_head(dc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
+    dc.DrawLine(arrow_fail, arrow_end);
+    this->paint_arrow_head(dc, arrow_fail, arrow_end, head_size);
+  } else {
+    dc.SetPen(bg_pen);
+    dc.DrawLine(arrow_start, arrow_end);
+    this->paint_arrow_head(dc, arrow_start, arrow_end, head_size);
+    dc.SetPen(valid ? green_pen : red_pen);
+    dc.DrawLine(arrow_start, arrow_end);
+    this->paint_arrow_head(dc, arrow_start, arrow_end, head_size);
+  }
+}
+
+void CanvasPanel::paint_arrow_head(
+  wxDC& dc, wxPoint start, wxPoint end, wxSize head_size, ArrowHeadType head_type
+) {
+  if (start == end) return;
+  wxPoint2DDouble norm(end - start);
+  norm.Normalize();
+  wxPoint2DDouble perp(-norm.m_y, norm.m_x);
+  wxPoint2DDouble head1 = -norm * head_size.x + perp * head_size.y;
+  wxPoint2DDouble head2 = -norm * head_size.x - perp * head_size.y;
+  wxPoint head1i(head1.m_x, head1.m_y), head2i(head2.m_x, head2.m_y);
+  if (head_type == ARROW_HEAD_NORMAL) {
+    dc.DrawLine(end, end + head1i);
+    dc.DrawLine(end, end + head2i);
+  } else if (head_type == ARROW_HEAD_CROSS) {
+    dc.DrawLine(end - head1i, end + head1i);
+    dc.DrawLine(end - head2i, end + head2i);
+  }
+}
+
 void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
   this->prev_mouse_pos = this->mouse_pos;
   this->mouse_pos = event.GetPosition();
@@ -259,6 +330,7 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
   }
   if (event.ButtonDown()) {
     this->mouse_is_down = true;
+    this->SetFocus();
   } else if (event.ButtonUp()) {
     this->mouse_is_down = false;
   }

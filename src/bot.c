@@ -64,6 +64,7 @@ void bot_state_free(BotState* self) {
     free_and_clear(self->fill_grid2);
     free_and_clear(self->fill_stack);
     BotState* next = self->sub_state;
+    self->sub_state = NULL;
     free(self);
     self = next;
   }
@@ -449,7 +450,7 @@ int bot_rate_move(BotState* self, BotMove move) {
   }
 
   if (self->depth <= self->params->junction_check_recursion_limit) {
-    int undo_tile = move_penguin(self->game, penguin, target);
+    move_penguin(self->game, penguin, target);
 
     if (bot_quick_junction_check(self, target)) {
       int* fill_grid = bot_flood_fill_reset_grid(self, &self->fill_grid2, &self->fill_grid2_cap);
@@ -483,11 +484,11 @@ int bot_rate_move(BotState* self, BotMove move) {
       }
     }
 
-    undo_move_penguin(self->game, penguin, target, undo_tile);
+    undo_move_penguin(self->game);
   }
 
   if (self->depth < self->params->recursion_limit) {
-    int undo_tile = move_penguin(self->game, penguin, target);
+    move_penguin(self->game, penguin, target);
 
     BotState* sub = bot_enter_sub_state(self);
     int moves_count = 0;
@@ -500,7 +501,7 @@ int bot_rate_move(BotState* self, BotMove move) {
       }
     }
 
-    undo_move_penguin(self->game, penguin, target, undo_tile);
+    undo_move_penguin(self->game);
   }
 
   return score;

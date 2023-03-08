@@ -1,5 +1,6 @@
 #include "gui/controllers.hh"
 #include "board.h"
+#include "game.h"
 #include "gui/bot_thread.hh"
 #include "gui/canvas.hh"
 #include "gui/game.hh"
@@ -8,11 +9,9 @@
 #include "placement.h"
 #include "utils.h"
 #include <memory>
-#include <wx/colour.h>
+#include <wx/button.h>
 #include <wx/debug.h>
-#include <wx/gdicmn.h>
-#include <wx/geometry.h>
-#include <wx/pen.h>
+#include <wx/defs.h>
 
 GameController::GameController(GameFrame* game_frame)
 : game_frame(game_frame)
@@ -25,11 +24,38 @@ void GameController::update_game_state_and_indirectly_delete_this() {
 }
 
 void GameController::on_activated() {
+  this->configure_bot_turn_ui();
+  this->configure_log_viewer_ui();
+}
+
+void GameController::configure_bot_turn_ui() {
   this->game_frame->stop_bot_progress();
 }
 
-void BotTurnController::on_activated() {
+void GameController::configure_log_viewer_ui() {
+  this->game_frame->show_current_turn_btn->Disable();
+}
+
+void GameController::on_deactivated(GameController* WXUNUSED(next_controller)) {}
+void GameController::paint_overlay(wxDC& WXUNUSED(dc)) {}
+void GameController::on_mouse_down(wxMouseEvent& WXUNUSED(event)) {}
+void GameController::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {}
+void GameController::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {}
+
+void GameEndedController::on_activated() {
+  this->GameController::on_activated();
+  if (!this->state.game_ended) {
+    this->state.game_ended = true;
+    this->game_frame->CallAfter(&GameFrame::end_game);
+  }
+}
+
+void BotTurnController::configure_bot_turn_ui() {
   this->game_frame->start_bot_progress();
+}
+
+void BotTurnController::on_deactivated(GameController* WXUNUSED(next_controller)) {
+  this->stop_bot_thread();
 }
 
 void BotPlacementController::on_activated() {
@@ -97,6 +123,24 @@ void BotTurnController::unregister_bot_thread(BotThread* thread) {
   }
 }
 
+void LogEntryViewerController::on_activated() {
+  this->GameController::on_activated();
+  const GameLogEntry* entry = game_get_log_entry(game, this->entry_index);
+  size_t adjusted_index = this->entry_index;
+  if (entry->type == GAME_LOG_ENTRY_PHASE_CHANGE) {
+    if (entry->data.phase_change.new_phase == GAME_PHASE_END) {
+      adjusted_index = game->log_length;
+    }
+  } else if (entry->type == GAME_LOG_ENTRY_PLACEMENT) {
+    adjusted_index += 1;
+  }
+  game_rewind_state_to_log_entry(game, adjusted_index);
+}
+
+void LogEntryViewerController::configure_log_viewer_ui() {
+  this->game_frame->show_current_turn_btn->Enable();
+}
+
 void GameController::update_tile_attributes() {
   set_all_tiles_attr(game, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
 }
@@ -158,37 +202,7 @@ void PlayerTurnController::paint_overlay(wxDC& dc) {
   Coords current_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
   if (is_tile_in_bounds(game, current_coords) && this->canvas->mouse_within_window) {
     bool blocked = get_tile_attr(game, current_coords, TILE_BLOCKED_FOR_CURSOR);
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.SetPen(wxPen(blocked ? *wxRED : *wxGREEN, 5));
-    dc.DrawRectangle(this->canvas->get_tile_rect(current_coords));
-  }
-}
-
-enum ArrowHeadType {
-  ARROW_HEAD_NORMAL = 1,
-  ARROW_HEAD_CROSS = 2,
-};
-
-static void draw_arrow_head(
-  wxDC& dc,
-  wxPoint start,
-  wxPoint end,
-  wxSize head_size,
-  ArrowHeadType head_type = ARROW_HEAD_NORMAL
-) {
-  if (start == end) return;
-  wxPoint2DDouble norm(end - start);
-  norm.Normalize();
-  wxPoint2DDouble perp(-norm.m_y, norm.m_x);
-  wxPoint2DDouble head1 = -norm * head_size.x + perp * head_size.y;
-  wxPoint2DDouble head2 = -norm * head_size.x - perp * head_size.y;
-  wxPoint head1i(head1.m_x, head1.m_y), head2i(head2.m_x, head2.m_y);
-  if (head_type == ARROW_HEAD_NORMAL) {
-    dc.DrawLine(end, end + head1i);
-    dc.DrawLine(end, end + head2i);
-  } else if (head_type == ARROW_HEAD_CROSS) {
-    dc.DrawLine(end - head1i, end + head1i);
-    dc.DrawLine(end - head2i, end + head2i);
+    this->canvas->paint_selected_tile_outline(dc, current_coords, blocked);
   }
 }
 
@@ -203,35 +217,15 @@ void PlayerMovementController::paint_overlay(wxDC& dc) {
 
   Coords move_fail = penguin;
   MovementError result = validate_movement(game, penguin, target, &move_fail);
-  wxPoint arrow_start = this->canvas->get_tile_centre(penguin);
-  wxPoint arrow_fail = this->canvas->get_tile_centre(move_fail);
-  wxPoint arrow_end = this->canvas->get_tile_centre(target);
+  this->canvas->paint_move_arrow(dc, penguin, target, move_fail, result == VALID_INPUT);
+}
 
-  wxSize head_size(8, 8);
-  wxPen bg_pen(*wxBLACK, 6);
-  wxPen green_pen((*wxGREEN).ChangeLightness(75), 4);
-  wxPen red_pen((*wxRED).ChangeLightness(75), 4);
-
-  if (result != VALID_INPUT && !coords_same(move_fail, penguin)) {
-    dc.SetPen(bg_pen);
-    dc.DrawLine(arrow_start, arrow_fail);
-    dc.SetPen(green_pen);
-    dc.DrawLine(arrow_start, arrow_fail);
-    dc.SetPen(bg_pen);
-    draw_arrow_head(dc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
-    dc.DrawLine(arrow_fail, arrow_end);
-    draw_arrow_head(dc, arrow_fail, arrow_end, head_size);
-    dc.SetPen(red_pen);
-    draw_arrow_head(dc, arrow_start, arrow_fail, head_size, ARROW_HEAD_CROSS);
-    dc.DrawLine(arrow_fail, arrow_end);
-    draw_arrow_head(dc, arrow_fail, arrow_end, head_size);
-  } else {
-    dc.SetPen(bg_pen);
-    dc.DrawLine(arrow_start, arrow_end);
-    draw_arrow_head(dc, arrow_start, arrow_end, head_size);
-    dc.SetPen(result == VALID_INPUT ? green_pen : red_pen);
-    dc.DrawLine(arrow_start, arrow_end);
-    draw_arrow_head(dc, arrow_start, arrow_end, head_size);
+void LogEntryViewerController::paint_overlay(wxDC& dc) {
+  const GameLogEntry* entry = game_get_log_entry(this->state.game.get(), this->entry_index);
+  if (entry->type == GAME_LOG_ENTRY_PLACEMENT) {
+    this->canvas->paint_selected_tile_outline(dc, entry->data.placement.target);
+  } else if (entry->type == GAME_LOG_ENTRY_MOVEMENT) {
+    this->canvas->paint_move_arrow(dc, entry->data.movement.penguin, entry->data.movement.target);
   }
 }
 

@@ -94,9 +94,9 @@ int run_autonomous_mode(const Arguments* args) {
   return move_ok ? EXIT_OK : EXIT_NO_POSSIBLE_MOVES;
 }
 
-static int read_line(FILE* file, char** buf, int* line_len) {
+static size_t read_line(FILE* file, char** buf, size_t* line_len) {
   *line_len = 0;
-  int buf_size = 64;
+  size_t buf_size = 64;
   *buf = realloc(*buf, buf_size);
   int c;
   while ((c = fgetc(file)) != EOF) {
@@ -116,7 +116,7 @@ static int read_line(FILE* file, char** buf, int* line_len) {
 
 bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_player_name) {
   char* line_buf = NULL;
-  int line_len = 0;
+  size_t line_len = 0;
 
   read_line(file, &line_buf, &line_len);
   int board_width, board_height;

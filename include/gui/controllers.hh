@@ -19,11 +19,14 @@ public:
   void update_game_state_and_indirectly_delete_this();
 
   virtual void on_activated();
+  virtual void configure_bot_turn_ui();
+  virtual void configure_log_viewer_ui();
+  virtual void on_deactivated(GameController* next_controller);
   virtual void update_tile_attributes();
-  virtual void paint_overlay(wxDC& WXUNUSED(dc)) {}
-  virtual void on_mouse_down(wxMouseEvent& WXUNUSED(event)) {}
-  virtual void on_mouse_move(wxMouseEvent& WXUNUSED(event)) {}
-  virtual void on_mouse_up(wxMouseEvent& WXUNUSED(event)) {}
+  virtual void paint_overlay(wxDC& dc);
+  virtual void on_mouse_down(wxMouseEvent& event);
+  virtual void on_mouse_move(wxMouseEvent& event);
+  virtual void on_mouse_up(wxMouseEvent& event);
 
   GameFrame* game_frame;
   CanvasPanel* canvas;
@@ -59,7 +62,8 @@ class BotTurnController : public GameController {
 public:
   BotTurnController(GameFrame* game_frame) : GameController(game_frame) {}
   virtual ~BotTurnController();
-  virtual void on_activated() override;
+  virtual void configure_bot_turn_ui() override;
+  virtual void on_deactivated(GameController* next_controller) override;
   virtual void update_tile_attributes() override;
   virtual void on_mouse_up(wxMouseEvent& event) override;
 
@@ -88,4 +92,16 @@ public:
 class GameEndedController : public GameController {
 public:
   GameEndedController(GameFrame* game_frame) : GameController(game_frame) {}
+  virtual void on_activated() override;
+};
+
+class LogEntryViewerController : public GameController {
+public:
+  LogEntryViewerController(GameFrame* game_frame, size_t entry_index)
+  : GameController(game_frame), entry_index(entry_index) {}
+  virtual ~LogEntryViewerController() {}
+  virtual void on_activated() override;
+  virtual void configure_log_viewer_ui() override;
+  virtual void paint_overlay(wxDC& dc) override;
+  size_t entry_index;
 };

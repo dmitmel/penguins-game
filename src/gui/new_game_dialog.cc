@@ -1,6 +1,5 @@
 #include "gui/new_game_dialog.hh"
 #include "utils.h"
-#include <cstddef>
 #include <wx/choice.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>

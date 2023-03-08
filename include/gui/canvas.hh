@@ -8,7 +8,6 @@
 #include <wx/defs.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
-#include <wx/panel.h>
 #include <wx/types.h>
 #include <wx/window.h>
 
@@ -22,11 +21,15 @@ enum GuiTileAttribute {
   TILE_OVERLAY_NEEDS_REDRAW = 1 << 6,
 };
 
-class CanvasPanel : public wxPanel {
+class CanvasPanel : public wxWindow {
 public:
   static const wxCoord TILE_SIZE = 40;
 
   CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame);
+
+  virtual bool AcceptsFocus() const override {
+    return true;
+  }
 
   wxSize get_canvas_size() const;
   Coords tile_coords_at_point(wxPoint point) const;
@@ -40,6 +43,23 @@ public:
   wxPoint mouse_pos = wxDefaultPosition;
   wxPoint prev_mouse_pos = wxDefaultPosition;
   wxPoint mouse_drag_pos = wxDefaultPosition;
+
+  void paint_selected_tile_outline(wxDC& dc, Coords coords, bool blocked = false);
+  void paint_move_arrow(wxDC& dc, Coords start, Coords end);
+  void paint_move_arrow(wxDC& dc, Coords start, Coords end, Coords fail, bool valid);
+
+  enum ArrowHeadType {
+    ARROW_HEAD_NORMAL = 1,
+    ARROW_HEAD_CROSS = 2,
+  };
+
+  void paint_arrow_head(
+    wxDC& dc,
+    wxPoint start,
+    wxPoint end,
+    wxSize head_size,
+    ArrowHeadType head_type = ARROW_HEAD_NORMAL
+  );
 
 protected:
   void on_paint(wxPaintEvent& event);

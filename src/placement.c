@@ -6,13 +6,13 @@
 
 void placement_begin(Game* game) {
   assert(game->phase >= GAME_PHASE_SETUP_DONE);
-  game->phase = GAME_PHASE_PLACEMENT;
-  game->current_player_index = -1;
+  game_set_current_player(game, -1);
+  game_set_phase(game, GAME_PHASE_PLACEMENT);
 }
 
 void placement_end(Game* game) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
-  game->phase = GAME_PHASE_PLACEMENT_DONE;
+  game_set_phase(game, GAME_PHASE_PLACEMENT_DONE);
 }
 
 int placement_switch_player(Game* game) {
@@ -25,7 +25,7 @@ int placement_switch_player(Game* game) {
   while (checked_players < game->players_count) {
     index = (index + 1) % game->players_count;
     if (game_get_player(game, index)->penguins_count < game->penguins_per_player) {
-      game->current_player_index = index;
+      game_set_current_player(game, index);
       return index;
     }
     checked_players++;
@@ -77,8 +77,25 @@ void place_penguin(Game* game, Coords target) {
   Player* player = game_get_current_player(game);
   int tile = get_tile(game, target);
   assert(is_fish_tile(tile));
+
+  GameLogPlacement* entry = &game_push_log_entry(game, GAME_LOG_ENTRY_PLACEMENT)->data.placement;
+  entry->target = target;
+  entry->undo_tile = tile;
+
   game_add_player_penguin(game, game->current_player_index, target);
   set_tile(game, target, PENGUIN_TILE(player->id));
   player->points += get_tile_fish(tile);
   player->moves_count += 1;
+}
+
+void undo_place_penguin(Game* game) {
+  assert(game->phase == GAME_PHASE_PLACEMENT);
+  const GameLogPlacement* entry =
+    &game_pop_log_entry(game, GAME_LOG_ENTRY_PLACEMENT)->data.placement;
+
+  Player* player = game_get_current_player(game);
+  game_remove_player_penguin(game, game->current_player_index, entry->target);
+  set_tile(game, entry->target, entry->undo_tile);
+  player->points -= get_tile_fish(entry->undo_tile);
+  player->moves_count -= 1;
 }

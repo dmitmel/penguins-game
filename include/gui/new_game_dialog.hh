@@ -1,7 +1,6 @@
 #pragma once
 
 #include "gui/game_state.hh"
-#include <cstddef>
 #include <wx/button.h>
 #include <wx/choice.h>
 #include <wx/defs.h>
