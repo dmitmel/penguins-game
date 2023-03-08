@@ -44,6 +44,7 @@ public:
   void set_controller(GameController* next_controller);
   void end_game();
   void close_game();
+  void clear_status_bar();
   void update_player_info_boxes();
 
   void start_bot_progress();

@@ -125,7 +125,6 @@ GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type) {
 }
 
 const GameLogEntry* game_pop_log_entry(Game* self, GameLogEntryType expected_type) {
-  UNUSED(expected_type);
   assert(self->log_current > 0);
   self->log_current -= 1;
   const GameLogEntry* entry = &self->log_buffer[self->log_current];

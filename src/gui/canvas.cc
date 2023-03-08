@@ -329,10 +329,10 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
     this->mouse_drag_pos = this->mouse_pos;
   }
   if (event.ButtonDown()) {
-    this->mouse_is_down = true;
+    this->mouse_is_down_real = this->mouse_is_down = true;
     this->SetFocus();
   } else if (event.ButtonUp()) {
-    this->mouse_is_down = false;
+    this->mouse_is_down_real = this->mouse_is_down = false;
   }
 
   if (event.Entering()) {
@@ -341,20 +341,21 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
     this->mouse_within_window = false;
   }
 
+  GameController* controller = this->game_frame->controller;
   // NOTE: a `switch` is unusable here because the event types are defined as
   // `extern` variables. `switch` in C++ can only work with statically-known
   // constants.
   auto event_type = event.GetEventType();
   if (event_type == wxEVT_LEFT_DOWN) {
-    this->game_frame->controller->on_mouse_down(event);
+    controller->on_mouse_down(event);
   } else if (event_type == wxEVT_MOTION) {
-    this->game_frame->controller->on_mouse_move(event);
+    controller->on_mouse_move(event);
   } else if (event_type == wxEVT_LEFT_UP) {
-    this->game_frame->controller->on_mouse_up(event);
+    controller->on_mouse_up(event);
   } else if (event_type == wxEVT_ENTER_WINDOW) {
-    this->Refresh();
+    controller->on_mouse_enter_leave(event);
   } else if (event_type == wxEVT_LEAVE_WINDOW) {
-    this->Refresh();
+    controller->on_mouse_enter_leave(event);
   } else {
     event.Skip();
   }

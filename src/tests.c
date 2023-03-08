@@ -127,14 +127,16 @@ static MunitResult test_detect_valid_movement(const MunitParameter* params, void
                 .current_player_index = 0 };
   Coords fail = { -1, -1 };
 
-  assert_true(validate_movement(&game, (Coords){ 0, 0 }, (Coords){ 2, 0 }, &fail) == VALID_INPUT);
+  assert_int(
+    validate_movement(&game, (Coords){ 0, 0 }, (Coords){ 2, 0 }, &fail), ==, MOVEMENT_VALID
+  );
   return MUNIT_OK;
 }
 
 static MunitResult
 test_movement_over_empty_space_invalid(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { -1, 0, 3 };
+  int grid[] = { 1, -1, 0, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -145,21 +147,23 @@ test_movement_over_empty_space_invalid(const MunitParameter* params, void* data)
                 .players = players,
                 .players_count = 1,
                 .penguins_per_player = 1,
-                .board_width = 3,
+                .board_width = 4,
                 .board_height = 1,
                 .board_grid = grid,
                 .current_player_index = 0 };
   Coords fail = { -1, -1 };
 
-  assert_true(
-    validate_movement(&game, (Coords){ 0, 0 }, (Coords){ 2, 0 }, &fail) == MOVE_OVER_EMPTY_TILE
+  assert_int(
+    validate_movement(&game, (Coords){ 1, 0 }, (Coords){ 3, 0 }, &fail),
+    ==,
+    MOVEMENT_OVER_EMPTY_TILE
   );
   return MUNIT_OK;
 }
 
 static MunitResult test_movement_over_penguin_invalid(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { -1, -2, 3 };
+  int grid[] = { 1, -1, -2, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -170,14 +174,14 @@ static MunitResult test_movement_over_penguin_invalid(const MunitParameter* para
                 .players = players,
                 .players_count = 1,
                 .penguins_per_player = 1,
-                .board_width = 3,
+                .board_width = 4,
                 .board_height = 1,
                 .board_grid = grid,
                 .current_player_index = 0 };
   Coords fail = { -1, -1 };
 
-  assert_true(
-    validate_movement(&game, (Coords){ 0, 0 }, (Coords){ 2, 0 }, &fail) == MOVE_OVER_PENGUIN
+  assert_int(
+    validate_movement(&game, (Coords){ 1, 0 }, (Coords){ 3, 0 }, &fail), ==, MOVEMENT_OVER_PENGUIN
   );
   return MUNIT_OK;
 }
