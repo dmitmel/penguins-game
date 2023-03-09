@@ -259,6 +259,7 @@ void game_end(Game* self) {
   game_set_current_player(self, -1);
   game_set_phase(self, GAME_PHASE_END);
 }
+
 void game_rewind_state_to_log_entry(Game* self, size_t target_entry) {
   bool prev_log_disabled = self->log_disabled;
   self->log_disabled = true;

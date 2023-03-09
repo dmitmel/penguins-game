@@ -11,7 +11,3 @@ appicon_16.ico: appicon_16.png
 	convert $< -filter point -resize 16x16 $@
 appicon_128.ico: appicon_16.png
 	convert $< -filter point -resize 128x128 $@
-
-all: appicon.icns
-appicon.icns: appicon_16.png appicon_256.png
-	png2icns $@ $^

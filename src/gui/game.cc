@@ -17,6 +17,7 @@
 #include <wx/event.h>
 #include <wx/gauge.h>
 #include <wx/gdicmn.h>
+#include <wx/iconbndl.h>
 #include <wx/listbox.h>
 #include <wx/menu.h>
 #include <wx/menuitem.h>
@@ -34,7 +35,7 @@
 GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Penguins game") {
   this->Bind(wxEVT_DESTROY, &GameFrame::on_destroy, this);
 
-  this->SetIcon(wxGetApp().app_icon);
+  this->SetIcons(wxGetApp().app_icon);
 
   this->root_panel = new wxPanel(this, wxID_ANY);
 
@@ -181,7 +182,7 @@ void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
   info.SetName("Penguins game");
   info.SetVersion(PENGUINS_VERSION_STRING);
 #if !defined(__WXOSX__)
-  info.SetIcon(wxGetApp().app_icon);
+  info.SetIcon(wxGetApp().app_icon.GetIconOfExactSize(64));
 #endif
   wxAboutBox(info, this);
 }

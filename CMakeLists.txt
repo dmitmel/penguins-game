@@ -103,13 +103,14 @@ endfunction()
 add_executable(embed_resource src/tools/embed_resource.cc)
 setup_penguins_target(embed_resource)
 
-function(embed_resource res_path)
-  string(MAKE_C_IDENTIFIER ${res_path} var_name)
-  get_filename_component(res_path_abs ${res_path} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+function(embed_resource res_path out_var_name)
+  string(MAKE_C_IDENTIFIER "${res_path}" var_name)
+  set("${out_var_name}" "${var_name}" PARENT_SCOPE)
+  get_filename_component(res_path_abs "${res_path}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
   add_custom_command(
-    OUTPUT ${var_name}.c ${var_name}.h
-    COMMAND embed_resource ${res_path_abs} ${var_name}.c ${var_name}.h ${var_name}
-    DEPENDS embed_resource ${res_path_abs}
+    OUTPUT "${var_name}.c" "${var_name}.h"
+    COMMAND embed_resource "${res_path_abs}" "${var_name}.c" "${var_name}.h" "${var_name}"
+    DEPENDS embed_resource "${res_path_abs}"
     VERBATIM
   )
 endfunction()
@@ -185,6 +186,7 @@ endif()
 
 if(GRAPHICAL_MODE)
   set(mac_resources)
+  set(embedded_resources)
 
   if(APPLE)
     set(iconset_dir "appicon.iconset")
@@ -217,8 +219,11 @@ if(GRAPHICAL_MODE)
     list(APPEND mac_resources ${icns_icon})
   endif()
 
-  embed_resource(resources/appicon_256.png)
-  embed_resource(resources/tileset.png)
+  foreach(resource_file IN ITEMS appicon_16.png appicon_64.png appicon_256.png tileset.png)
+    embed_resource("resources/${resource_file}" resource_name)
+    list(APPEND embedded_resources "${resource_name}.c")
+  endforeach()
+
   # Useful information about enabling High-DPI support on Windows:
   # <https://doc.magnum.graphics/magnum/platforms-windows.html#platforms-windows-hidpi>.
   # Note that when compiling on an OS other than Windows, the Windows-specific
@@ -226,8 +231,11 @@ if(GRAPHICAL_MODE)
   # for macOS-specific options).
   add_executable(penguins-gui WIN32 MACOSX_BUNDLE
     ${mac_resources}
+    ${embedded_resources}
     resources/penguins.rc
+    resources_appicon_16_png.c
     resources_appicon_256_png.c
+    resources_appicon_64_png.c
     resources_tileset_png.c
     src/gui/better_random.cc
     src/gui/bot_thread.cc
