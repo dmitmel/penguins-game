@@ -190,30 +190,35 @@ if(GRAPHICAL_MODE)
 
   if(APPLE)
     set(iconset_dir "appicon.iconset")
+    set(icns_icon "appicon.icns")
+
+    set(icns_icon_commands)
+    set(icns_icon_depends)
+    set(icns_icon_byproducts)
+    foreach(icon_size IN ITEMS 16 64 256)
+      set(icon_src "resources/appicon_${icon_size}.png")
+      set(icon_dst "${iconset_dir}/icon_${icon_size}x${icon_size}.png")
+      list(APPEND icns_icon_commands
+        COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${icon_src}" "${icon_dst}"
+      )
+      list(APPEND icns_icon_depends "${icon_src}")
+      list(APPEND icns_icon_byproducts "${icon_dst}")
+    endforeach()
+
     add_custom_command(
       OUTPUT "${iconset_dir}"
-      COMMAND ${CMAKE_COMMAND} -E make_directory "${iconset_dir}"
+      COMMAND "${CMAKE_COMMAND}" -E remove_directory "${iconset_dir}"
+      COMMAND "${CMAKE_COMMAND}" -E make_directory "${iconset_dir}"
+      ${icns_icon_commands}
+      DEPENDS ${icns_icon_depends}
+      BYPRODUCTS ${icns_icon_byproducts}
       VERBATIM
     )
 
-    set(icns_icon_deps)
-    foreach(icon_size IN ITEMS 16 64 256)
-      set(icon_src "${CMAKE_CURRENT_SOURCE_DIR}/resources/appicon_${icon_size}.png")
-      set(icon_dst "${iconset_dir}/icon_${icon_size}x${icon_size}.png")
-      add_custom_command(
-        OUTPUT "${icon_dst}"
-        COMMAND ${CMAKE_COMMAND} -E copy "${icon_src}" "${icon_dst}"
-        DEPENDS "${icon_src}" "${iconset_dir}"
-        VERBATIM
-      )
-      list(APPEND icns_icon_deps "${icon_dst}")
-    endforeach()
-
-    set(icns_icon "appicon.icns")
     add_custom_command(
       OUTPUT "${icns_icon}"
       COMMAND iconutil -c icns -o "${icns_icon}" "${iconset_dir}"
-      DEPENDS "${iconset_dir}" "${icns_icon_deps}"
+      DEPENDS "${iconset_dir}"
       VERBATIM
     )
     list(APPEND mac_resources ${icns_icon})
