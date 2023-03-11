@@ -335,3 +335,43 @@ if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
     COMMENT "Generate API documentation for ${PROJECT_NAME}"
   )
 endif()
+
+set(installed_targets penguins)
+set(installed_targets_pdb $<TARGET_PDB_FILE:penguins>)
+if(GRAPHICAL_MODE)
+  list(APPEND installed_targets penguins-gui)
+  list(APPEND installed_targets_pdb $<TARGET_PDB_FILE:penguins-gui>)
+endif()
+install(TARGETS ${installed_targets}
+  ARCHIVE DESTINATION . COMPONENT Runtime
+  LIBRARY DESTINATION . COMPONENT Runtime
+  RUNTIME DESTINATION . COMPONENT Runtime
+  BUNDLE  DESTINATION . COMPONENT Runtime
+)
+if(MSVC)
+  install(FILES ${installed_targets_pdb} DESTINATION . COMPONENT Runtime OPTIONAL)
+endif()
+
+if(WIN32)
+  set(CPACK_GENERATOR ZIP)
+else()
+  set(CPACK_GENERATOR TGZ)
+endif()
+set(CPACK_SOURCE_GENERATOR TGZ)
+
+# <https://github.com/Kitware/CMake/blob/v3.25.3/Modules/CPack.cmake#L646-L654>
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(CPACK_SYSTEM_NAME win64)
+  else()
+    set(CPACK_SYSTEM_NAME win32)
+  endif()
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  set(CPACK_SYSTEM_NAME macos)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  set(CPACK_SYSTEM_NAME linux)
+else()
+  set(CPACK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}")
+endif()
+
+include(CPack)

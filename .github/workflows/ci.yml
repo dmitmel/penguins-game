@@ -72,3 +72,14 @@ jobs:
             -DUSE_SANITIZERS='${{steps.build_cfg.outputs.use_sanitizers}}' -DGENERATE_DOCUMENTATION=OFF
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}'
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}' --target run-tests
+      - id: cpack
+        if: matrix.build_wxwidgets == 'ON'
+        run: |
+          (cd build && cpack -C '${{matrix.build_type}}')
+          package_file_name="$(sed -nE 's/set\(CPACK_PACKAGE_FILE_NAME "(.+)"\)/\1/p' build/CPackConfig.cmake)"
+          echo "package_file_name=${package_file_name}" >> "${GITHUB_OUTPUT}"
+      - uses: actions/upload-artifact@v3
+        if: matrix.build_wxwidgets == 'ON'
+        with:
+          name: ${{steps.cpack.outputs.package_file_name}}
+          path: build/${{steps.cpack.outputs.package_file_name}}.*
