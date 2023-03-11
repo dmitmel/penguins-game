@@ -1,5 +1,11 @@
 # A wrapper around CMake, based on <https://github.com/neovim/neovim/blob/v0.8.1/Makefile>
 
+CMAKE_FLAGS = -G'$(CMAKE_GENERATOR)'
+define cmake_var
+$(1) ?= $(2)
+CMAKE_FLAGS += $$(if $$($(1)),-D$(1)='$$($(1))',)
+endef
+
 -include local.mk
 
 CMAKE ?= $(shell command -v cmake 2>/dev/null)
@@ -34,9 +40,11 @@ else
   BUILD_TOOL = $(MAKE)
 endif
 
-CMAKE_BUILD_TYPE ?= Debug
-USE_SANITIZERS ?= OFF
-CMAKE_FLAGS := -G'$(CMAKE_GENERATOR)' -DCMAKE_BUILD_TYPE='$(CMAKE_BUILD_TYPE)' -DUSE_SANITIZERS='$(USE_SANITIZERS)'
+$(eval $(call cmake_var,CMAKE_BUILD_TYPE,Debug))
+$(eval $(call cmake_var,USE_SANITIZERS,))
+$(eval $(call cmake_var,BUILD_WXWIDGETS_FROM_SOURCE,))
+$(eval $(call cmake_var,BUILD_SHARED_LIBS,))
+
 CMAKE_EXTRA_FLAGS ?=
 BUILD_DIR ?= build
 CMAKE_STAMP := $(BUILD_DIR)/.ran-cmake

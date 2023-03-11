@@ -75,8 +75,8 @@ function(setup_penguins_target target)
     )
   else()
     target_compile_options(${target} PRIVATE
-      -Wall -Wextra -Wpedantic -Werror=return-type
-      $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>
+      -Wall -Wextra -Wpedantic -Werror=return-type -Wdouble-promotion -Wmissing-declarations
+      $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration -Werror=strict-prototypes>
     )
   endif()
 
