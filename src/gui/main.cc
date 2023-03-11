@@ -1,11 +1,13 @@
 #include "gui/main.hh"
 #include "gui/game.hh"
 #include "random.h"
+#include "resources_appicon_16_png.h"
 #include "resources_appicon_256_png.h"
+#include "resources_appicon_64_png.h"
 #include <wx/app.h>
-#include <wx/bitmap.h>
 #include <wx/defs.h>
 #include <wx/gdicmn.h>
+#include <wx/iconbndl.h>
 #include <wx/image.h>
 #include <wx/imagpng.h>
 #include <wx/mstream.h>
@@ -26,9 +28,13 @@ bool PenguinsApp::OnInit() {
   wxImage::AddHandler(new wxPNGHandler());
   tileset.load();
 
-  wxMemoryInputStream icon_stream(resources_appicon_256_png, resources_appicon_256_png_size);
-  // The triple conversion necessary to load the icon here is... meh.
-  this->app_icon.CopyFromBitmap(wxBitmap(wxImage(icon_stream, wxBITMAP_TYPE_PNG)));
+  auto add_icon = [](wxIconBundle& bundle, const void* data, size_t size) {
+    wxMemoryInputStream input_stream(data, size);
+    bundle.AddIcon(input_stream, wxBITMAP_TYPE_PNG);
+  };
+  add_icon(this->app_icon, resources_appicon_16_png, resources_appicon_16_png_size);
+  add_icon(this->app_icon, resources_appicon_64_png, resources_appicon_64_png_size);
+  add_icon(this->app_icon, resources_appicon_256_png, resources_appicon_256_png_size);
 
   this->game_frame = new GameFrame(nullptr, wxID_ANY);
   this->game_frame->Centre();
