@@ -12,6 +12,7 @@
 #include <wx/button.h>
 #include <wx/debug.h>
 #include <wx/defs.h>
+#include <wx/sizer.h>
 #include <wx/string.h>
 #include <wx/utils.h>
 
@@ -59,6 +60,9 @@ void GameEndedController::on_activated() {
     this->panel->game_ended = true;
     this->panel->CallAfter(&GamePanel::show_game_results);
   }
+  this->panel->show_current_turn_btn->Hide();
+  this->panel->exit_game_btn->Show();
+  this->panel->game_controls_box->Layout();
 }
 
 void BotTurnController::configure_bot_turn_ui() {

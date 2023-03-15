@@ -1,4 +1,5 @@
 #include "gui/new_game_dialog.hh"
+#include "gui/game_state.hh"
 #include "utils.h"
 #include <wx/choice.h>
 #include <wx/event.h>
@@ -50,7 +51,7 @@ NewGameDialog::NewGameDialog(wxWindow* parent, wxWindowID id)
   this->board_gen_input = this->create_choice_option(
     "Board generation type:", wxID_ANY, WXSIZEOF(board_gen_types), board_gen_types
   );
-  this->board_gen_input->Select(0);
+  this->board_gen_input->Select(BOARD_GEN_ISLAND);
 
   this->penguins_input = this->create_number_option(
     "Penguins per player:", wxID_ANY, 1, 10, DEFAULT_PENGUINS_PER_PLAYER
@@ -203,7 +204,7 @@ void NewGameDialog::add_new_player_row(bool initial) {
   player_types[PLAYER_BOT] = "Bot";
   auto type_input =
     new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, PLAYER_TYPE_MAX, player_types);
-  type_input->Select(0);
+  type_input->Select(PLAYER_NORMAL);
   grid->Add(type_input, wxSizerFlags().Expand());
 
 #if defined(__WXGTK__)

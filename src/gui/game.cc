@@ -121,10 +121,6 @@ void GameFrame::clear_status_bar() {
   this->progress_container->Hide();
 }
 
-void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
-  this->start_new_game();
-}
-
 void GameFrame::start_new_game() {
   std::unique_ptr<NewGameDialog> dialog(new NewGameDialog(this, wxID_ANY));
   wxPersistentRegisterAndRestore(dialog.get());
@@ -142,12 +138,20 @@ void GameFrame::start_new_game() {
   panel->update_game_state();
 }
 
-void GameFrame::on_close_game(wxCommandEvent& WXUNUSED(event)) {
+void GameFrame::close_game() {
   this->clear_status_bar();
   this->set_panel(new GameStartPanel(this, wxID_ANY));
   this->current_panel->update_layout();
   this->Update();
   this->Centre();
+}
+
+void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
+  this->start_new_game();
+}
+
+void GameFrame::on_close_game(wxCommandEvent& WXUNUSED(event)) {
+  this->close_game();
 }
 
 void GameFrame::on_exit(wxCommandEvent& WXUNUSED(event)) {
@@ -252,6 +256,9 @@ GamePanel::GamePanel(GameFrame* parent, wxWindowID id, NewGameDialog* dialog)
   panel_grid->AddGrowableCol(1);
   panel_grid->AddGrowableRow(1);
 
+  auto game_controls_vbox = new wxBoxSizer(wxVERTICAL);
+  this->game_controls_box = game_controls_vbox;
+
   this->show_current_turn_btn = new wxButton();
   // Controls can be created in the disabled state in:
   // GTK+MSW since v3.1.3: <https://github.com/wxWidgets/wxWidgets/pull/1060>
@@ -263,14 +270,27 @@ GamePanel::GamePanel(GameFrame* parent, wxWindowID id, NewGameDialog* dialog)
   this->show_current_turn_btn->Create(this, wxID_ANY, "Back to the game");
   this->show_current_turn_btn->Disable();
   this->show_current_turn_btn->Bind(wxEVT_BUTTON, &GamePanel::on_show_current_turn_clicked, this);
-  panel_grid->Add(
-    this->show_current_turn_btn, wxSizerFlags().Bottom().Expand().Border(wxALL & ~wxBOTTOM)
-  );
+  game_controls_vbox->Add(this->show_current_turn_btn, wxSizerFlags().Expand());
+
+  this->exit_game_btn = new wxButton(this, wxID_ANY, "Close the game");
+  this->exit_game_btn->Bind(wxEVT_BUTTON, &GamePanel::on_exit_game_clicked, this);
+  this->exit_game_btn->Hide();
+  game_controls_vbox->Add(this->exit_game_btn, wxSizerFlags().Expand());
+
+  panel_grid->Add(game_controls_vbox, wxSizerFlags().Bottom().Expand().Border(wxALL & ~wxBOTTOM));
+
+  int max_points = 0;
+  for (int y = 0; y < game->board_height; y++) {
+    for (int x = 0; x < game->board_width; x++) {
+      Coords coords = { x, y };
+      max_points += get_tile_fish(get_tile(game, coords));
+    }
+  }
 
   auto players_box = new wxBoxSizer(wxHORIZONTAL);
   this->player_info_boxes.reserve(game->players_count);
   for (int i = 0; i < game->players_count; i++) {
-    auto player_box = new PlayerInfoBox(this, wxID_ANY);
+    auto player_box = new PlayerInfoBox(this, wxID_ANY, max_points);
     int border_dir = (i > 0 ? wxLEFT : 0) | (i + 1 < game->players_count ? wxRIGHT : 0);
     players_box->Add(player_box->GetContainingSizer(), wxSizerFlags().Border(border_dir));
     this->player_info_boxes.push_back(player_box);
@@ -376,6 +396,10 @@ void GamePanel::on_show_current_turn_clicked(wxCommandEvent& WXUNUSED(event)) {
   Game* game = this->game.get();
   game_rewind_state_to_log_entry(game, game->log_length);
   this->set_controller(this->get_controller_for_current_turn());
+}
+
+void GamePanel::on_exit_game_clicked(wxCommandEvent& WXUNUSED(event)) {
+  this->frame->CallAfter(&GameFrame::close_game);
 }
 
 void GamePanel::update_game_log() {

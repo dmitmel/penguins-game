@@ -16,7 +16,7 @@ class PlayerPenguinWindow;
 
 class PlayerInfoBox : public SimpleStaticBox {
 public:
-  PlayerInfoBox(wxWindow* parent, wxWindowID id);
+  PlayerInfoBox(wxWindow* parent, wxWindowID id, int max_points);
 
   void update_data(Game* game, int idx, const wxString& name);
 

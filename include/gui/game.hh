@@ -77,7 +77,10 @@ public:
 
   wxVector<PlayerInfoBox*> player_info_boxes;
 
+  wxSizer* game_controls_box;
   wxButton* show_current_turn_btn;
+  wxButton* exit_game_btn;
+
   wxListBox* log_list;
   size_t displayed_log_entries = 0;
 
@@ -89,6 +92,7 @@ public:
 protected:
   void on_game_log_select(wxCommandEvent& event);
   void on_show_current_turn_clicked(wxCommandEvent& event);
+  void on_exit_game_clicked(wxCommandEvent& event);
 };
 
 class GameFrame : public wxFrame {
@@ -100,6 +104,7 @@ public:
   void clear_status_bar();
 
   void start_new_game();
+  void close_game();
 
   BaseGamePanel* current_panel = nullptr;
 

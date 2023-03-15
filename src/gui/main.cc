@@ -12,7 +12,6 @@
 #include <wx/imagpng.h>
 #include <wx/mstream.h>
 #include <wx/stdpaths.h>
-#include <wx/utils.h>
 #include <wx/version.h>
 
 wxIMPLEMENT_APP(PenguinsApp);

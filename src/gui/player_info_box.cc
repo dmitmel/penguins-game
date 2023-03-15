@@ -14,7 +14,8 @@
 #include <wx/string.h>
 #include <wx/window.h>
 
-PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id) : SimpleStaticBox(parent, id) {
+PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id, int max_points)
+: SimpleStaticBox(parent, id) {
   this->root_hbox = new wxStaticBoxSizer(this, wxHORIZONTAL);
 
   this->penguin_window = new PlayerPenguinWindow(this, wxID_ANY);
@@ -26,7 +27,17 @@ PlayerInfoBox::PlayerInfoBox(wxWindow* parent, wxWindowID id) : SimpleStaticBox(
   this->name_text->SetFont(this->name_text->GetFont().MakeBold());
   this->info_vbox->Add(this->name_text, wxSizerFlags().Border(wxRIGHT));
 
-  this->score_text = new wxStaticText(this, wxID_ANY, wxEmptyString);
+  wxString score_test_str;
+  if (max_points < 0) max_points = -max_points;
+  do {
+    score_test_str << '0';
+    max_points /= 10;
+  } while (max_points != 0);
+  score_test_str << " points";
+
+  this->score_text = new wxStaticText(
+    this, wxID_ANY, score_test_str, wxDefaultPosition, wxDefaultSize, wxST_NO_AUTORESIZE
+  );
   this->info_vbox->Add(this->score_text, wxSizerFlags().Border(wxRIGHT));
 
   this->root_hbox->Add(this->info_vbox, wxSizerFlags().Border(wxALL & ~wxLEFT));
