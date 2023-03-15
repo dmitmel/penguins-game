@@ -156,7 +156,8 @@ void LogEntryViewerController::configure_log_viewer_ui() {
 }
 
 void GameController::update_tile_attributes() {
-  set_all_tiles_attr(game, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
+  set_all_tiles_attr(game, TILE_BLOCKED, false);
+  set_all_tiles_attr(game, TILE_BLOCKED_FOR_CURSOR, false);
 }
 
 void PlayerPlacementController::update_tile_attributes() {
@@ -189,7 +190,8 @@ void PlayerMovementController::update_tile_attributes() {
     return;
   }
   // A penguin is selected
-  set_all_tiles_attr(game, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, true);
+  set_all_tiles_attr(game, TILE_BLOCKED, true);
+  set_all_tiles_attr(game, TILE_BLOCKED_FOR_CURSOR, true);
   PossibleSteps moves = calculate_penguin_possible_moves(game, selected_penguin);
   bool any_steps = false;
   for (int dir = 0; dir < DIRECTION_MAX; dir++) {
@@ -198,7 +200,8 @@ void PlayerMovementController::update_tile_attributes() {
     any_steps = any_steps || moves.steps[dir] != 0;
     for (int steps = moves.steps[dir]; steps > 0; steps--) {
       coords.x += d.x, coords.y += d.y;
-      set_tile_attr(game, coords, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
+      set_tile_attr(game, coords, TILE_BLOCKED, false);
+      set_tile_attr(game, coords, TILE_BLOCKED_FOR_CURSOR, false);
     }
   }
   set_tile_attr(game, selected_penguin, TILE_BLOCKED, false);

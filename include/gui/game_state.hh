@@ -1,5 +1,7 @@
 #pragma once
 
+#include "board.h"
+
 enum BoardGenType {
   BOARD_GEN_RANDOM,
   BOARD_GEN_ISLAND,
@@ -13,9 +15,10 @@ enum PlayerType {
 };
 
 enum GuiTileAttribute {
-  TILE_BLOCKED = 1 << 2,
-  TILE_WAS_BLOCKED = 1 << 3,
-  TILE_BLOCKED_FOR_CURSOR = 1 << 4,
-  TILE_NEEDS_REDRAW = 1 << 5,
-  TILE_OVERLAY_NEEDS_REDRAW = 1 << 6,
+  TILE_BLOCKED = TILE_ATTR_MAX,
+  TILE_WAS_BLOCKED,
+  TILE_BLOCKED_FOR_CURSOR,
+  TILE_NEEDS_REDRAW,
+  TILE_OVERLAY_NEEDS_REDRAW,
+  GUI_TILE_ATTR_MAX,
 };

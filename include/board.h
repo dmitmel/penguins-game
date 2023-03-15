@@ -19,7 +19,8 @@ extern "C" {
 #define get_tile_player_id(tile) ((tile) < 0 ? -(tile) : 0)
 
 enum TileAttribute {
-  TILE_DIRTY = 1 << 1,
+  TILE_DIRTY,
+  TILE_ATTR_MAX,
 };
 
 void setup_board(Game* game, int width, int height);
@@ -33,13 +34,13 @@ inline ALWAYS_INLINE bool is_tile_in_bounds(const Game* game, Coords coords) {
 
 inline ALWAYS_INLINE bool get_tile_attr(const Game* game, Coords coords, int attr) {
   assert(is_tile_in_bounds(game, coords));
-  return (game->tile_attributes[coords.x + game->board_width * coords.y] & attr) != 0;
+  return test_bit(game->tile_attributes[coords.x + game->board_width * coords.y], 1 << attr);
 }
 
 inline ALWAYS_INLINE void set_tile_attr(Game* game, Coords coords, int attr, bool value) {
   assert(is_tile_in_bounds(game, coords));
   int* ptr = &game->tile_attributes[coords.x + game->board_width * coords.y];
-  *ptr = (*ptr & ~attr) | (value ? attr : 0);
+  *ptr = change_bit(*ptr, 1 << attr, value);
 }
 
 inline ALWAYS_INLINE void set_all_tiles_attr(Game* game, int attr, bool value) {
