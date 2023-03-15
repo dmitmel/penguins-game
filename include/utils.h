@@ -65,6 +65,7 @@ inline bool coords_same(Coords a, Coords b) {
 #define clear_bit(num, bit) ((num) & ~(bit))
 #define toggle_bit(num, bit) ((num) ^ (bit))
 #define change_bit(num, bit, val) (((num) & ~(bit)) | ((val) ? (bit) : 0))
+#define test_bit(num, bit) (((num) & (bit)) != 0)
 
 const char* strip_prefix(const char* str, const char* prefix);
 bool parse_number(const char* str, long* result);

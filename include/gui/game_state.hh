@@ -1,11 +1,6 @@
 #pragma once
 
-#include "bot.h"
-#include "game.h"
-#include <memory>
-#include <wx/defs.h>
-#include <wx/string.h>
-#include <wx/vector.h>
+#include "board.h"
 
 enum BoardGenType {
   BOARD_GEN_RANDOM,
@@ -19,11 +14,11 @@ enum PlayerType {
   PLAYER_TYPE_MAX,
 };
 
-struct GuiGameState {
-  bool game_ended = false;
-  std::unique_ptr<Game, decltype(&game_free)> game{ nullptr, game_free };
-  std::shared_ptr<BotParameters> bot_params{ nullptr };
-  wxVector<wxString> player_names;
-  wxVector<PlayerType> player_types;
-  size_t displayed_log_entries = 0;
+enum GuiTileAttribute {
+  TILE_BLOCKED = TILE_ATTR_MAX,
+  TILE_WAS_BLOCKED,
+  TILE_BLOCKED_FOR_CURSOR,
+  TILE_NEEDS_REDRAW,
+  TILE_OVERLAY_NEEDS_REDRAW,
+  GUI_TILE_ATTR_MAX,
 };

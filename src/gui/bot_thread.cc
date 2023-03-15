@@ -1,6 +1,5 @@
 #include "gui/bot_thread.hh"
 #include "gui/controllers.hh"
-#include "gui/game_state.hh"
 #include "movement.h"
 #include "placement.h"
 #include "utils.h"
@@ -23,8 +22,8 @@ void BotThreadShared::notify_exit() {
 }
 
 BotThread::BotThread(BotTurnController* controller)
-: wxThread(wxTHREAD_DETACHED), controller(controller), bot_params(controller->state.bot_params) {
-  this->game.reset(game_clone(controller->state.game.get()));
+: wxThread(wxTHREAD_DETACHED), controller(controller), bot_params(controller->bot_params) {
+  this->game.reset(game_clone(controller->game));
   this->bot_state.reset(bot_state_new(this->bot_params.get(), this->game.get()));
   this->cancelled_ptr = &this->bot_state->cancelled;
 }

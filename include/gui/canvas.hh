@@ -11,21 +11,13 @@
 #include <wx/types.h>
 #include <wx/window.h>
 
-class GameFrame;
-
-enum GuiTileAttribute {
-  TILE_BLOCKED = 1 << 2,
-  TILE_WAS_BLOCKED = 1 << 3,
-  TILE_BLOCKED_FOR_CURSOR = 1 << 4,
-  TILE_NEEDS_REDRAW = 1 << 5,
-  TILE_OVERLAY_NEEDS_REDRAW = 1 << 6,
-};
+class GamePanel;
 
 class CanvasPanel : public wxWindow {
 public:
   static const wxCoord TILE_SIZE = 40;
 
-  CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame);
+  CanvasPanel(wxWindow* parent, wxWindowID id, GamePanel* panel);
 
   virtual bool AcceptsFocus() const override {
     return true;
@@ -79,7 +71,7 @@ protected:
   wxMemoryDC draw_bitmap_dc;
 #endif
 
-  GameFrame* game_frame;
+  GamePanel* panel;
   Game* game;
 
   wxDECLARE_EVENT_TABLE();

@@ -40,9 +40,5 @@ bool PenguinsApp::OnInit() {
   this->game_frame->Centre();
   this->game_frame->Show();
 
-  wxYieldIfNeeded();
-
-  this->game_frame->start_new_game();
-
   return true;
 }

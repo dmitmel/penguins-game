@@ -15,30 +15,27 @@
 #include <wx/string.h>
 #include <wx/utils.h>
 
-GameController::GameController(GameFrame* game_frame)
-: game_frame(game_frame)
-, canvas(game_frame->canvas)
-, state(game_frame->state)
-, game(state.game.get()) {}
+GameController::GameController(GamePanel* panel)
+: panel(panel), canvas(panel->canvas), game(panel->game.get()), bot_params(panel->bot_params) {}
 
 void GameController::update_game_state_and_indirectly_delete_this() {
-  this->game_frame->update_game_state();
+  this->panel->update_game_state();
 }
 
 void GameController::on_activated() {
   this->configure_bot_turn_ui();
   this->configure_log_viewer_ui();
   this->update_status_bar();
-  this->game_frame->update_player_info_boxes();
+  this->panel->update_player_info_boxes();
   this->canvas->Refresh();
 }
 
 void GameController::configure_bot_turn_ui() {
-  this->game_frame->stop_bot_progress();
+  this->panel->stop_bot_progress();
 }
 
 void GameController::configure_log_viewer_ui() {
-  this->game_frame->show_current_turn_btn->Disable();
+  this->panel->show_current_turn_btn->Disable();
 }
 
 void GameController::on_deactivated(GameController* WXUNUSED(next_controller)) {}
@@ -48,7 +45,7 @@ void GameController::on_mouse_move(wxMouseEvent& WXUNUSED(event)) {}
 void GameController::on_mouse_up(wxMouseEvent& WXUNUSED(event)) {}
 
 void GameController::update_status_bar() {
-  this->game_frame->clear_status_bar();
+  this->panel->frame->clear_status_bar();
 }
 
 void GameController::on_mouse_enter_leave(wxMouseEvent& WXUNUSED(event)) {
@@ -58,14 +55,14 @@ void GameController::on_mouse_enter_leave(wxMouseEvent& WXUNUSED(event)) {
 
 void GameEndedController::on_activated() {
   this->GameController::on_activated();
-  if (!this->state.game_ended) {
-    this->state.game_ended = true;
-    this->game_frame->CallAfter(&GameFrame::end_game);
+  if (!this->panel->game_ended) {
+    this->panel->game_ended = true;
+    this->panel->CallAfter(&GamePanel::show_game_results);
   }
 }
 
 void BotTurnController::configure_bot_turn_ui() {
-  this->game_frame->start_bot_progress();
+  this->panel->start_bot_progress();
 }
 
 BotThread* BotPlacementController::create_bot_thread() {
@@ -94,7 +91,7 @@ void BotTurnController::on_bot_thread_done_work(bool cancelled) {
   if (!cancelled) {
     this->update_game_state_and_indirectly_delete_this();
   } else {
-    this->game_frame->stop_bot_progress();
+    this->panel->stop_bot_progress();
   }
 }
 
@@ -155,11 +152,12 @@ void LogEntryViewerController::on_activated() {
 }
 
 void LogEntryViewerController::configure_log_viewer_ui() {
-  this->game_frame->show_current_turn_btn->Enable();
+  this->panel->show_current_turn_btn->Enable();
 }
 
 void GameController::update_tile_attributes() {
-  set_all_tiles_attr(game, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
+  set_all_tiles_attr(game, TILE_BLOCKED, false);
+  set_all_tiles_attr(game, TILE_BLOCKED_FOR_CURSOR, false);
 }
 
 void PlayerPlacementController::update_tile_attributes() {
@@ -192,7 +190,8 @@ void PlayerMovementController::update_tile_attributes() {
     return;
   }
   // A penguin is selected
-  set_all_tiles_attr(game, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, true);
+  set_all_tiles_attr(game, TILE_BLOCKED, true);
+  set_all_tiles_attr(game, TILE_BLOCKED_FOR_CURSOR, true);
   PossibleSteps moves = calculate_penguin_possible_moves(game, selected_penguin);
   bool any_steps = false;
   for (int dir = 0; dir < DIRECTION_MAX; dir++) {
@@ -201,7 +200,8 @@ void PlayerMovementController::update_tile_attributes() {
     any_steps = any_steps || moves.steps[dir] != 0;
     for (int steps = moves.steps[dir]; steps > 0; steps--) {
       coords.x += d.x, coords.y += d.y;
-      set_tile_attr(game, coords, TILE_BLOCKED | TILE_BLOCKED_FOR_CURSOR, false);
+      set_tile_attr(game, coords, TILE_BLOCKED, false);
+      set_tile_attr(game, coords, TILE_BLOCKED_FOR_CURSOR, false);
     }
   }
   set_tile_attr(game, selected_penguin, TILE_BLOCKED, false);
@@ -238,7 +238,7 @@ void PlayerMovementController::paint_overlay(wxDC& dc) {
 }
 
 void LogEntryViewerController::paint_overlay(wxDC& dc) {
-  const GameLogEntry* entry = game_get_log_entry(this->state.game.get(), this->entry_index);
+  const GameLogEntry* entry = game_get_log_entry(game, this->entry_index);
   if (entry->type == GAME_LOG_ENTRY_PLACEMENT) {
     this->canvas->paint_selected_tile_outline(dc, entry->data.placement.target);
   } else if (entry->type == GAME_LOG_ENTRY_MOVEMENT) {
@@ -260,7 +260,7 @@ static wxString describe_placement_result(PlacementError result) {
 }
 
 void PlayerPlacementController::update_status_bar() {
-  GameFrame* frame = this->game_frame;
+  GameFrame* frame = this->panel->frame;
   Coords curr_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
   if (!(this->canvas->mouse_within_window && is_tile_in_bounds(game, curr_coords))) {
     frame->clear_status_bar();
@@ -291,7 +291,7 @@ static wxString describe_movement_result(MovementError result) {
 }
 
 void PlayerMovementController::update_status_bar() {
-  GameFrame* frame = this->game_frame;
+  GameFrame* frame = this->panel->frame;
   Coords prev_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_drag_pos);
   Coords curr_coords = this->canvas->tile_coords_at_point(this->canvas->mouse_pos);
   if (!(this->canvas->mouse_within_window && is_tile_in_bounds(game, curr_coords))) {
@@ -332,20 +332,20 @@ void PlayerMovementController::update_status_bar() {
 }
 
 void BotTurnController::update_status_bar() {
-  this->game_frame->SetStatusText("The bot is thinking...", 0);
-  this->game_frame->SetStatusText("", 1);
+  this->panel->frame->SetStatusText("The bot is thinking...", 0);
+  this->panel->frame->SetStatusText("", 1);
 }
 
 void GameEndedController::update_status_bar() {
-  this->game_frame->SetStatusText("The game has ended!", 0);
-  this->game_frame->SetStatusText("", 1);
+  this->panel->frame->SetStatusText("The game has ended!", 0);
+  this->panel->frame->SetStatusText("", 1);
 }
 
 void LogEntryViewerController::update_status_bar() {
-  this->game_frame->SetStatusText(
+  this->panel->frame->SetStatusText(
     wxString::Format("Viewing a previous turn (entry #%zd)", this->entry_index + 1), 0
   );
-  this->game_frame->SetStatusText("", 1);
+  this->panel->frame->SetStatusText("", 1);
 }
 
 void PlayerMovementController::on_mouse_down(wxMouseEvent& WXUNUSED(event)) {

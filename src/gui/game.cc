@@ -15,6 +15,7 @@
 #include <wx/debug.h>
 #include <wx/defs.h>
 #include <wx/event.h>
+#include <wx/font.h>
 #include <wx/gauge.h>
 #include <wx/gdicmn.h>
 #include <wx/iconbndl.h>
@@ -25,19 +26,19 @@
 #include <wx/persist.h>
 #include <wx/scrolwin.h>
 #include <wx/sizer.h>
+#include <wx/statbmp.h>
+#include <wx/stattext.h>
 #include <wx/statusbr.h>
 #include <wx/string.h>
 #include <wx/timer.h>
 #include <wx/utils.h>
 #include <wx/vector.h>
+#include <wx/version.h>
 #include <wx/window.h>
+// IWYU pragma: no_include <wx/bmpbndl.h>
 
 GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Penguins game") {
-  this->Bind(wxEVT_DESTROY, &GameFrame::on_destroy, this);
-
   this->SetIcons(wxGetApp().app_icon);
-
-  this->root_panel = new wxPanel(this, wxID_ANY);
 
   auto menu_bar = new wxMenuBar();
   wxMenuItem* item;
@@ -67,7 +68,6 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Pen
   this->CreateStatusBar(2);
   int status_bar_widths[2] = { -3, -1 };
   this->SetStatusWidths(2, status_bar_widths);
-  this->clear_status_bar();
 
   this->progress_container = new wxWindow(this->GetStatusBar(), wxID_ANY);
   this->progress_container->Hide();
@@ -95,81 +95,58 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Pen
     }
   });
 
-  this->progress_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent&) -> void {
-    this->progress_container->Show();
-    this->progress_bar->Pulse();
-  });
-
-  this->scrolled_panel = new wxScrolledWindow(this->root_panel, wxID_ANY);
-  auto scroll_vbox = new wxBoxSizer(wxVERTICAL);
-  auto scroll_hbox = new wxBoxSizer(wxHORIZONTAL);
-  this->scrolled_panel->SetScrollRate(10, 10);
-  wxSize default_board_size(
-    NewGameDialog::DEFAULT_BOARD_WIDTH, NewGameDialog::DEFAULT_BOARD_HEIGHT
-  );
-  this->empty_canvas = new wxPanel(
-    this->scrolled_panel, wxID_ANY, wxDefaultPosition, default_board_size * CanvasPanel::TILE_SIZE
-  );
-  scroll_hbox->Add(this->empty_canvas, wxSizerFlags(1).Centre());
-  this->canvas_sizer = scroll_hbox;
-  scroll_vbox->Add(scroll_hbox, wxSizerFlags(1).Centre());
-  this->scrolled_panel->SetSizer(scroll_vbox);
-
-  auto panel_grid = new wxFlexGridSizer(/* rows */ 2, /* cols */ 2, 0, 0);
-  panel_grid->AddGrowableCol(1);
-  panel_grid->AddGrowableRow(1);
-
-  this->show_current_turn_btn = new wxButton(this->root_panel, wxID_ANY, "Back to the game");
-  this->show_current_turn_btn->Bind(wxEVT_BUTTON, &GameFrame::on_show_current_turn_clicked, this);
-  this->show_current_turn_btn->Hide();
-  this->show_current_turn_btn->Disable();
-  panel_grid->Add(
-    this->show_current_turn_btn, wxSizerFlags().Bottom().Expand().Border(wxALL & ~wxBOTTOM)
-  );
-
-  this->players_box = new wxBoxSizer(wxHORIZONTAL);
-  panel_grid->Add(this->players_box, wxSizerFlags().Centre().Border(wxALL & ~wxBOTTOM));
-
-  this->game_log = new wxListBox(this->root_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-  this->game_log->Bind(wxEVT_LISTBOX, &GameFrame::on_game_log_select, this);
-  this->game_log->Hide();
-  panel_grid->Add(this->game_log, wxSizerFlags(1).Expand().Border());
-
-  panel_grid->Add(this->scrolled_panel, wxSizerFlags(1).Expand().Border());
-
-  auto panel_vbox = new wxBoxSizer(wxVERTICAL);
-  panel_vbox->Add(panel_grid, wxSizerFlags(1).Expand().Border());
-  this->root_panel->SetSizer(panel_vbox);
-
   auto root_vbox = new wxBoxSizer(wxVERTICAL);
-  root_vbox->Add(this->root_panel, wxSizerFlags(1).Expand());
+  this->current_panel = new GameStartPanel(this, wxID_ANY);
+  root_vbox->Add(this->current_panel, wxSizerFlags(1).Expand());
   this->SetSizer(root_vbox);
-  this->update_layout();
-}
-
-void GameFrame::update_layout() {
-  this->Layout();
-  this->scrolled_panel->GetSizer()->SetSizeHints(this->scrolled_panel);
-  this->GetSizer()->SetSizeHints(this);
+  this->current_panel->update_layout();
 }
 
 GameFrame::~GameFrame() {
-  this->SendDestroyEvent();
-  this->set_controller(nullptr);
+  this->set_panel(nullptr);
 }
 
-void GameFrame::on_destroy(wxWindowDestroyEvent& WXUNUSED(event)) {
-  this->set_controller(nullptr);
+void GameFrame::set_panel(BaseGamePanel* panel) {
+  wxASSERT(this->current_panel != nullptr);
+  if (panel != nullptr) {
+    wxASSERT(this->GetSizer()->Replace(this->current_panel, panel));
+  }
+  this->current_panel->Destroy();
+  this->current_panel = panel;
+}
+
+void GameFrame::clear_status_bar() {
+  this->SetStatusText("", 0);
+  this->SetStatusText("", 1);
+  this->progress_container->Hide();
 }
 
 void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
   this->start_new_game();
 }
 
+void GameFrame::start_new_game() {
+  std::unique_ptr<NewGameDialog> dialog(new NewGameDialog(this, wxID_ANY));
+  wxPersistentRegisterAndRestore(dialog.get());
+  int result = dialog->ShowModal();
+  if (result != wxID_OK) {
+    return;
+  }
+
+  this->clear_status_bar();
+  auto panel = new GamePanel(this, wxID_ANY, dialog.get());
+  this->set_panel(panel);
+  this->current_panel->update_layout();
+  this->Update();
+  this->Centre();
+  panel->update_game_state();
+}
+
 void GameFrame::on_close_game(wxCommandEvent& WXUNUSED(event)) {
-  this->close_game();
-  this->update_layout();
-  this->Refresh();
+  this->clear_status_bar();
+  this->set_panel(new GameStartPanel(this, wxID_ANY));
+  this->current_panel->update_layout();
+  this->Update();
   this->Centre();
 }
 
@@ -187,32 +164,67 @@ void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
   wxAboutBox(info, this);
 }
 
-void GameFrame::start_new_game() {
-  std::unique_ptr<NewGameDialog> dialog(new NewGameDialog(this, wxID_ANY));
-  wxPersistentRegisterAndRestore(dialog.get());
-  int result = dialog->ShowModal();
-  if (result != wxID_OK) {
-    return;
-  }
+BaseGamePanel::BaseGamePanel(GameFrame* parent, wxWindowID id)
+: wxPanel(parent, id), frame(parent) {}
 
-  this->close_game();
+void BaseGamePanel::update_layout() {
+  this->frame->Layout();
+  this->frame->GetSizer()->SetSizeHints(this->frame);
+}
 
+GameStartPanel::GameStartPanel(GameFrame* parent, wxWindowID id) : BaseGamePanel(parent, id) {
+  this->SetInitialSize(wxSize(600, 500));
+
+  auto title_hbox = new wxBoxSizer(wxHORIZONTAL);
+
+  auto icon_image = new wxStaticBitmap(this, wxID_ANY, wxGetApp().app_icon.GetIconOfExactSize(64));
+  title_hbox->Add(icon_image, wxSizerFlags().Centre().Border());
+
+  auto title_label = new wxStaticText(this, wxID_ANY, "Penguins v" PENGUINS_VERSION_STRING);
+  title_label->SetFont(title_label->GetFont().MakeBold().Scale(2.0f));
+  title_hbox->Add(title_label, wxSizerFlags().Centre().Border());
+
+  auto buttons_vbox = new wxBoxSizer(wxVERTICAL);
+
+  auto start_game_btn = new wxButton(this, wxID_ANY, "New Game");
+  start_game_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { this->frame->start_new_game(); });
+  buttons_vbox->Add(start_game_btn, wxSizerFlags().Expand().Border());
+
+  auto exit_btn = new wxButton(this, wxID_ANY, "Exit");
+  exit_btn->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { this->frame->Close(true); });
+  buttons_vbox->Add(exit_btn, wxSizerFlags().Expand().Border());
+
+  auto content_vbox = new wxBoxSizer(wxVERTICAL);
+  content_vbox->Add(title_hbox, wxSizerFlags().Centre().DoubleBorder(wxBOTTOM));
+  content_vbox->Add(buttons_vbox, wxSizerFlags().Centre().Border(wxTOP));
+
+  auto root_vbox = new wxBoxSizer(wxVERTICAL);
+  auto root_hbox = new wxBoxSizer(wxHORIZONTAL);
+  root_hbox->Add(content_vbox, wxSizerFlags(1).Centre().Border());
+  root_vbox->Add(root_hbox, wxSizerFlags(1).Centre());
+  this->SetSizer(root_vbox);
+
+  start_game_btn->SetFocus();
+}
+
+GamePanel::GamePanel(GameFrame* parent, wxWindowID id, NewGameDialog* dialog)
+: BaseGamePanel(parent, id) {
   Game* game = game_new();
-  this->state.game.reset(game);
-  this->state.player_names = wxVector<wxString>(dialog->get_number_of_players());
-  this->state.player_types = wxVector<PlayerType>(dialog->get_number_of_players());
+  this->game.reset(game);
+  this->player_names.reserve(dialog->get_number_of_players());
+  this->player_types.reserve(dialog->get_number_of_players());
 
   auto bot_params = new BotParameters;
   init_bot_parameters(bot_params);
-  this->state.bot_params.reset(bot_params);
+  this->bot_params.reset(bot_params);
 
   game_begin_setup(game);
   game_set_penguins_per_player(game, dialog->get_penguins_per_player());
   game_set_players_count(game, dialog->get_number_of_players());
   for (int i = 0; i < game->players_count; i++) {
     game_set_player_name(game, i, dialog->get_player_name(i).c_str());
-    this->state.player_names.at(i) = dialog->get_player_name(i);
-    this->state.player_types.at(i) = dialog->get_player_type(i);
+    this->player_names.push_back(dialog->get_player_name(i));
+    this->player_types.push_back(dialog->get_player_type(i));
   }
   setup_board(game, dialog->get_board_width(), dialog->get_board_height());
   switch (dialog->get_board_gen_type()) {
@@ -222,48 +234,88 @@ void GameFrame::start_new_game() {
   }
   game_end_setup(game);
 
+  this->progress_timer.Bind(wxEVT_TIMER, [this](wxTimerEvent&) -> void {
+    this->frame->progress_container->Show();
+    this->frame->progress_bar->Pulse();
+  });
+
+  this->scrolled_panel = new wxScrolledWindow(this, wxID_ANY);
+  auto scroll_vbox = new wxBoxSizer(wxVERTICAL);
+  auto scroll_hbox = new wxBoxSizer(wxHORIZONTAL);
+  this->scrolled_panel->SetScrollRate(10, 10);
   this->canvas = new CanvasPanel(this->scrolled_panel, wxID_ANY, this);
-  bool replaced = this->canvas_sizer->Replace(this->empty_canvas, this->canvas);
-  wxASSERT(replaced);
-  this->empty_canvas->Hide();
+  scroll_hbox->Add(this->canvas, wxSizerFlags(1).Centre());
+  scroll_vbox->Add(scroll_hbox, wxSizerFlags(1).Centre());
+  this->scrolled_panel->SetSizer(scroll_vbox);
 
-  this->players_box->Clear(/* delete_windows */ true);
-  this->player_info_boxes = wxVector<PlayerInfoBox*>(game->players_count);
-  for (int i = 0; i < game->players_count; i++) {
-    auto player_box = new PlayerInfoBox(this->root_panel, wxID_ANY);
-    int border_dir = (i > 0 ? wxLEFT : 0) | (i + 1 < game->players_count ? wxRIGHT : 0);
-    this->players_box->Add(player_box->GetContainingSizer(), wxSizerFlags().Border(border_dir));
-    this->player_info_boxes.at(i) = player_box;
-  }
-  this->update_player_info_boxes();
+  auto panel_grid = new wxFlexGridSizer(/* rows */ 2, /* cols */ 2, 0, 0);
+  panel_grid->AddGrowableCol(1);
+  panel_grid->AddGrowableRow(1);
 
-  this->game_log->Show();
+  this->show_current_turn_btn = new wxButton();
+  // Controls can be created in the disabled state in:
+  // GTK+MSW since v3.1.3: <https://github.com/wxWidgets/wxWidgets/pull/1060>
+  // OSX since v3.1.6: <https://github.com/wxWidgets/wxWidgets/pull/2509>
+#if ((defined(__WXGTK__) || defined(__WXMSW__)) && wxCHECK_VERSION(3, 1, 3)) || \
+  (defined(__WXOSX__) && wxCHECK_VERSION(3, 1, 6))
   this->show_current_turn_btn->Disable();
-  this->show_current_turn_btn->Show();
+#endif
+  this->show_current_turn_btn->Create(this, wxID_ANY, "Back to the game");
+  this->show_current_turn_btn->Disable();
+  this->show_current_turn_btn->Bind(wxEVT_BUTTON, &GamePanel::on_show_current_turn_clicked, this);
+  panel_grid->Add(
+    this->show_current_turn_btn, wxSizerFlags().Bottom().Expand().Border(wxALL & ~wxBOTTOM)
+  );
 
+  auto players_box = new wxBoxSizer(wxHORIZONTAL);
+  this->player_info_boxes.reserve(game->players_count);
+  for (int i = 0; i < game->players_count; i++) {
+    auto player_box = new PlayerInfoBox(this, wxID_ANY);
+    int border_dir = (i > 0 ? wxLEFT : 0) | (i + 1 < game->players_count ? wxRIGHT : 0);
+    players_box->Add(player_box->GetContainingSizer(), wxSizerFlags().Border(border_dir));
+    this->player_info_boxes.push_back(player_box);
+  }
+  panel_grid->Add(players_box, wxSizerFlags().Centre().Border(wxALL & ~wxBOTTOM));
+
+  this->log_list = new wxListBox(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+  this->log_list->Bind(wxEVT_LISTBOX, &GamePanel::on_game_log_select, this);
+  panel_grid->Add(this->log_list, wxSizerFlags(1).Expand().Border());
+
+  panel_grid->Add(this->scrolled_panel, wxSizerFlags(1).Expand().Border());
+
+  auto panel_vbox = new wxBoxSizer(wxVERTICAL);
+  panel_vbox->Add(panel_grid, wxSizerFlags(1).Expand().Border());
+  this->SetSizer(panel_vbox);
+
+  this->update_player_info_boxes();
   this->update_game_log();
-
-  this->update_layout();
-  this->Refresh();
-  this->Centre();
-
   this->canvas->SetFocus();
-
-  this->update_game_state();
 }
 
-void GameFrame::update_game_state() {
-  Game* game = this->state.game.get();
+GamePanel::~GamePanel() {
+  this->SendDestroyEvent();
+  this->set_controller(nullptr);
+  this->stop_bot_progress();
+}
+
+void GamePanel::update_layout() {
+  this->frame->Layout();
+  this->scrolled_panel->GetSizer()->SetSizeHints(this->scrolled_panel);
+  this->frame->GetSizer()->SetSizeHints(this->frame);
+}
+
+void GamePanel::update_game_state() {
+  Game* game = this->game.get();
   game_advance_state(game);
   this->update_game_log();
   this->set_controller(this->get_controller_for_current_turn());
 }
 
-GameController* GameFrame::get_controller_for_current_turn() {
-  Game* game = this->state.game.get();
+GameController* GamePanel::get_controller_for_current_turn() {
+  Game* game = this->game.get();
   PlayerType type = PLAYER_TYPE_MAX;
   if (game_check_player_index(game, game->current_player_index)) {
-    type = this->state.player_types.at(game->current_player_index);
+    type = this->player_types.at(game->current_player_index);
   }
   if (game->phase == GAME_PHASE_END) {
     return new GameEndedController(this);
@@ -281,7 +333,7 @@ GameController* GameFrame::get_controller_for_current_turn() {
   }
 }
 
-void GameFrame::set_controller(GameController* next_controller) {
+void GamePanel::set_controller(GameController* next_controller) {
   if (this->controller != nullptr) {
     this->controller->on_deactivated(next_controller);
     delete this->controller;
@@ -292,7 +344,7 @@ void GameFrame::set_controller(GameController* next_controller) {
   }
 }
 
-void GameFrame::start_bot_progress() {
+void GamePanel::start_bot_progress() {
   // The progress_container is shown by the timer.
   if (!this->progress_timer.IsRunning()) {
     this->progress_timer.Start(50);
@@ -304,42 +356,42 @@ void GameFrame::start_bot_progress() {
 #endif
 }
 
-void GameFrame::stop_bot_progress() {
-  this->progress_container->Hide();
+void GamePanel::stop_bot_progress() {
+  this->frame->progress_container->Hide();
   this->progress_timer.Stop();
 #ifndef __WXOSX__
   this->busy_cursor_changer.reset(nullptr);
 #endif
 }
 
-void GameFrame::on_game_log_select(wxCommandEvent& event) {
+void GamePanel::on_game_log_select(wxCommandEvent& event) {
   if (auto list_entry = dynamic_cast<GameLogListBoxEntry*>(event.GetClientObject())) {
     this->set_controller(new LogEntryViewerController(this, list_entry->index));
   }
 }
 
-void GameFrame::on_show_current_turn_clicked(wxCommandEvent& WXUNUSED(event)) {
-  this->game_log->SetSelection(-1); // works more reliably than DeselectAll
+void GamePanel::on_show_current_turn_clicked(wxCommandEvent& WXUNUSED(event)) {
+  this->log_list->SetSelection(-1); // works more reliably than DeselectAll
   this->canvas->CallAfter(&CanvasPanel::SetFocus);
-  Game* game = this->state.game.get();
+  Game* game = this->game.get();
   game_rewind_state_to_log_entry(game, game->log_length);
   this->set_controller(this->get_controller_for_current_turn());
 }
 
-void GameFrame::update_game_log() {
-  size_t old_count = this->state.displayed_log_entries;
-  size_t new_count = this->state.game->log_length;
+void GamePanel::update_game_log() {
+  size_t old_count = this->displayed_log_entries;
+  size_t new_count = this->game->log_length;
   for (size_t i = old_count; i < new_count; i++) {
-    this->state.displayed_log_entries += 1;
+    this->displayed_log_entries += 1;
     wxString description = this->describe_game_log_entry(i);
     if (description.IsEmpty()) continue;
-    int item_index = this->game_log->Append(description, new GameLogListBoxEntry(i));
-    this->game_log->EnsureVisible(item_index);
+    int item_index = this->log_list->Append(description, new GameLogListBoxEntry(i));
+    this->log_list->EnsureVisible(item_index);
   }
 }
 
-wxString GameFrame::describe_game_log_entry(size_t index) const {
-  Game* game = this->state.game.get();
+wxString GamePanel::describe_game_log_entry(size_t index) const {
+  Game* game = this->game.get();
   const GameLogEntry* entry = game_get_log_entry(game, index);
   if (entry->type == GAME_LOG_ENTRY_PHASE_CHANGE) {
     auto entry_data = &entry->data.phase_change;
@@ -366,41 +418,16 @@ wxString GameFrame::describe_game_log_entry(size_t index) const {
   return "";
 }
 
-void GameFrame::end_game() {
+void GamePanel::show_game_results() {
   std::unique_ptr<GameEndDialog> dialog(
-    new GameEndDialog(this, wxID_ANY, this->state.game.get(), this->state.player_names)
+    new GameEndDialog(this, wxID_ANY, this->game.get(), this->player_names)
   );
   dialog->ShowModal();
 }
 
-void GameFrame::close_game() {
-  this->set_controller(nullptr);
-  this->stop_bot_progress();
-  if (this->canvas != nullptr) {
-    bool replaced = this->canvas_sizer->Replace(this->canvas, this->empty_canvas);
-    wxASSERT(replaced);
-    this->canvas->Destroy();
-    this->canvas = nullptr;
-    this->empty_canvas->Show();
-  }
-  this->players_box->Clear(/* delete_windows */ true);
-  this->player_info_boxes = wxVector<PlayerInfoBox*>();
-  this->game_log->Clear();
-  this->game_log->Hide();
-  this->show_current_turn_btn->Hide();
-  this->show_current_turn_btn->Disable();
-  this->clear_status_bar();
-  this->state = GuiGameState();
-}
-
-void GameFrame::clear_status_bar() {
-  this->SetStatusText("", 0);
-  this->SetStatusText("", 1);
-}
-
-void GameFrame::update_player_info_boxes() {
-  Game* game = this->state.game.get();
+void GamePanel::update_player_info_boxes() {
+  Game* game = this->game.get();
   for (int i = 0; i < game->players_count; i++) {
-    this->player_info_boxes.at(i)->update_data(game, i, this->state.player_names.at(i));
+    this->player_info_boxes.at(i)->update_data(game, i, this->player_names.at(i));
   }
 }

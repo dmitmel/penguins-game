@@ -1,19 +1,20 @@
 #pragma once
 
+#include "bot.h"
 #include "game.h"
-#include "gui/game_state.hh"
+#include <memory>
 #include <wx/dc.h>
 #include <wx/defs.h>
 #include <wx/event.h>
 #include <wx/thread.h>
 
-class GameFrame;
+class GamePanel;
 class CanvasPanel;
 class BotThread;
 
 class GameController : public wxEvtHandler {
 public:
-  GameController(GameFrame* game_frame);
+  GameController(GamePanel* panel);
   virtual ~GameController() {}
 
   void update_game_state_and_indirectly_delete_this();
@@ -30,21 +31,21 @@ public:
   virtual void on_mouse_move(wxMouseEvent& event);
   virtual void on_mouse_up(wxMouseEvent& event);
 
-  GameFrame* game_frame;
+  GamePanel* panel;
   CanvasPanel* canvas;
-  GuiGameState& state;
   Game* game;
+  std::shared_ptr<BotParameters>& bot_params;
 };
 
 class PlayerTurnController : public GameController {
 public:
-  PlayerTurnController(GameFrame* game_frame) : GameController(game_frame) {}
+  PlayerTurnController(GamePanel* panel) : GameController(panel) {}
   virtual void paint_overlay(wxDC& dc) override;
 };
 
 class PlayerPlacementController : public PlayerTurnController {
 public:
-  PlayerPlacementController(GameFrame* game_frame) : PlayerTurnController(game_frame) {}
+  PlayerPlacementController(GamePanel* panel) : PlayerTurnController(panel) {}
   virtual void update_tile_attributes() override;
   virtual void on_mouse_move(wxMouseEvent& event) override;
   virtual void on_mouse_up(wxMouseEvent& event) override;
@@ -53,7 +54,7 @@ public:
 
 class PlayerMovementController : public PlayerTurnController {
 public:
-  PlayerMovementController(GameFrame* game_frame) : PlayerTurnController(game_frame) {}
+  PlayerMovementController(GamePanel* panel) : PlayerTurnController(panel) {}
   virtual void update_tile_attributes() override;
   virtual void paint_overlay(wxDC& dc) override;
   virtual void update_status_bar() override;
@@ -64,7 +65,7 @@ public:
 
 class BotTurnController : public GameController {
 public:
-  BotTurnController(GameFrame* game_frame) : GameController(game_frame) {}
+  BotTurnController(GamePanel* panel) : GameController(panel) {}
   virtual ~BotTurnController();
   virtual void configure_bot_turn_ui() override;
   virtual void on_activated() override;
@@ -86,27 +87,27 @@ public:
 
 class BotPlacementController : public BotTurnController {
 public:
-  BotPlacementController(GameFrame* game_frame) : BotTurnController(game_frame) {}
+  BotPlacementController(GamePanel* panel) : BotTurnController(panel) {}
   virtual BotThread* create_bot_thread() override;
 };
 
 class BotMovementController : public BotTurnController {
 public:
-  BotMovementController(GameFrame* game_frame) : BotTurnController(game_frame) {}
+  BotMovementController(GamePanel* panel) : BotTurnController(panel) {}
   virtual BotThread* create_bot_thread() override;
 };
 
 class GameEndedController : public GameController {
 public:
-  GameEndedController(GameFrame* game_frame) : GameController(game_frame) {}
+  GameEndedController(GamePanel* panel) : GameController(panel) {}
   virtual void on_activated() override;
   virtual void update_status_bar() override;
 };
 
 class LogEntryViewerController : public GameController {
 public:
-  LogEntryViewerController(GameFrame* game_frame, size_t entry_index)
-  : GameController(game_frame), entry_index(entry_index) {}
+  LogEntryViewerController(GamePanel* panel, size_t entry_index)
+  : GameController(panel), entry_index(entry_index) {}
   virtual ~LogEntryViewerController() {}
   virtual void on_activated() override;
   virtual void update_status_bar() override;
