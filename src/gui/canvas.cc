@@ -30,8 +30,8 @@ wxBEGIN_EVENT_TABLE(CanvasPanel, wxWindow)
 wxEND_EVENT_TABLE();
 // clang-format on
 
-CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GameFrame* game_frame)
-: wxWindow(parent, id), game_frame(game_frame), game(game_frame->state.game.get()) {
+CanvasPanel::CanvasPanel(wxWindow* parent, wxWindowID id, GamePanel* panel)
+: wxWindow(parent, id), panel(panel), game(panel->game.get()) {
   this->SetInitialSize(this->get_canvas_size());
 #ifdef __WXMSW__
   // Necessary to avoid flicker on Windows, see <https://wiki.wxwidgets.org/Flicker-Free_Drawing>.
@@ -81,7 +81,8 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
 
   wxRect update_region = GetUpdateRegion().GetBox();
 
-  this->game_frame->controller->update_tile_attributes();
+  GameController* controller = this->panel->controller;
+  if (controller) controller->update_tile_attributes();
 
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
@@ -124,7 +125,7 @@ void CanvasPanel::on_paint(wxPaintEvent& WXUNUSED(event)) {
   this->board_dc.SelectObject(wxNullBitmap);
   this->tiles_dc.SelectObject(wxNullBitmap);
 
-  this->game_frame->controller->paint_overlay(window_dc);
+  if (controller) controller->paint_overlay(window_dc);
 }
 
 void CanvasPanel::draw_bitmap(wxDC& dc, const wxBitmap& bitmap, const wxPoint& pos) {
@@ -341,7 +342,12 @@ void CanvasPanel::on_any_mouse_event(wxMouseEvent& event) {
     this->mouse_within_window = false;
   }
 
-  GameController* controller = this->game_frame->controller;
+  GameController* controller = this->panel->controller;
+  if (!controller) {
+    event.Skip();
+    return;
+  }
+
   // NOTE: a `switch` is unusable here because the event types are defined as
   // `extern` variables. `switch` in C++ can only work with statically-known
   // constants.
