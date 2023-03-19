@@ -77,7 +77,7 @@ typedef struct Game {
   int board_width;
   int board_height;
   int* board_grid;
-  int* tile_attributes;
+  short* tile_attributes;
   int current_player_index;
   bool log_disabled;
   GameLogEntry* log_buffer;

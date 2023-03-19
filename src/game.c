@@ -16,7 +16,7 @@ extern int game_find_player_by_id(const Game* self, int id);
 extern Coords* game_find_player_penguin(const Game* self, int idx, Coords coords);
 
 Game* game_new(void) {
-  Game* self = malloc(sizeof(Game));
+  Game* self = malloc(sizeof(*self));
   self->phase = GAME_PHASE_NONE;
   self->players = NULL;
   self->players_count = -1;
@@ -35,26 +35,30 @@ Game* game_new(void) {
 }
 
 Game* game_clone(const Game* other) {
-  Game* self = memdup(other, sizeof(Game));
+  Game* self = memdup(other, sizeof(*self));
   if (other->players) {
-    self->players = memdup(other->players, sizeof(Player) * other->players_count);
+    self->players = memdup(other->players, sizeof(*other->players) * other->players_count);
     for (int i = 0; i < other->players_count; i++) {
       Player *player = &self->players[i], *other_player = &other->players[i];
       player->name = other_player->name ? strdup(other_player->name) : NULL;
-      player->penguins =
-        memdup(other_player->penguins, sizeof(Coords) * other_player->penguins_count);
+      player->penguins = memdup(
+        other_player->penguins, sizeof(*other_player->penguins) * other_player->penguins_count
+      );
     }
   }
-  if (other->board_grid) {
-    self->board_grid =
-      memdup(other->board_grid, sizeof(int) * other->board_width * other->board_height);
+  if (self->board_grid) {
+    self->board_grid = memdup(
+      other->board_grid, sizeof(*other->board_grid) * other->board_width * other->board_height
+    );
   }
-  if (other->tile_attributes) {
-    self->tile_attributes =
-      memdup(other->tile_attributes, sizeof(int) * other->board_width * other->board_height);
+  if (self->tile_attributes) {
+    self->tile_attributes = memdup(
+      other->tile_attributes,
+      sizeof(*self->tile_attributes) * other->board_width * other->board_height
+    );
   }
-  if (other->log_buffer) {
-    self->log_buffer = memdup(other->log_buffer, sizeof(GameLogEntry) * other->log_capacity);
+  if (self->log_buffer) {
+    self->log_buffer = memdup(other->log_buffer, sizeof(*self->log_buffer) * other->log_capacity);
   }
   return self;
 }
@@ -108,7 +112,7 @@ void game_set_log_capacity(Game* self, size_t capacity) {
   self->log_capacity = capacity;
   self->log_length = my_min(self->log_length, capacity);
   self->log_current = my_min(self->log_current, capacity);
-  self->log_buffer = realloc(self->log_buffer, sizeof(GameLogEntry) * capacity);
+  self->log_buffer = realloc(self->log_buffer, sizeof(*self->log_buffer) * capacity);
 }
 
 GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type) {
@@ -183,7 +187,8 @@ void game_set_penguins_per_player(Game* self, int value) {
   for (int i = 0; i < self->players_count; i++) {
     Player* player = &self->players[i];
     player->penguins_count = my_min(player->penguins_count, self->penguins_per_player);
-    player->penguins = realloc(player->penguins, sizeof(Coords) * self->penguins_per_player);
+    player->penguins =
+      realloc(player->penguins, sizeof(*player->penguins) * self->penguins_per_player);
   }
 }
 
@@ -191,7 +196,7 @@ void game_set_players_count(Game* self, int count) {
   assert(self->phase == GAME_PHASE_SETUP);
   assert(count > 0);
   assert(self->players == NULL);
-  self->players = malloc(sizeof(Player) * count);
+  self->players = malloc(sizeof(*self->players) * count);
   self->players_count = count;
   for (int i = 0; i < count; i++) {
     Player* player = &self->players[i];
@@ -199,7 +204,7 @@ void game_set_players_count(Game* self, int count) {
     player->name = NULL;
     player->points = 0;
     player->penguins_count = 0;
-    player->penguins = malloc(sizeof(Coords) * my_max(0, self->penguins_per_player));
+    player->penguins = malloc(sizeof(*player->penguins) * my_max(0, self->penguins_per_player));
     player->moves_count = 0;
     player->color = 0;
   }

@@ -39,7 +39,7 @@ inline ALWAYS_INLINE bool get_tile_attr(const Game* game, Coords coords, int att
 
 inline ALWAYS_INLINE void set_tile_attr(Game* game, Coords coords, int attr, bool value) {
   assert(is_tile_in_bounds(game, coords));
-  int* ptr = &game->tile_attributes[coords.x + game->board_width * coords.y];
+  short* ptr = &game->tile_attributes[coords.x + game->board_width * coords.y];
   *ptr = change_bit(*ptr, 1 << attr, value);
 }
 

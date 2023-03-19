@@ -155,7 +155,7 @@ void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
       int tile = get_tile(game, coords);
       wxPoint tile_pos = tile_rect.GetPosition();
 
-      uint32_t coords_hash = fnv32_hash(FNV32_INITIAL_STATE, &coords, sizeof(Coords));
+      uint32_t coords_hash = fnv32_hash(FNV32_INITIAL_STATE, &coords, sizeof(coords));
 
       if (is_water_tile(tile)) {
         this->draw_bitmap(

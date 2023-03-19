@@ -190,7 +190,7 @@ static MunitResult
 test_move_penguin_and_calculate_points(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
   int grid[] = { -1, 1, 3 };
-  int attrs[] = { 0, 0, 0 };
+  short attrs[] = { 0, 0, 0 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,

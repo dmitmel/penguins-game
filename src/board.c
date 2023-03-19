@@ -20,8 +20,8 @@ void setup_board(Game* game, int width, int height) {
   free_and_clear(game->tile_attributes);
   game->board_width = width;
   game->board_height = height;
-  game->board_grid = calloc(game->board_width * game->board_height, sizeof(int));
-  game->tile_attributes = calloc(game->board_width * game->board_height, sizeof(int));
+  game->board_grid = calloc(width * height, sizeof(*game->board_grid));
+  game->tile_attributes = calloc(width * height, sizeof(*game->tile_attributes));
   set_all_tiles_attr(game, TILE_DIRTY, true);
 }
 

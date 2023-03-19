@@ -25,7 +25,7 @@ void init_bot_parameters(BotParameters* self) {
 }
 
 BotState* bot_state_new(const BotParameters* params, Game* game) {
-  BotState* self = malloc(sizeof(BotState));
+  BotState* self = malloc(sizeof(*self));
   self->params = params;
   self->game = game;
   self->cancelled = false;
@@ -81,7 +81,7 @@ BotState* bot_enter_sub_state(BotState* self) {
 // Checks if the buffer has enough capacity for data of requested size, if not
 // - reallocates it to fit the requested size.
 #define bot_alloc_buf(buf, capacity, size) \
-  (size > capacity ? (buf = realloc(buf, size), capacity = size) : 0)
+  ((size_t)1 * size > capacity ? (buf = realloc(buf, sizeof(*buf) * size), capacity = size) : 0)
 
 // The only distance function that is relevant for us since penguins can move
 // only along the axes.
@@ -116,9 +116,7 @@ static int pick_best_scores(int scores_length, int* scores, int best_length, int
 bool bot_make_placement(BotState* self, Coords* out_target) {
   Game* game = self->game;
 
-  bot_alloc_buf(
-    self->tile_coords, self->tile_coords_cap, sizeof(int) * game->board_width * game->board_height
-  );
+  bot_alloc_buf(self->tile_coords, self->tile_coords_cap, game->board_width * game->board_height);
   int tiles_count = 0;
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
@@ -139,7 +137,7 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
     return true;
   }
 
-  bot_alloc_buf(self->tile_scores, self->tile_scores_cap, sizeof(int) * tiles_count);
+  bot_alloc_buf(self->tile_scores, self->tile_scores_cap, tiles_count);
   for (int i = 0; i < tiles_count; i++) {
     self->tile_scores[i] = bot_rate_placement(self, self->tile_coords[i]);
     if (self->cancelled) return false;
@@ -304,9 +302,7 @@ bool bot_make_move(BotState* self, Coords* out_penguin, Coords* out_target) {
 BotMove* bot_generate_all_moves_list(
   BotState* self, int penguins_count, Coords* penguins, int* moves_count
 ) {
-  bot_alloc_buf(
-    self->possible_steps, self->possible_steps_cap, sizeof(PossibleSteps) * penguins_count
-  );
+  bot_alloc_buf(self->possible_steps, self->possible_steps_cap, penguins_count);
   for (int i = 0; i < penguins_count; i++) {
     PossibleSteps moves = calculate_penguin_possible_moves(self->game, penguins[i]);
     for (int dir = 0; dir < DIRECTION_MAX; dir++) {
@@ -315,7 +311,7 @@ BotMove* bot_generate_all_moves_list(
     }
     self->possible_steps[i] = moves;
   }
-  bot_alloc_buf(self->all_moves, self->all_moves_cap, sizeof(BotMove) * *moves_count);
+  bot_alloc_buf(self->all_moves, self->all_moves_cap, *moves_count);
   int move_idx = 0;
   for (int i = 0; i < penguins_count; i++) {
     Coords penguin = penguins[i];
@@ -340,7 +336,7 @@ int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
   int fishes_per_dir[DIRECTION_MAX];
   int* fill_grid = NULL;
 
-  bot_alloc_buf(self->move_scores, self->move_scores_cap, sizeof(int) * moves_count);
+  bot_alloc_buf(self->move_scores, self->move_scores_cap, moves_count);
   for (int i = 0; i < moves_count; i++) {
     BotMove move = moves_list[i];
     int score = bot_rate_move(self, move);
@@ -564,8 +560,8 @@ bool bot_quick_junction_check(BotState* self, Coords coords) {
 
 int* bot_flood_fill_reset_grid(BotState* self, int** fill_grid, size_t* fill_grid_cap) {
   int w = self->game->board_width, h = self->game->board_height;
-  bot_alloc_buf(*fill_grid, *fill_grid_cap, sizeof(int) * w * h);
-  memset(*fill_grid, 0, sizeof(int) * w * h);
+  bot_alloc_buf(*fill_grid, *fill_grid_cap, w * h);
+  memset(*fill_grid, 0, sizeof(**fill_grid) * w * h);
   return *fill_grid;
 }
 
@@ -628,7 +624,7 @@ static void flood_fill_push(
 ) {
   if (*stack_len >= *stack_cap) {
     *stack_cap = my_max(*stack_cap * 2, 256);
-    *stack = alloc_stack(*stack_cap * sizeof(FillSpan), user_data);
+    *stack = alloc_stack(*stack_cap, user_data);
   }
   FillSpan span = { x1, x2, y, dy };
   (*stack)[*stack_len] = span;
