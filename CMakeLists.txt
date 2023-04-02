@@ -138,7 +138,6 @@ if(INTERACTIVE_MODE)
   target_sources(penguins PRIVATE
     src/color.c
     src/interactive.c
-    src/io.c
   )
 endif()
 if(AUTONOMOUS_MODE)
