@@ -108,9 +108,15 @@ function(embed_resource res_path out_var_name)
   set("${out_var_name}" "${var_name}" PARENT_SCOPE)
   get_filename_component(res_path_abs "${res_path}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
   add_custom_command(
-    OUTPUT "${var_name}.c" "${var_name}.h"
-    COMMAND embed_resource "${res_path_abs}" "${var_name}.c" "${var_name}.h" "${var_name}"
-    DEPENDS embed_resource "${res_path_abs}"
+    OUTPUT "${var_name}.h"
+    COMMAND embed_resource header "${var_name}.h" "${var_name}"
+    DEPENDS embed_resource
+    VERBATIM
+  )
+  add_custom_command(
+    OUTPUT "${var_name}.c"
+    COMMAND embed_resource source "${res_path_abs}" "${var_name}.c" "${var_name}.h" "${var_name}"
+    DEPENDS embed_resource "${res_path_abs}" "${var_name}.h"
     VERBATIM
   )
 endfunction()
