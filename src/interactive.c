@@ -37,7 +37,7 @@ static void print_board(const Game* game) {
     printf("| ");
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      int tile = get_tile(game, coords);
+      short tile = get_tile(game, coords);
       if (is_water_tile(tile)) {
         water_color();
         printf(" 0 ");

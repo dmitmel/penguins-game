@@ -208,7 +208,7 @@ int bot_rate_placement(BotState* self, Coords penguin) {
       for (int x = area_start_x; x <= area_end_x; x++) {
         Coords coords = { x, y };
         if (is_tile_in_bounds(self->game, coords)) {
-          int tile = get_tile(self->game, coords);
+          short tile = get_tile(self->game, coords);
           total_fish += get_tile_fish(tile);
         }
       }
@@ -222,8 +222,7 @@ int bot_rate_placement(BotState* self, Coords penguin) {
       Coords coords = { x, y };
       int tile_score = 0;
       if (is_tile_in_bounds(self->game, coords)) {
-        int tile = get_tile(self->game, coords);
-        int fish, player_id;
+        short tile = get_tile(self->game, coords), fish, player_id;
         if ((fish = get_tile_fish(tile))) {
           tile_score += 10 * fish;
         } else if ((player_id = get_tile_player_id(tile))) {
@@ -334,7 +333,7 @@ int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
   if (self->cancelled) return NULL;
   Coords prev_penguin = { -1, -1 };
   int fishes_per_dir[DIRECTION_MAX];
-  int* fill_grid = NULL;
+  short* fill_grid = NULL;
 
   bot_alloc_buf(self->move_scores, self->move_scores_cap, moves_count);
   for (int i = 0; i < moves_count; i++) {
@@ -359,7 +358,8 @@ int* bot_rate_moves_list(BotState* self, int moves_count, BotMove* moves_list) {
             neighbor.x += penguin.x, neighbor.y += penguin.y;
             if (!is_tile_in_bounds(self->game, neighbor)) continue;
             if (fill_grid[neighbor.x + neighbor.y * self->game->board_width] == 0) {
-              fishes_per_dir[dir] = bot_flood_fill_count_fish(self, fill_grid, neighbor, dir + 1);
+              short marker = (short)(dir + 1);
+              fishes_per_dir[dir] = bot_flood_fill_count_fish(self, fill_grid, neighbor, marker);
             }
           }
         }
@@ -391,8 +391,8 @@ int bot_rate_move(BotState* self, BotMove move) {
 
   int move_len = distance(penguin, target);
   score += 64 / move_len - 8;
-  int target_tile = get_tile(self->game, target);
-  int fish = get_tile_fish(target_tile);
+  short target_tile = get_tile(self->game, target);
+  short fish = get_tile_fish(target_tile);
   score += 10 * fish * fish;
 
   if (self->depth == 0 && count_obstructed_directions(self->game, penguin) == 3) {
@@ -408,8 +408,7 @@ int bot_rate_move(BotState* self, BotMove move) {
     Coords neighbor = DIRECTION_TO_COORDS[dir];
     neighbor.x += penguin.x, neighbor.y += penguin.y;
     if (!is_tile_in_bounds(self->game, neighbor)) continue;
-    int other_tile = get_tile(self->game, neighbor);
-    int other_player_id;
+    short other_tile = get_tile(self->game, neighbor), other_player_id;
     if ((other_player_id = get_tile_player_id(other_tile))) {
       for (int dir = 0; dir < DIRECTION_MAX; dir++) {
         Coords neighbor = DIRECTION_TO_COORDS[dir];
@@ -428,8 +427,7 @@ int bot_rate_move(BotState* self, BotMove move) {
     neighbor.x += target.x, neighbor.y += target.y;
     if (!is_tile_in_bounds(self->game, neighbor)) continue;
     if (neighbor.x == penguin.x && neighbor.y == penguin.y) continue;
-    int other_tile = get_tile(self->game, neighbor);
-    int other_player_id;
+    short other_tile = get_tile(self->game, neighbor), other_player_id;
     if ((other_player_id = get_tile_player_id(other_tile))) {
       if (other_player_id != my_player->id) {
         // One side will be blocked by us, so add 1.
@@ -449,13 +447,13 @@ int bot_rate_move(BotState* self, BotMove move) {
     move_penguin(self->game, penguin, target);
 
     if (bot_quick_junction_check(self, target)) {
-      int* fill_grid = bot_flood_fill_reset_grid(self, &self->fill_grid2, &self->fill_grid2_cap);
+      short* fill_grid = bot_flood_fill_reset_grid(self, &self->fill_grid2, &self->fill_grid2_cap);
       int dir;
       for (dir = 0; dir < DIRECTION_MAX; dir++) {
         Coords neighbor = DIRECTION_TO_COORDS[dir];
         neighbor.x += target.x, neighbor.y += target.y;
         if (!is_tile_in_bounds(self->game, neighbor)) continue;
-        int marker = dir + 1;
+        short marker = (short)(dir + 1);
         if (bot_flood_fill_count_fish(self, fill_grid, neighbor, marker) > 0) {
           break;
         }
@@ -466,9 +464,9 @@ int bot_rate_move(BotState* self, BotMove move) {
         Coords neighbor = DIRECTION_TO_COORDS[dir];
         neighbor.x += target.x, neighbor.y += target.y;
         if (!is_tile_in_bounds(self->game, neighbor)) continue;
-        int other_tile = get_tile(self->game, neighbor);
+        short other_tile = get_tile(self->game, neighbor);
         if (is_fish_tile(other_tile)) {
-          int marker = fill_grid[neighbor.x + neighbor.y * self->game->board_width];
+          short marker = fill_grid[neighbor.x + neighbor.y * self->game->board_width];
           if (marker == 0) {
             // If a tile in some other direction is not reachable from the
             // direction at which we ran the flood fill, then we must created
@@ -519,7 +517,7 @@ bool bot_quick_junction_check(BotState* self, Coords coords) {
     connected[dir] = false;
     is_fish[dir] = false;
     if ((in_bounds[dir] = is_tile_in_bounds(self->game, neighbor))) {
-      int tile = get_tile(self->game, neighbor);
+      short tile = get_tile(self->game, neighbor);
       is_fish[dir] = is_fish_tile(tile);
     }
   }
@@ -558,7 +556,7 @@ bool bot_quick_junction_check(BotState* self, Coords coords) {
   return false;
 }
 
-int* bot_flood_fill_reset_grid(BotState* self, int** fill_grid, size_t* fill_grid_cap) {
+short* bot_flood_fill_reset_grid(BotState* self, short** fill_grid, size_t* fill_grid_cap) {
   int w = self->game->board_width, h = self->game->board_height;
   bot_alloc_buf(*fill_grid, *fill_grid_cap, w * h);
   memset(*fill_grid, 0, sizeof(**fill_grid) * w * h);
@@ -567,8 +565,8 @@ int* bot_flood_fill_reset_grid(BotState* self, int** fill_grid, size_t* fill_gri
 
 struct BotFloodFillCtx {
   BotState* self;
-  int* fill_grid;
-  int marker_value;
+  short* fill_grid;
+  short marker_value;
   int fish_count;
 };
 
@@ -577,7 +575,7 @@ static bool bot_flood_fill_check(int x, int y, void* user_data) {
   Game* game = ctx->self->game;
   int w = game->board_width, h = game->board_height;
   if ((0 <= x && x < w && 0 <= y && y < h) && ctx->fill_grid[x + y * w] == 0) {
-    int tile = game->board_grid[x + y * w];
+    short tile = game->board_grid[x + y * w];
     return is_fish_tile(tile);
   }
   return false;
@@ -598,7 +596,7 @@ static FillSpan* bot_flood_fill_alloc_stack(size_t capacity, void* user_data) {
   return self->fill_stack;
 }
 
-int bot_flood_fill_count_fish(BotState* self, int* grid, Coords start, int marker_value) {
+int bot_flood_fill_count_fish(BotState* self, short* grid, Coords start, short marker_value) {
   assert(marker_value != 0);
   struct BotFloodFillCtx ctx;
   ctx.self = self;
@@ -613,8 +611,8 @@ int bot_flood_fill_count_fish(BotState* self, int* grid, Coords start, int marke
 
 static void flood_fill_push(
   FillSpan** stack,
-  int* stack_len,
-  int* stack_cap,
+  size_t* stack_len,
+  size_t* stack_cap,
   int x1,
   int x2,
   int y,
@@ -645,8 +643,8 @@ void flood_fill(
   void* user_data
 ) {
   if (!check(x, y, user_data)) return;
-  int stack_len = 0;
-  int stack_cap = 0;
+  size_t stack_len = 0;
+  size_t stack_cap = 0;
   FillSpan* stack = NULL;
   stack_push(x, x, y, 1);
   stack_push(x, x, y - 1, -1);

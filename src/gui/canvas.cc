@@ -64,8 +64,8 @@ Coords CanvasPanel::get_selected_penguin_coords() const {
   if (!is_tile_in_bounds(game, curr_coords)) return null_coords;
   int player_idx = game->current_player_index;
   if (!game_check_player_index(game, player_idx)) return null_coords;
-  int player_id = game_get_player(game, player_idx)->id;
-  int tile = get_tile(game, curr_coords);
+  short player_id = game_get_player(game, player_idx)->id;
+  short tile = get_tile(game, curr_coords);
   return get_tile_player_id(tile) == player_id ? curr_coords : null_coords;
 }
 
@@ -152,7 +152,7 @@ void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
       // The next layer of the board has to be repainted as well.
       set_tile_attr(game, coords, TILE_OVERLAY_NEEDS_REDRAW, true);
 
-      int tile = get_tile(game, coords);
+      short tile = get_tile(game, coords);
       wxPoint tile_pos = tile_rect.GetPosition();
 
       uint32_t coords_hash = fnv32_hash(FNV32_INITIAL_STATE, &coords, sizeof(coords));
@@ -204,7 +204,7 @@ void CanvasPanel::paint_tiles(wxDC& dc, const wxRect& update_region) {
       draw_convex_corner(-1, -1, CORNER_TOP_LEFT);
 
       if (is_fish_tile(tile)) {
-        int fish = get_tile_fish(tile);
+        short fish = get_tile_fish(tile);
         this->draw_bitmap(
           dc, tileset.fish_sprites[(fish - 1) % WXSIZEOF(tileset.fish_sprites)], tile_pos
         );
@@ -233,7 +233,7 @@ void CanvasPanel::paint_board(wxDC& dc, const wxRect& update_region, wxDC& tiles
       if (!update_region.Intersects(tile_rect)) continue;
       set_tile_attr(game, coords, TILE_OVERLAY_NEEDS_REDRAW, false);
 
-      int tile = get_tile(game, coords);
+      short tile = get_tile(game, coords);
       wxPoint tile_pos = tile_rect.GetPosition();
       dc.Blit(tile_pos, tile_rect.GetSize(), &tiles_dc, tile_pos);
 

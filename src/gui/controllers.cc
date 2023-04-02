@@ -185,7 +185,7 @@ void PlayerMovementController::update_tile_attributes() {
     for (int y = 0; y < game->board_height; y++) {
       for (int x = 0; x < game->board_width; x++) {
         Coords coords = { x, y };
-        int tile = get_tile(game, coords);
+        short tile = get_tile(game, coords);
         bool blocked = get_tile_player_id(tile) != current_player_id;
         set_tile_attr(game, coords, TILE_BLOCKED_FOR_CURSOR, blocked);
         set_tile_attr(game, coords, TILE_BLOCKED, false);

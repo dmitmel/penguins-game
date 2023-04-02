@@ -12,7 +12,7 @@
 extern bool game_check_player_index(const Game* self, int idx);
 extern Player* game_get_player(const Game* self, int idx);
 extern Player* game_get_current_player(const Game* self);
-extern int game_find_player_by_id(const Game* self, int id);
+extern int game_find_player_by_id(const Game* self, short id);
 extern Coords* game_find_player_penguin(const Game* self, int idx, Coords coords);
 
 Game* game_new(void) {
@@ -136,7 +136,7 @@ const GameLogEntry* game_pop_log_entry(Game* self, GameLogEntryType expected_typ
   return entry->type == expected_type ? entry : NULL;
 }
 
-const GameLogEntry* game_get_log_entry(Game* self, size_t idx) {
+const GameLogEntry* game_get_log_entry(const Game* self, size_t idx) {
   assert(idx < self->log_length);
   return &self->log_buffer[idx];
 }
@@ -200,7 +200,7 @@ void game_set_players_count(Game* self, int count) {
   self->players_count = count;
   for (int i = 0; i < count; i++) {
     Player* player = &self->players[i];
-    player->id = i + 1;
+    player->id = (short)(i + 1);
     player->name = NULL;
     player->points = 0;
     player->penguins_count = 0;

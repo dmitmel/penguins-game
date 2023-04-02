@@ -32,18 +32,18 @@ inline ALWAYS_INLINE bool is_tile_in_bounds(const Game* game, Coords coords) {
   return 0 <= x && x < game->board_width && 0 <= y && y < game->board_height;
 }
 
-inline ALWAYS_INLINE bool get_tile_attr(const Game* game, Coords coords, int attr) {
+inline ALWAYS_INLINE bool get_tile_attr(const Game* game, Coords coords, short attr) {
   assert(is_tile_in_bounds(game, coords));
   return test_bit(game->tile_attributes[coords.x + game->board_width * coords.y], 1 << attr);
 }
 
-inline ALWAYS_INLINE void set_tile_attr(Game* game, Coords coords, int attr, bool value) {
+inline ALWAYS_INLINE void set_tile_attr(Game* game, Coords coords, short attr, bool value) {
   assert(is_tile_in_bounds(game, coords));
   short* ptr = &game->tile_attributes[coords.x + game->board_width * coords.y];
   *ptr = change_bit(*ptr, 1 << attr, value);
 }
 
-inline ALWAYS_INLINE void set_all_tiles_attr(Game* game, int attr, bool value) {
+inline ALWAYS_INLINE void set_all_tiles_attr(Game* game, short attr, bool value) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
@@ -52,12 +52,12 @@ inline ALWAYS_INLINE void set_all_tiles_attr(Game* game, int attr, bool value) {
   }
 }
 
-inline ALWAYS_INLINE int get_tile(const Game* game, Coords coords) {
+inline ALWAYS_INLINE short get_tile(const Game* game, Coords coords) {
   assert(is_tile_in_bounds(game, coords));
   return game->board_grid[coords.x + game->board_width * coords.y];
 }
 
-inline ALWAYS_INLINE void set_tile(Game* game, Coords coords, int value) {
+inline ALWAYS_INLINE void set_tile(Game* game, Coords coords, short value) {
   assert(is_tile_in_bounds(game, coords));
   game->board_grid[coords.x + game->board_width * coords.y] = value;
   set_tile_attr(game, coords, TILE_DIRTY, true);

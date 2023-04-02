@@ -17,8 +17,8 @@ int random_range(int min, int max) {
 
 static MunitResult test_placeable_spot_exists(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { 0,  1, 2, //
-                 -1, 2, 1 };
+  short grid[] = { 0,  1, 2, //
+                   -1, 2, 1 };
   Game game = { .phase = GAME_PHASE_PLACEMENT,
                 .players = NULL,
                 .players_count = 1,
@@ -33,8 +33,8 @@ static MunitResult test_placeable_spot_exists(const MunitParameter* params, void
 
 static MunitResult test_placeable_spot_does_not_exist(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { 0,  0,  2, //
-                 -1, -2, 3 };
+  short grid[] = { 0,  0,  2, //
+                   -1, -2, 3 };
   Game game = { .phase = GAME_PHASE_PLACEMENT,
                 .players = NULL,
                 .players_count = 1,
@@ -51,8 +51,8 @@ static MunitResult test_placeable_spot_does_not_exist(const MunitParameter* para
 static MunitResult
 test_valid_movement_exists_for_player(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { -2, 0, -1, //
-                 0,  1, 3 };
+  short grid[] = { -2, 0, -1, //
+                   0,  1, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -81,8 +81,8 @@ test_valid_movement_exists_for_player(const MunitParameter* params, void* data) 
 static MunitResult
 test_no_valid_movement_exists_for_player(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { -2, 0, -1, //
-                 0,  1, 3 };
+  short grid[] = { -2, 0, -1, //
+                   0,  1, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -110,7 +110,7 @@ test_no_valid_movement_exists_for_player(const MunitParameter* params, void* dat
 
 static MunitResult test_detect_valid_movement(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { -1, 1, 3 };
+  short grid[] = { -1, 1, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -136,7 +136,7 @@ static MunitResult test_detect_valid_movement(const MunitParameter* params, void
 static MunitResult
 test_movement_over_empty_space_invalid(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { 1, -1, 0, 3 };
+  short grid[] = { 1, -1, 0, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -163,7 +163,7 @@ test_movement_over_empty_space_invalid(const MunitParameter* params, void* data)
 
 static MunitResult test_movement_over_penguin_invalid(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { 1, -1, -2, 3 };
+  short grid[] = { 1, -1, -2, 3 };
   Player players[] = { { .id = 1,
                          .name = "1",
                          .points = 0,
@@ -189,7 +189,7 @@ static MunitResult test_movement_over_penguin_invalid(const MunitParameter* para
 static MunitResult
 test_move_penguin_and_calculate_points(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);
-  int grid[] = { -1, 1, 3 };
+  short grid[] = { -1, 1, 3 };
   short attrs[] = { 0, 0, 0 };
   Player players[] = { { .id = 1,
                          .name = "1",

@@ -46,7 +46,7 @@ bool any_valid_placement_exists(const Game* game) {
 }
 
 bool validate_placement_simple(const Game* game, Coords target) {
-  int tile = get_tile(game, target);
+  short tile = get_tile(game, target);
   return get_tile_fish(tile) == 1;
 }
 
@@ -54,7 +54,7 @@ PlacementError validate_placement(const Game* game, Coords target) {
   if (!is_tile_in_bounds(game, target)) {
     return PLACEMENT_OUT_OF_BOUNDS;
   }
-  int tile = get_tile(game, target);
+  short tile = get_tile(game, target);
   if (is_water_tile(tile)) {
     return PLACEMENT_EMPTY_TILE;
   } else if (is_penguin_tile(tile)) {
@@ -75,7 +75,7 @@ void place_penguin(Game* game, Coords target) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   assert(validate_placement(game, target) == PLACEMENT_VALID);
   Player* player = game_get_current_player(game);
-  int tile = get_tile(game, target);
+  short tile = get_tile(game, target);
   assert(is_fish_tile(tile));
 
   GameLogPlacement* entry = &game_push_log_entry(game, GAME_LOG_ENTRY_PLACEMENT)->data.placement;

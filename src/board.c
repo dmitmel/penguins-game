@@ -7,11 +7,11 @@
 #include <stdlib.h>
 
 extern bool is_tile_in_bounds(const Game* game, Coords coords);
-extern bool get_tile_attr(const Game* game, Coords coords, int attr);
-extern void set_tile_attr(Game* game, Coords coords, int attr, bool value);
-extern void set_all_tiles_attr(Game* game, int attr, bool value);
-extern int get_tile(const Game* game, Coords coords);
-extern void set_tile(Game* game, Coords coords, int value);
+extern bool get_tile_attr(const Game* game, Coords coords, short attr);
+extern void set_tile_attr(Game* game, Coords coords, short attr, bool value);
+extern void set_all_tiles_attr(Game* game, short attr, bool value);
+extern short get_tile(const Game* game, Coords coords);
+extern void set_tile(Game* game, Coords coords, short value);
 
 void setup_board(Game* game, int width, int height) {
   assert(game->phase == GAME_PHASE_SETUP);
@@ -29,7 +29,7 @@ void generate_board_random(Game* game) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      int fish = random_range(0, 3);
+      short fish = (short)random_range(0, 3);
       set_tile(game, coords, FISH_TILE(fish));
     }
   }
@@ -53,7 +53,7 @@ void generate_board_island(Game* game) {
         case 3: coords.y -= 1; break;
       }
       if (is_tile_in_bounds(game, coords)) {
-        int fish = random_range(1, 3);
+        short fish = (short)random_range(1, 3);
         set_tile(game, coords, FISH_TILE(fish));
       } else {
         break;

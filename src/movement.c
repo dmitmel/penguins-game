@@ -48,7 +48,7 @@ MovementError validate_movement_start(const Game* game, Coords start) {
   if (!is_tile_in_bounds(game, start)) {
     return MOVEMENT_NOT_A_PENGUIN;
   }
-  int start_tile = get_tile(game, start);
+  short start_tile = get_tile(game, start);
   if (!is_penguin_tile(start_tile)) {
     return MOVEMENT_NOT_A_PENGUIN;
   } else if (get_tile_player_id(start_tile) != game_get_current_player(game)->id) {
@@ -75,7 +75,7 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
   } else if (target.x != start.x && target.y != start.y) {
     return MOVEMENT_DIAGONAL;
   }
-  int target_tile = get_tile(game, target);
+  short target_tile = get_tile(game, target);
   if (is_water_tile(target_tile)) {
     return MOVEMENT_ONTO_EMPTY_TILE;
   } else if (is_penguin_tile(target_tile)) {
@@ -90,7 +90,7 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
     if (fail) {
       *fail = coords;
     }
-    int tile = get_tile(game, coords);
+    short tile = get_tile(game, coords);
     if (is_water_tile(tile)) {
       return MOVEMENT_OVER_EMPTY_TILE;
     } else if (is_penguin_tile(tile)) {
@@ -105,7 +105,7 @@ void move_penguin(Game* game, Coords start, Coords target) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   assert(validate_movement(game, start, target, NULL) == MOVEMENT_VALID);
   Player* player = game_get_current_player(game);
-  int target_tile = get_tile(game, target);
+  short target_tile = get_tile(game, target);
   assert(is_fish_tile(target_tile));
 
   GameLogMovement* entry = &game_push_log_entry(game, GAME_LOG_ENTRY_MOVEMENT)->data.movement;

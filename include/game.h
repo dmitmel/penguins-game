@@ -22,7 +22,7 @@ typedef enum GamePhase {
 } GamePhase;
 
 typedef struct Player {
-  int id;
+  short id;
   char* name;
   int points;
   int penguins_count;
@@ -50,13 +50,13 @@ typedef struct GameLogPlayerChange {
 
 typedef struct GameLogPlacement {
   Coords target;
-  int undo_tile;
+  short undo_tile;
 } GameLogPlacement;
 
 typedef struct GameLogMovement {
   Coords penguin;
   Coords target;
-  int undo_tile;
+  short undo_tile;
 } GameLogMovement;
 
 typedef struct GameLogEntry {
@@ -76,7 +76,7 @@ typedef struct Game {
   int penguins_per_player;
   int board_width;
   int board_height;
-  int* board_grid;
+  short* board_grid;
   short* tile_attributes;
   int current_player_index;
   bool log_disabled;
@@ -95,7 +95,7 @@ uint32_t game_compute_state_hash(const Game* self);
 void game_set_log_capacity(Game* self, size_t capacity);
 GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type);
 const GameLogEntry* game_pop_log_entry(Game* self, GameLogEntryType expected_type);
-const GameLogEntry* game_get_log_entry(Game* self, size_t idx);
+const GameLogEntry* game_get_log_entry(const Game* self, size_t idx);
 
 void game_set_phase(Game* self, GamePhase phase);
 void game_set_current_player(Game* self, int idx);
@@ -127,7 +127,7 @@ inline Player* game_get_current_player(const Game* self) {
   return game_get_player(self, self->current_player_index);
 }
 
-inline int game_find_player_by_id(const Game* self, int id) {
+inline int game_find_player_by_id(const Game* self, short id) {
   for (int i = 0; i < self->players_count; i++) {
     if (self->players[i].id == id) {
       return i;

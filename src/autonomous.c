@@ -130,7 +130,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
   }
   setup_board(game, board_width, board_height);
 
-  int player_ids[MAX_PLAYERS];
+  short player_ids[MAX_PLAYERS];
   char* player_names[MAX_PLAYERS];
   int player_scores[MAX_PLAYERS];
 
@@ -158,10 +158,10 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
       str += 2;
 
       if ('0' <= c1 && c1 <= '9' && c2 == '0') {
-        int fish = c1 - '0';
+        short fish = c1 - '0';
         set_tile(game, coords, FISH_TILE(fish));
       } else if ('1' <= c2 && c2 <= '9' && c1 == '0') {
-        int player_id = c2 - '0';
+        short player_id = c2 - '0';
         set_tile(game, coords, PENGUIN_TILE(player_id));
         player_penguins_by_id[player_id - MIN_PLAYER_ID] += 1;
       } else {
@@ -200,7 +200,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     }
     taken_player_ids[id] = true;
     int i = players_count;
-    player_ids[i] = id;
+    player_ids[i] = (short)id;
     player_names[i] = strdup(name);
     player_scores[i] = points;
     players_count += 1;
@@ -214,8 +214,8 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     }
   }
   if (!my_player_found) {
-    int free_id = -1;
-    for (int id = MIN_PLAYER_ID; id <= MAX_PLAYER_ID; id++) {
+    short free_id = -1;
+    for (short id = MIN_PLAYER_ID; id <= MAX_PLAYER_ID; id++) {
       if (!taken_player_ids[id]) {
         free_id = id;
         break;
@@ -247,7 +247,7 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
     for (int y = 0; y < game->board_height; y++) {
       for (int x = 0; x < game->board_width; x++) {
         Coords coords = { x, y };
-        int tile = get_tile(game, coords);
+        short tile = get_tile(game, coords);
         if (get_tile_player_id(tile) == player->id) {
           game_add_player_penguin(game, i, coords);
         }
@@ -269,15 +269,15 @@ bool save_game_state(const Game* game, FILE* file) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      int tile = get_tile(game, coords);
+      short tile = get_tile(game, coords);
       if (x != 0) {
         fprintf(file, " ");
       }
       if (0 <= tile && tile <= 9) {
-        int fish = tile;
+        short fish = tile;
         fprintf(file, "%c0", '0' + fish);
       } else if (-9 <= tile && tile <= -1) {
-        int player_id = -tile;
+        short player_id = -tile;
         fprintf(file, "0%c", '0' + player_id);
       }
     }
