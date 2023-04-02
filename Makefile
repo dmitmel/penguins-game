@@ -8,14 +8,10 @@ endef
 
 -include local.mk
 
-CMAKE ?= $(shell command -v cmake 2>/dev/null)
-NINJA ?= $(shell command -v ninja 2>/dev/null)
+CMAKE ?= cmake
+NINJA ?= ninja
 
-ifneq (,$(NINJA))
-  CMAKE_GENERATOR ?= Ninja
-else
-  CMAKE_GENERATOR ?= Unix Makefiles
-endif
+CMAKE_GENERATOR ?= Unix Makefiles
 
 # Based on <https://github.com/neovim/neovim/blob/v0.8.3/Makefile#L57-L66>
 ifneq (,$(findstring Ninja,$(CMAKE_GENERATOR)))
