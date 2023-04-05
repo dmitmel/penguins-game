@@ -142,7 +142,6 @@ add_custom_target(run COMMAND penguins USES_TERMINAL)
 if(INTERACTIVE_MODE)
   target_compile_definitions(penguins PUBLIC INTERACTIVE_MODE)
   target_sources(penguins PRIVATE
-    src/color.c
     src/interactive.c
   )
 endif()
