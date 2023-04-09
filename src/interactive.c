@@ -31,6 +31,8 @@
 #define ANSI_SGR_CYAN "6"
 #define ANSI_SGR_WHITE "7"
 
+#define ANSI_RESET ANSI_CSI ANSI_SGR_RESET ANSI_SGR
+
 #define PLAYER_COLORS_COUNT 5
 static const char* const PLAYER_ANSI_COLORS[PLAYER_COLORS_COUNT] = {
   ANSI_SGR_RED, ANSI_SGR_GREEN, ANSI_SGR_YELLOW, ANSI_SGR_BLUE, ANSI_SGR_MAGENTA
@@ -62,21 +64,18 @@ static void print_board(const Game* game) {
       if (is_water_tile(tile)) {
         printf(ANSI_CSI ANSI_SGR_BACK_COLOR ANSI_SGR_CYAN ANSI_SGR);
         printf(ANSI_CSI ANSI_SGR_FORE_COLOR ANSI_SGR_BLACK ANSI_SGR);
-        printf(" 0 ");
-        printf(ANSI_CSI ANSI_SGR_RESET ANSI_SGR);
+        printf(" 0 " ANSI_RESET);
       } else if (is_penguin_tile(tile)) {
         int player_idx = game_find_player_by_id(game, get_tile_player_id(tile));
         Player* player = game_get_player(game, player_idx);
         printf(ANSI_CSI ANSI_SGR_BACK_COLOR "%s" ANSI_SGR, PLAYER_ANSI_COLORS[player->color]);
         printf(ANSI_CSI ANSI_SGR_FORE_COLOR ANSI_SGR_BLACK ANSI_SGR);
         printf(ANSI_CSI ANSI_SGR_BOLD ANSI_SGR);
-        printf("p%d ", player_idx + 1);
-        printf(ANSI_CSI ANSI_SGR_RESET ANSI_SGR);
+        printf("p%d " ANSI_RESET, player_idx + 1);
       } else if (is_fish_tile(tile)) {
         printf(ANSI_CSI ANSI_SGR_BACK_COLOR ANSI_SGR_WHITE ANSI_SGR);
         printf(ANSI_CSI ANSI_SGR_FORE_COLOR ANSI_SGR_BLACK ANSI_SGR);
-        printf(" %d ", get_tile_fish(tile));
-        printf(ANSI_CSI ANSI_SGR_RESET ANSI_SGR);
+        printf(" %d " ANSI_RESET, get_tile_fish(tile));
       } else {
         printf("   ");
       }
@@ -85,8 +84,14 @@ static void print_board(const Game* game) {
   }
 }
 
-static void display_new_turn_message(int player_number) {
-  printf("\nPlayer %d's turn.\n", player_number);
+static void display_new_turn_message(Game* game) {
+  Player* player = game_get_current_player(game);
+  printf(
+    "\nPlayer " ANSI_CSI ANSI_SGR_FORE_COLOR "%s" ANSI_SGR "%d" ANSI_RESET "'s turn.\n",
+    PLAYER_ANSI_COLORS[player->color],
+    game->current_player_index + 1
+  );
+  printf("\n");
 }
 
 static void display_error_message(const char* message) {
@@ -97,8 +102,20 @@ static void print_player_stats(const Game* game) {
   printf("id\t| name\t| score\n");
   for (int i = 0; i < game->players_count; i++) {
     Player* player = game_get_player(game, i);
-    printf("%d\t| %s\t| %d\n", i + 1, player->name, player->points);
+    printf(
+      ANSI_CSI ANSI_SGR_FORE_COLOR "%s" ANSI_SGR "%d" ANSI_RESET "\t| %s\t| %d\n",
+      PLAYER_ANSI_COLORS[player->color],
+      i + 1,
+      player->name,
+      player->points
+    );
   }
+}
+
+static bool scan_coords(Coords* out) {
+  bool ok = scanf("%d %d", &out->x, &out->y) != 2;
+  out->x -= 1, out->y -= 1;
+  return ok;
 }
 
 static void update_game_state_display(const Game* game) {
@@ -137,11 +154,12 @@ int run_interactive_mode(void) {
 
     printf("Player %d, select your color:\n", i + 1);
     for (int i = 0; i < PLAYER_COLORS_COUNT; i++) {
-      printf("%d - ", i + 1);
-      printf(ANSI_CSI ANSI_SGR_FORE_COLOR "%s" ANSI_SGR, PLAYER_ANSI_COLORS[i]);
-      printf("%s", PLAYER_COLOR_NAMES[i]);
-      printf(ANSI_CSI ANSI_SGR_RESET ANSI_SGR);
-      printf("\n");
+      printf(
+        "%d - " ANSI_CSI ANSI_SGR_FORE_COLOR "%s" ANSI_SGR "%s" ANSI_RESET "\n",
+        i + 1,
+        PLAYER_ANSI_COLORS[i],
+        PLAYER_COLOR_NAMES[i]
+      );
     }
     int color_choice;
     do {
@@ -177,13 +195,26 @@ int run_interactive_mode(void) {
   return 0;
 }
 
+static const char* describe_placement_result(PlacementError result) {
+  switch (result) {
+    case PLACEMENT_VALID: return "";
+    case PLACEMENT_OUT_OF_BOUNDS:
+      return "Inputted coordinates are outside the bounds of the board";
+    case PLACEMENT_EMPTY_TILE: return "This tile is empty, you can't select an empty (water) tile";
+    case PLACEMENT_ENEMY_PENGUIN: return "This tile is already occupied by a penguin"; break;
+    case PLACEMENT_OWN_PENGUIN: return "This tile is already occupied by a penguin"; break;
+    case PLACEMENT_MULTIPLE_FISH: return "Only a tile with just one fish can be selected"; break;
+  }
+  return "ERROR: what on god's green earth did you just select???";
+}
+
 void interactive_placement(Game* game) {
   Coords target = { 0, 0 };
   placement_begin(game);
   while (true) {
     int result = placement_switch_player(game);
     if (result < 0) break;
-    display_new_turn_message(game->current_player_index + 1);
+    display_new_turn_message(game);
     handle_placement_input(game, &target);
     place_penguin(game, target);
     update_game_state_display(game);
@@ -197,30 +228,31 @@ void handle_placement_input(Game* game, Coords* selected) {
     game->current_player_index + 1
   );
   while (true) {
-    scanf("%d %d", &selected->x, &selected->y);
-    selected->x -= 1, selected->y -= 1;
-    switch (validate_placement(game, *selected)) {
-      case PLACEMENT_VALID: return;
-      case PLACEMENT_OUT_OF_BOUNDS:
-        display_error_message("Inputted coordinates are outside the bounds of the board");
-        break;
-      case PLACEMENT_EMPTY_TILE:
-        display_error_message("This tile is empty, you can't select an empty(water) tile");
-        break;
-      case PLACEMENT_ENEMY_PENGUIN:
-        display_error_message("This tile is already occupied by a penguin");
-        break;
-      case PLACEMENT_OWN_PENGUIN:
-        display_error_message("This tile is already occupied by a penguin");
-        break;
-      case PLACEMENT_MULTIPLE_FISH:
-        display_error_message("Only a tile with just one fish can be selected");
-        break;
-      default:
-        display_error_message("ERROR: what on god's green earth did you just select???");
-        break;
+    scan_coords(selected);
+    PlacementError result = validate_placement(game, *selected);
+    if (result != PLACEMENT_VALID) {
+      display_error_message(describe_placement_result(result));
+      continue;
     }
+    break;
   }
+}
+
+static const char* describe_movement_result(MovementError result) {
+  switch (result) {
+    case MOVEMENT_VALID: return "";
+    case MOVEMENT_OUT_OF_BOUNDS: return "You cant move oustide the board!"; break;
+    case MOVEMENT_CURRENT_LOCATION: return "Thats your current location"; break;
+    case MOVEMENT_DIAGONAL: return "You cant move diagonaly!"; break;
+    case MOVEMENT_NOT_A_PENGUIN: return "Chose a penguin for movement"; break;
+    case MOVEMENT_NOT_YOUR_PENGUIN: return "Chose YOUR PENGUIN for movement"; break;
+    case MOVEMENT_ONTO_EMPTY_TILE: return "Can't move onto an empty tile"; break;
+    case MOVEMENT_ONTO_PENGUIN: return "Can't move onto another penguin!"; break;
+    case MOVEMENT_OVER_EMPTY_TILE: return "You cant move over an empty tile!"; break;
+    case MOVEMENT_OVER_PENGUIN: return "You cant move over another penguin!"; break;
+    case MOVEMENT_PENGUIN_BLOCKED: return "There are no possible moves for this penguin!"; break;
+  }
+  return "";
 }
 
 void interactive_movement(Game* game) {
@@ -230,7 +262,7 @@ void interactive_movement(Game* game) {
   while (true) {
     int result = movement_switch_player(game);
     if (result < 0) break;
-    display_new_turn_message(game->current_player_index + 1);
+    display_new_turn_message(game);
     handle_movement_input(game, &penguin, &target);
     move_penguin(game, penguin, target);
     update_game_state_display(game);
@@ -241,34 +273,25 @@ void interactive_movement(Game* game) {
 void handle_movement_input(Game* game, Coords* penguin, Coords* target) {
   while (true) {
     printf("Chose a penguin\n");
-    scanf("%d %d", &penguin->x, &penguin->y);
-    penguin->x -= 1, penguin->y -= 1;
-    printf("Where do you want to move?\n");
-    scanf("%d %d", &target->x, &target->y);
-    target->x -= 1, target->y -= 1;
-    MovementError input = validate_movement(game, *penguin, *target, NULL);
-    switch (input) {
-      case MOVEMENT_VALID: return;
-      case MOVEMENT_OUT_OF_BOUNDS:
-        display_error_message("You cant move oustide the board!");
-        break;
-      case MOVEMENT_CURRENT_LOCATION: display_error_message("Thats your current location"); break;
-      case MOVEMENT_DIAGONAL: display_error_message("You cant move diagonaly!"); break;
-      case MOVEMENT_NOT_A_PENGUIN: display_error_message("Chose a penguin for movement"); break;
-      case MOVEMENT_NOT_YOUR_PENGUIN:
-        display_error_message("Chose YOUR PENGUIN for movement");
-        break;
-      case MOVEMENT_ONTO_EMPTY_TILE: display_error_message("Can't move onto an empty tile"); break;
-      case MOVEMENT_ONTO_PENGUIN: display_error_message("Can't move onto another penguin!"); break;
-      case MOVEMENT_OVER_EMPTY_TILE:
-        display_error_message("You cant move over an empty tile!");
-        break;
-      case MOVEMENT_OVER_PENGUIN:
-        display_error_message("You cant move over another penguin!");
-        break;
-      case MOVEMENT_PENGUIN_BLOCKED:
-        display_error_message("There are no possible moves for this penguin!");
-        break;
+    while (true) {
+      scan_coords(penguin);
+      MovementError result = validate_movement_start(game, *penguin);
+      if (result != MOVEMENT_VALID) {
+        display_error_message(describe_movement_result(result));
+        continue;
+      }
+      break;
     }
+    printf("Where do you want to move?\n");
+    while (true) {
+      scan_coords(target);
+      MovementError result = validate_movement(game, *penguin, *target, NULL);
+      if (result != MOVEMENT_VALID) {
+        display_error_message(describe_movement_result(result));
+        continue;
+      }
+      break;
+    }
+    break;
   }
 }
