@@ -12,7 +12,14 @@ typedef enum ActionArg {
   ACTION_ARG_PRINT_NAME,
   ACTION_ARG_PLACEMENT,
   ACTION_ARG_MOVEMENT,
+  ACTION_ARG_GENERATE,
 } ActionArg;
+
+typedef enum GenerateArg {
+  GENERATE_ARG_NONE,
+  GENERATE_ARG_ISLAND,
+  GENERATE_ARG_RANDOM,
+} GenerateArg;
 
 typedef struct Arguments {
   ActionArg action;
@@ -21,6 +28,9 @@ typedef struct Arguments {
   const char* output_board_file;
   const char* set_name;
   BotParameters bot;
+  int board_gen_width;
+  int board_gen_height;
+  GenerateArg board_gen_type;
 } Arguments;
 
 void init_arguments(Arguments* self);

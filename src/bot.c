@@ -235,6 +235,7 @@ bool bot_make_move(BotState* self, Coords* out_penguin, Coords* out_target) {
 
   int best_indexes[BEST_MOVES_COUNT];
   int available_moves = pick_best_scores(moves_count, move_scores, BEST_MOVES_COUNT, best_indexes);
+  UNUSED(available_moves);
   assert(available_moves > 0);
   BotMove picked_move = moves_list[best_indexes[0]];
   *out_penguin = picked_move.penguin, *out_target = picked_move.target;

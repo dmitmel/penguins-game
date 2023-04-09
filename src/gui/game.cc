@@ -234,7 +234,7 @@ GamePanel::GamePanel(GameFrame* parent, wxWindowID id, NewGameDialog* dialog)
   switch (dialog->get_board_gen_type()) {
     case BOARD_GEN_RANDOM: generate_board_random(game); break;
     case BOARD_GEN_ISLAND: generate_board_island(game); break;
-    default: break;
+    case BOARD_GEN_MAX: break;
   }
   game_end_setup(game);
 

@@ -30,6 +30,33 @@ int run_autonomous_mode(const Arguments* args) {
   Game* game = game_new();
   FILE *input_file, *output_file;
 
+  if (args->action == ACTION_ARG_GENERATE) {
+    game_begin_setup(game);
+    game_set_players_count(game, 0);
+    game_set_penguins_per_player(game, 0);
+    setup_board(game, args->board_gen_width, args->board_gen_height);
+    switch (args->board_gen_type) {
+      case GENERATE_ARG_ISLAND: generate_board_island(game); break;
+      case GENERATE_ARG_RANDOM: generate_board_random(game); break;
+      case GENERATE_ARG_NONE: break;
+    }
+    game_end_setup(game);
+
+    if ((output_file = fopen(args->output_board_file, "w")) == NULL) {
+      perror("Failed to open the output board file");
+      return EXIT_INTERNAL_ERROR;
+    }
+    if (!save_game_state(game, output_file)) {
+      return EXIT_INTERNAL_ERROR;
+    }
+    fflush(output_file);
+    fclose(output_file);
+
+    game_free(game);
+
+    return EXIT_OK;
+  }
+
   game_begin_setup(game);
   if ((input_file = fopen(args->input_board_file, "r")) == NULL) {
     perror("Failed to open the input board file");

@@ -11,6 +11,9 @@ void init_arguments(Arguments* self) {
   self->input_board_file = NULL;
   self->output_board_file = NULL;
   self->set_name = NULL;
+  self->board_gen_width = 0;
+  self->board_gen_height = 0;
+  self->board_gen_type = GENERATE_ARG_NONE;
   init_bot_parameters(&self->bot);
 }
 
@@ -19,6 +22,7 @@ void print_usage(const char* prog_name) {
 #ifdef AUTONOMOUS_MODE
   fprintf(stderr, "%s phase=placement penguins=N inputboard.txt outpuboard.txt\n", prog_name);
   fprintf(stderr, "%s phase=movement board.txt board.txt\n", prog_name);
+  fprintf(stderr, "%s generate <island|random> <WIDTH> <HEIGHT> board.txt\n", prog_name);
   fprintf(stderr, "%s name\n", prog_name);
 #endif
 #ifdef INTERACTIVE_MODE
@@ -33,9 +37,11 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
   int file_arg = 0;
   for (int i = 1; i < argc; i++) {
     const char* arg = argv[i];
-    const char* arg_value;
+    const char* arg_value = arg;
     bool is_placement_or_movement =
       result->action == ACTION_ARG_PLACEMENT || result->action == ACTION_ARG_MOVEMENT;
+    bool is_board_gen = result->action == ACTION_ARG_GENERATE;
+    long num = 0;
     if ((arg_value = strip_prefix(arg, "phase="))) {
       if (strcmp(arg_value, "placement") == 0) {
         result->action = ACTION_ARG_PLACEMENT;
@@ -46,9 +52,8 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         ok = false;
       }
     } else if ((arg_value = strip_prefix(arg, "penguins="))) {
-      long value = 0;
-      if (parse_number(arg_value, &value) && value > 0) {
-        result->penguins = (int)value;
+      if (parse_number(arg_value, &num) && num > 0) {
+        result->penguins = (int)num;
       } else {
         fprintf(stderr, "Invalid value for the 'penguins' option: '%s'\n", arg_value);
         ok = false;
@@ -57,6 +62,8 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
       result->action = ACTION_ARG_PRINT_NAME;
     } else if (strcmp(arg, "interactive") == 0) {
       result->action = ACTION_ARG_INTERACTIVE;
+    } else if (strcmp(arg, "generate") == 0) {
+      result->action = ACTION_ARG_GENERATE;
     } else if ((arg_value = strip_prefix(arg, "name="))) {
       if (*arg_value != '\0') {
         result->set_name = arg_value;
@@ -78,9 +85,8 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         fprintf(stderr, "Invalid value for the 'bot-placement' option: '%s'\n", arg_value);
       }
     } else if ((arg_value = strip_prefix(arg, "bot-placement-scan-area="))) {
-      long value;
-      if (parse_number(arg_value, &value) && value >= 0) {
-        result->bot.placement_scan_area = (int)value;
+      if (parse_number(arg_value, &num) && num >= 0) {
+        result->bot.placement_scan_area = (int)num;
       } else {
         fprintf(
           stderr, "Invalid value for the 'bot-placement-scan-area' option: '%s'\n", arg_value
@@ -99,31 +105,57 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         fprintf(stderr, "Invalid value for the 'bot-movement' option: '%s'\n", arg_value);
       }
     } else if ((arg_value = strip_prefix(arg, "bot-max-move-steps="))) {
-      long value;
-      if (parse_number(arg_value, &value) && value >= 0) {
-        result->bot.max_move_length = (int)value;
+      if (parse_number(arg_value, &num) && num >= 0) {
+        result->bot.max_move_length = (int)num;
       } else {
         fprintf(stderr, "Invalid value for the 'bot-max-move-steps' option: '%s'\n", arg_value);
         ok = false;
       }
     } else if ((arg_value = strip_prefix(arg, "bot-recursion="))) {
-      long value;
-      if (parse_number(arg_value, &value) && value >= 0) {
-        result->bot.recursion_limit = (int)value;
+      if (parse_number(arg_value, &num) && num >= 0) {
+        result->bot.recursion_limit = (int)num;
       } else {
         fprintf(stderr, "Invalid value for the 'bot-recursion' option: '%s'\n", arg_value);
         ok = false;
       }
     } else if ((arg_value = strip_prefix(arg, "bot-junction-check-recursion="))) {
-      long value;
-      if (parse_number(arg_value, &value) && value >= -1) {
-        result->bot.junction_check_recursion_limit = (int)value;
+      if (parse_number(arg_value, &num) && num >= -1) {
+        result->bot.junction_check_recursion_limit = (int)num;
       } else {
         fprintf(
           stderr, "Invalid value for the 'bot-junction-check-recursion' option: '%s'\n", arg_value
         );
         ok = false;
       }
+    } else if (is_board_gen && file_arg == 0) {
+      if (strcmp(arg, "island") == 0) {
+        result->board_gen_type = GENERATE_ARG_ISLAND;
+      } else if (strcmp(arg, "random") == 0) {
+        result->board_gen_type = GENERATE_ARG_RANDOM;
+      } else {
+        fprintf(stderr, "Invalid value for the 'board_gen_type' option: '%s'\n", arg);
+        ok = false;
+      }
+      file_arg++;
+    } else if (is_board_gen && file_arg == 1) {
+      if (parse_number(arg, &num) && num >= 1) {
+        result->board_gen_width = (int)num;
+      } else {
+        fprintf(stderr, "Invalid value for the 'WIDTH' option: '%s'\n", arg);
+        ok = false;
+      }
+      file_arg++;
+    } else if (is_board_gen && file_arg == 2) {
+      if (parse_number(arg, &num) && num >= 1) {
+        result->board_gen_height = (int)num;
+      } else {
+        fprintf(stderr, "Invalid value for the 'HEIGHT' option: '%s'\n", arg);
+        ok = false;
+      }
+      file_arg++;
+    } else if (is_board_gen && file_arg == 3) {
+      result->output_board_file = arg;
+      file_arg++;
     } else if (is_placement_or_movement && file_arg == 0) {
       result->input_board_file = arg;
       file_arg++;
@@ -150,6 +182,25 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
   if (result->action == ACTION_ARG_PLACEMENT) {
     if (result->penguins <= 0) {
       fprintf(stderr, "Expected a value for the 'penguins' option\n");
+      ok = false;
+    }
+  }
+
+  if (result->action == ACTION_ARG_GENERATE) {
+    if (result->board_gen_type == GENERATE_ARG_NONE) {
+      fprintf(stderr, "Expected a value for the required argument 'board_gen_type'\n");
+      ok = false;
+    }
+    if (result->board_gen_width <= 0) {
+      fprintf(stderr, "Expected a value for the required argument 'WIDTH'\n");
+      ok = false;
+    }
+    if (result->board_gen_height <= 0) {
+      fprintf(stderr, "Expected a value for the required argument 'HEIGHT'\n");
+      ok = false;
+    }
+    if (result->output_board_file == NULL) {
+      fprintf(stderr, "Expected a value for the required argument 'output_board_file'\n");
       ok = false;
     }
   }

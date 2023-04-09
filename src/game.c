@@ -170,19 +170,23 @@ void game_end_setup(Game* self) {
   assert(self->board_height > 0);
   assert(self->board_grid != NULL);
   assert(self->tile_attributes != NULL);
-  assert(self->players != NULL);
-  assert(self->players_count > 0);
+  assert(self->players_count >= 0);
+  if (self->players_count != 0) {
+    assert(self->players != NULL);
+  }
   assert(self->penguins_per_player >= 0);
   for (int i = 0; i < self->players_count; i++) {
     assert(self->players[i].name != NULL);
-    assert(self->players[i].penguins != NULL);
+    if (self->penguins_per_player != 0) {
+      assert(self->players[i].penguins != NULL);
+    }
   }
   game_set_phase(self, GAME_PHASE_SETUP_DONE);
 }
 
 void game_set_penguins_per_player(Game* self, int value) {
   assert(self->phase == GAME_PHASE_SETUP);
-  assert(value > 0);
+  assert(value >= 0);
   self->penguins_per_player = value;
   for (int i = 0; i < self->players_count; i++) {
     Player* player = &self->players[i];
@@ -194,7 +198,7 @@ void game_set_penguins_per_player(Game* self, int value) {
 
 void game_set_players_count(Game* self, int count) {
   assert(self->phase == GAME_PHASE_SETUP);
-  assert(count > 0);
+  assert(count >= 0);
   assert(self->players == NULL);
   self->players = malloc(sizeof(*self->players) * count);
   self->players_count = count;
