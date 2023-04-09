@@ -169,11 +169,12 @@ void GameEndDialogGrid::equally_size_columns() {
   // Width distribution algorithm was taken from
   // <https://github.com/wxWidgets/wxWidgets/blob/v3.2.2.1/src/common/statbar.cpp#L200-L213>.
   growable_cols_total_size += cols_free_size;
-  for (int i = ncols - 1; i >= 0; i--) {
+  for (int i = ncols - 1, grown = growable_cols; i >= 0; i--) {
     if (this->GetColSize(i) < cols_ideal_size) {
-      int size = growable_cols_total_size / (i + 1);
+      int size = growable_cols_total_size / grown;
       this->SetColSize(i, size);
       growable_cols_total_size -= size;
+      grown -= 1;
     }
   }
   this->EndBatch();
