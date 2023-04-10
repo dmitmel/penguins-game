@@ -51,6 +51,9 @@ all: $(CMAKE_STAMP)
 build: $(CMAKE_STAMP)
 	+$(BUILD_TOOL) -C $(BUILD_DIR) penguins
 
+build-lib: $(CMAKE_STAMP)
+	+$(BUILD_TOOL) -C $(BUILD_DIR) penguins-lib
+
 build-gui: $(CMAKE_STAMP)
 	+$(BUILD_TOOL) -C $(BUILD_DIR) penguins-gui
 

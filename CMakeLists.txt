@@ -316,8 +316,6 @@ if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
   set(DOXYGEN_INCLUDED_BY_GRAPH NO)
   # Also don't generate graphs on the directory pages (why is this even done?).
   set(DOXYGEN_DIRECTORY_GRAPH NO)
-  # Use our README as the homepage of the generated documentation.
-  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE readme.md)
   # Arrange members on the file and class pages in the order of declaration.
   set(DOXYGEN_SORT_MEMBER_DOCS NO)
   # Add links to other members which reference a given one.
@@ -333,8 +331,7 @@ if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
     ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-sidebar-only.css)
   set(DOXYGEN_HTML_COLORSTYLE LIGHT)
 
-  doxygen_add_docs(doxygen
-    ${doxygen_inputs} ${DOXYGEN_USE_MDFILE_AS_MAINPAGE}
+  doxygen_add_docs(doxygen ${doxygen_inputs}
     COMMENT "Generate API documentation for ${PROJECT_NAME}"
   )
 endif()

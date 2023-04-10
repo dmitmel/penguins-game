@@ -5,6 +5,7 @@
 # wxWidgets' internals (case in point: wxUSE_DYNLIB_CLASS). The full list of
 # compilation options can be found here:
 # <https://github.com/wxWidgets/wxWidgets/blob/v3.2.2.1/build/cmake/options.cmake>.
+# If you need something that isn't enabled - just comment the set() line out.
 
 set(wxUSE_REGEX OFF)
 # set(wxUSE_ZLIB OFF)
