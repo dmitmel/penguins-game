@@ -1,17 +1,18 @@
-#include "random.h"
+#include "gui/better_random.hh"
+#include <memory>
 #include <random>
 
-static std::default_random_engine& get_random_engine() {
-  static thread_local std::default_random_engine rng{ std::random_device()() };
-  return rng;
+BetterRng::BetterRng() {
+  // std::random_device has really large internal state, something like 5
+  // kilobytes (on GCC/Linux), therefore I think its better to allocate it on
+  // the heap.
+  std::unique_ptr<std::random_device> rng_dev(new std::random_device());
+  this->rng_engine.seed((*rng_dev)());
+  this->random_range = &random_range_impl;
 }
 
-extern "C" void random_init(void) {
-  // Ensure that the RNG has been initialized.
-  get_random_engine();
-}
-
-extern "C" int random_range(int min, int max) {
+int BetterRng::random_range_impl(Rng* rng, int min, int max) {
+  auto self = (BetterRng*)rng;
   std::uniform_int_distribution<int> distribution(min, max);
-  return distribution(get_random_engine());
+  return distribution(self->rng_engine);
 }

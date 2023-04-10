@@ -1,12 +1,9 @@
 #include "arguments.h"
 #include "autonomous.h"
 #include "interactive.h"
-#include "random.h"
 #include <stdio.h> // IWYU pragma: keep
 
 int main(int argc, char* argv[]) {
-  random_init();
-
   if (argc <= 1) {
 #ifdef INTERACTIVE_MODE
     return run_interactive_mode();

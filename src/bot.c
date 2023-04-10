@@ -3,7 +3,6 @@
 #include "game.h"
 #include "movement.h"
 #include "placement.h"
-#include "random.h"
 #include "utils.h"
 #include <assert.h>
 #include <limits.h>
@@ -23,10 +22,11 @@ void init_bot_parameters(BotParameters* self) {
   self->junction_check_recursion_limit = 2;
 }
 
-BotState* bot_state_new(const BotParameters* params, Game* game) {
+BotState* bot_state_new(const BotParameters* params, Game* game, Rng* rng) {
   BotState* self = malloc(sizeof(*self));
   self->params = params;
   self->game = game;
+  self->rng = rng;
   self->cancelled = false;
 
   self->tile_coords_cap = 0;
@@ -71,7 +71,7 @@ void bot_state_free(BotState* self) {
 
 BotState* bot_enter_sub_state(BotState* self) {
   if (self->sub_state == NULL) {
-    self->sub_state = bot_state_new(self->params, self->game);
+    self->sub_state = bot_state_new(self->params, self->game, self->rng);
     self->sub_state->depth = self->depth + 1;
   }
   return self->sub_state;
@@ -114,6 +114,7 @@ static int pick_best_scores(int scores_length, int* scores, int best_length, int
 
 bool bot_make_placement(BotState* self, Coords* out_target) {
   Game* game = self->game;
+  Rng* rng = self->rng;
 
   bot_alloc_buf(self->tile_coords, self->tile_coords_cap, game->board_width * game->board_height);
   int tiles_count = 0;
@@ -131,7 +132,8 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
 
   BotPlacementStrategy strategy = self->params->placement_strategy;
   if (strategy == BOT_PLACEMENT_FIRST_POSSIBLE || strategy == BOT_PLACEMENT_RANDOM) {
-    int picked_tile_idx = strategy == BOT_PLACEMENT_RANDOM ? random_range(0, tiles_count - 1) : 0;
+    int picked_tile_idx =
+      strategy == BOT_PLACEMENT_RANDOM ? rng->random_range(rng, 0, tiles_count - 1) : 0;
     *out_target = self->tile_coords[picked_tile_idx];
     return true;
   }
@@ -155,7 +157,8 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
   int available_tiles =
     pick_best_scores(tiles_count, self->tile_scores, BEST_MOVES_COUNT, best_indexes);
   assert(available_tiles > 0);
-  Coords picked_tile = self->tile_coords[best_indexes[random_range(0, available_tiles - 1)]];
+  Coords picked_tile =
+    self->tile_coords[best_indexes[rng->random_range(rng, 0, available_tiles - 1)]];
   *out_target = picked_tile;
   return true;
 }
@@ -224,7 +227,9 @@ bool bot_make_move(BotState* self, Coords* out_penguin, Coords* out_target) {
 
   BotMovementStrategy strategy = self->params->movement_strategy;
   if (strategy == BOT_MOVEMENT_FIRST_POSSIBLE || strategy == BOT_MOVEMENT_RANDOM) {
-    int picked_move_idx = strategy == BOT_MOVEMENT_RANDOM ? random_range(0, moves_count - 1) : 0;
+    Rng* rng = self->rng;
+    int picked_move_idx =
+      strategy == BOT_MOVEMENT_RANDOM ? rng->random_range(rng, 0, moves_count - 1) : 0;
     BotMove picked_move = self->all_moves[picked_move_idx];
     *out_penguin = picked_move.penguin, *out_target = picked_move.target;
     return true;

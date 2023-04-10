@@ -27,6 +27,8 @@ int run_autonomous_mode(const Arguments* args) {
     return EXIT_OK;
   }
 
+  Rng rng = init_stdlib_rng();
+
   Game* game = game_new();
   FILE *input_file, *output_file;
 
@@ -36,8 +38,8 @@ int run_autonomous_mode(const Arguments* args) {
     game_set_penguins_per_player(game, 0);
     setup_board(game, args->board_gen_width, args->board_gen_height);
     switch (args->board_gen_type) {
-      case GENERATE_ARG_ISLAND: generate_board_island(game); break;
-      case GENERATE_ARG_RANDOM: generate_board_random(game); break;
+      case GENERATE_ARG_ISLAND: generate_board_island(game, &rng); break;
+      case GENERATE_ARG_RANDOM: generate_board_random(game, &rng); break;
       case GENERATE_ARG_NONE: break;
     }
     game_end_setup(game);
@@ -80,7 +82,7 @@ int run_autonomous_mode(const Arguments* args) {
   assert(my_player_index >= 0);
 
   bool move_ok = false;
-  BotState* bot = bot_state_new(&args->bot, game);
+  BotState* bot = bot_state_new(&args->bot, game, &rng);
   if (args->action == ACTION_ARG_PLACEMENT) {
     placement_begin(game);
     game->current_player_index = my_player_index - 1;

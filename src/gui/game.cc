@@ -2,6 +2,7 @@
 #include "board.h"
 #include "bot.h"
 #include "game.h"
+#include "gui/better_random.hh"
 #include "gui/canvas.hh"
 #include "gui/controllers.hh"
 #include "gui/game_end_dialog.hh"
@@ -231,9 +232,10 @@ GamePanel::GamePanel(GameFrame* parent, wxWindowID id, NewGameDialog* dialog)
     this->player_types.push_back(dialog->get_player_type(i));
   }
   setup_board(game, dialog->get_board_width(), dialog->get_board_height());
+  BetterRng& rng = wxGetApp().rng;
   switch (dialog->get_board_gen_type()) {
-    case BOARD_GEN_RANDOM: generate_board_random(game); break;
-    case BOARD_GEN_ISLAND: generate_board_island(game); break;
+    case BOARD_GEN_RANDOM: generate_board_random(game, &rng); break;
+    case BOARD_GEN_ISLAND: generate_board_island(game, &rng); break;
     case BOARD_GEN_MAX: break;
   }
   game_end_setup(game);

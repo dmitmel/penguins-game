@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gui/better_random.hh"
 #include "gui/tileset.hh"
 #include <wx/app.h>
 #include <wx/iconbndl.h>
@@ -15,6 +16,7 @@ public:
   wxIconBundle app_icon;
   TilesetHelper tileset;
   GameFrame* game_frame;
+  BetterRng rng;
 };
 
 wxDECLARE_APP(PenguinsApp);

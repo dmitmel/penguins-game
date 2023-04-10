@@ -5,15 +5,9 @@
 #include "game.h"
 #include "movement.h"
 #include "placement.h"
-#include "random.h"
 #include "utils.h"
 #include <munit.h>
 #include <stdio.h>
-
-// an implementation of the function defined in random.h and used in board.c
-int random_range(int min, int max) {
-  return munit_rand_int_range(min, max);
-}
 
 static MunitResult test_placeable_spot_exists(const MunitParameter* params, void* data) {
   UNUSED(params), UNUSED(data);

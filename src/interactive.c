@@ -126,6 +126,8 @@ static void update_game_state_display(const Game* game) {
 }
 
 int run_interactive_mode(void) {
+  Rng rng = init_stdlib_rng();
+
 #ifdef _WIN32
   HANDLE out_handle = GetStdHandle(STD_OUTPUT_HANDLE);
   DWORD out_mode = 0;
@@ -179,7 +181,7 @@ int run_interactive_mode(void) {
   printf("E.g.: 10 5 -> width=10, height=5\n");
   scanf("%d %d", &board_width, &board_height);
   setup_board(game, board_width, board_height);
-  generate_board_random(game);
+  generate_board_random(game, &rng);
 
   game_end_setup(game);
 

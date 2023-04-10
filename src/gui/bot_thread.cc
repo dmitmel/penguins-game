@@ -24,7 +24,7 @@ void BotThreadShared::notify_exit() {
 BotThread::BotThread(BotTurnController* controller)
 : wxThread(wxTHREAD_DETACHED), controller(controller), bot_params(controller->bot_params) {
   this->game.reset(game_clone(controller->game));
-  this->bot_state.reset(bot_state_new(this->bot_params.get(), this->game.get()));
+  this->bot_state.reset(bot_state_new(this->bot_params.get(), this->game.get(), &this->rng));
   this->cancelled_ptr = &this->bot_state->cancelled;
 }
 

@@ -1,6 +1,5 @@
 #include "board.h"
 #include "game.h"
-#include "random.h"
 #include "utils.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -25,17 +24,17 @@ void setup_board(Game* game, int width, int height) {
   set_all_tiles_attr(game, TILE_DIRTY, true);
 }
 
-void generate_board_random(Game* game) {
+void generate_board_random(Game* game, Rng* rng) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
       Coords coords = { x, y };
-      short fish = (short)random_range(0, 3);
+      short fish = (short)rng->random_range(rng, 0, 3);
       set_tile(game, coords, FISH_TILE(fish));
     }
   }
 }
 
-void generate_board_island(Game* game) {
+void generate_board_island(Game* game, Rng* rng) {
   int w = game->board_width, h = game->board_height;
   for (int y = 0; y < h; y++) {
     for (int x = 0; x < w; x++) {
@@ -46,14 +45,14 @@ void generate_board_island(Game* game) {
   for (int i = 0; i < w + h; i++) {
     Coords coords = { w / 2, h / 2 };
     for (int j = 0; j < w + h; j++) {
-      switch (random_range(0, 3)) {
+      switch (rng->random_range(rng, 0, 3)) {
         case 0: coords.x += 1; break;
         case 1: coords.y += 1; break;
         case 2: coords.x -= 1; break;
         case 3: coords.y -= 1; break;
       }
       if (is_tile_in_bounds(game, coords)) {
-        short fish = (short)random_range(1, 3);
+        short fish = (short)rng->random_range(rng, 1, 3);
         set_tile(game, coords, FISH_TILE(fish));
       } else {
         break;

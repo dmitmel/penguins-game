@@ -2,6 +2,7 @@
 
 #include "bot.h"
 #include "game.h"
+#include "gui/better_random.hh"
 #include <memory>
 #include <wx/defs.h>
 #include <wx/thread.h>
@@ -49,6 +50,7 @@ protected:
   std::unique_ptr<Game, decltype(&game_free)> game{ nullptr, game_free };
   std::shared_ptr<BotParameters> bot_params{ nullptr };
   std::unique_ptr<BotState, decltype(&bot_state_free)> bot_state{ nullptr, bot_state_free };
+  BetterRng rng;
   volatile bool* cancelled_ptr = nullptr;
 };
 

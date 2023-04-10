@@ -24,8 +24,8 @@ enum TileAttribute {
 };
 
 void setup_board(Game* game, int width, int height);
-void generate_board_random(Game* game);
-void generate_board_island(Game* game);
+void generate_board_random(Game* game, Rng* rng);
+void generate_board_island(Game* game, Rng* rng);
 
 inline ALWAYS_INLINE bool is_tile_in_bounds(const Game* game, Coords coords) {
   int x = coords.x, y = coords.y;

@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -6,6 +7,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#include <time.h>
+#endif
 
 extern bool coords_same(Coords a, Coords b);
 extern uint32_t fnv32_hash(uint32_t state, const void* buf, size_t len);
@@ -60,4 +68,43 @@ void* memdup(const void* src, size_t size) {
   void* dest = malloc(size);
   if (dest != NULL) memcpy(dest, src, size);
   return dest;
+}
+
+// Taken from <https://cplusplus.com/faq/beginners/random-numbers/#seeding>.
+static void random_init(void) {
+#ifdef _WIN32
+  FILETIME t;
+  ULARGE_INTEGER i;
+  GetSystemTimeAsFileTime(&t);
+  i.u.LowPart = t.dwLowDateTime;
+  i.u.HighPart = t.dwHighDateTime;
+  ULONGLONG seed = i.QuadPart / 1000;
+#else
+  struct timespec ts, res;
+  clock_getres(CLOCK_REALTIME, &res);
+  clock_gettime(CLOCK_REALTIME, &ts);
+  unsigned long seed = ts.tv_nsec / res.tv_nsec;
+#endif
+  srand((unsigned int)seed);
+}
+
+// Taken from <https://cplusplus.com/faq/beginners/random-numbers/#random_int_in_range>.
+static int random_range(Rng* rng, int min, int max) {
+  UNUSED(rng);
+  assert(min <= max);
+  unsigned int n = (max - min <= RAND_MAX) ? (max - min + 1U) : (RAND_MAX + 1U);
+  unsigned int x = (RAND_MAX + 1U) / n;
+  unsigned int y = x * n;
+  unsigned int r;
+  do {
+    r = rand();
+  } while (r >= y);
+  return r / x + min;
+}
+
+Rng init_stdlib_rng(void) {
+  random_init();
+  Rng rng;
+  rng.random_range = &random_range;
+  return rng;
 }

@@ -135,7 +135,6 @@ setup_penguins_target(penguins-lib)
 add_executable(penguins
   src/arguments.c
   src/main.c
-  src/random.c
 )
 setup_penguins_target(penguins)
 add_custom_target(run COMMAND penguins USES_TERMINAL)

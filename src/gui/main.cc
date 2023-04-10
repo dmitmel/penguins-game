@@ -1,6 +1,5 @@
 #include "gui/main.hh"
 #include "gui/game.hh"
-#include "random.h"
 #include "resources_appicon_16_png.h"
 #include "resources_appicon_256_png.h"
 #include "resources_appicon_64_png.h"
@@ -23,7 +22,6 @@ bool PenguinsApp::OnInit() {
 #if wxCHECK_VERSION(3, 1, 1)
   wxStandardPaths::Get().SetFileLayout(wxStandardPathsBase::FileLayout_XDG);
 #endif
-  random_init();
   wxImage::AddHandler(new wxPNGHandler());
   tileset.load();
 

@@ -71,6 +71,12 @@ const char* strip_prefix(const char* str, const char* prefix);
 bool parse_number(const char* str, long* result);
 void* memdup(const void* src, size_t size);
 
+typedef struct Rng {
+  int (*random_range)(struct Rng* self, int min, int max);
+} Rng;
+
+Rng init_stdlib_rng(void);
+
 #define FNV32_INITIAL_STATE ((uint32_t)2166136261)
 #define FNV32_PRIME ((uint32_t)16777619)
 
