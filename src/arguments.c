@@ -23,6 +23,7 @@ void print_usage(const char* prog_name) {
   fprintf(stderr, "%s phase=placement penguins=N inputboard.txt outpuboard.txt\n", prog_name);
   fprintf(stderr, "%s phase=movement board.txt board.txt\n", prog_name);
   fprintf(stderr, "%s generate <island|random> <WIDTH> <HEIGHT> board.txt\n", prog_name);
+  fprintf(stderr, "%s view board.txt\n", prog_name);
   fprintf(stderr, "%s name\n", prog_name);
 #endif
 #ifdef INTERACTIVE_MODE
@@ -64,6 +65,8 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
       result->action = ACTION_ARG_INTERACTIVE;
     } else if (strcmp(arg, "generate") == 0) {
       result->action = ACTION_ARG_GENERATE;
+    } else if (strcmp(arg, "view") == 0) {
+      result->action = ACTION_ARG_VIEW;
     } else if ((arg_value = strip_prefix(arg, "name="))) {
       if (*arg_value != '\0') {
         result->set_name = arg_value;
@@ -156,6 +159,9 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
     } else if (is_board_gen && file_arg == 3) {
       result->output_board_file = arg;
       file_arg++;
+    } else if (result->action == ACTION_ARG_VIEW && file_arg == 0) {
+      result->input_board_file = arg;
+      file_arg++;
     } else if (is_placement_or_movement && file_arg == 0) {
       result->input_board_file = arg;
       file_arg++;
@@ -201,6 +207,13 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
     }
     if (result->output_board_file == NULL) {
       fprintf(stderr, "Expected a value for the required argument 'output_board_file'\n");
+      ok = false;
+    }
+  }
+
+  if (result->action == ACTION_ARG_VIEW) {
+    if (result->input_board_file == NULL) {
+      fprintf(stderr, "Expected a value for the required argument 'input_board_file'\n");
       ok = false;
     }
   }

@@ -50,7 +50,7 @@ static void clear_screen(void) {
   fflush(stdout);
 }
 
-static void print_board(const Game* game) {
+void print_board(const Game* game) {
   printf("   ");
   for (int x = 0; x < game->board_width; x++) {
     printf("%3d", x + 1);
@@ -98,7 +98,7 @@ static void display_error_message(const char* message) {
   printf("\n%s\n", message);
 }
 
-static void print_player_stats(const Game* game) {
+void print_player_stats(const Game* game) {
   printf("id\t| name\t| score\n");
   for (int i = 0; i < game->players_count; i++) {
     Player* player = game_get_player(game, i);
@@ -118,11 +118,15 @@ static bool scan_coords(Coords* out) {
   return ok;
 }
 
-static void update_game_state_display(const Game* game) {
-  clear_screen();
+void print_game_state(const Game* game) {
   print_player_stats(game);
   printf("\n");
   print_board(game);
+}
+
+static void update_game_state_display(const Game* game) {
+  clear_screen();
+  print_game_state(game);
 }
 
 int run_interactive_mode(void) {

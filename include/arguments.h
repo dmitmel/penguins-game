@@ -13,6 +13,7 @@ typedef enum ActionArg {
   ACTION_ARG_PLACEMENT,
   ACTION_ARG_MOVEMENT,
   ACTION_ARG_GENERATE,
+  ACTION_ARG_VIEW,
 } ActionArg;
 
 typedef enum GenerateArg {

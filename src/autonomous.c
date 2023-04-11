@@ -3,6 +3,7 @@
 #include "board.h"
 #include "bot.h"
 #include "game.h"
+#include "interactive.h"
 #include "movement.h"
 #include "placement.h"
 #include "utils.h"
@@ -28,12 +29,12 @@ int run_autonomous_mode(const Arguments* args) {
   }
 
   Rng rng = init_stdlib_rng();
-
   Game* game = game_new();
   FILE *input_file, *output_file;
+  bool move_ok = true;
 
+  game_begin_setup(game);
   if (args->action == ACTION_ARG_GENERATE) {
-    game_begin_setup(game);
     game_set_players_count(game, 0);
     game_set_penguins_per_player(game, 0);
     setup_board(game, args->board_gen_width, args->board_gen_height);
@@ -42,8 +43,66 @@ int run_autonomous_mode(const Arguments* args) {
       case GENERATE_ARG_RANDOM: generate_board_random(game, &rng); break;
       case GENERATE_ARG_NONE: break;
     }
-    game_end_setup(game);
+  } else if (args->input_board_file != NULL) {
+    if ((input_file = fopen(args->input_board_file, "r")) == NULL) {
+      perror("Failed to open the input board file");
+      return EXIT_INTERNAL_ERROR;
+    }
+    int penguins_arg = args->action == ACTION_ARG_PLACEMENT ? args->penguins : 0;
+    if (!load_game_state(game, input_file, penguins_arg, my_player_name)) {
+      fprintf(stderr, "Failed to parse the input file\n");
+      return EXIT_INPUT_FILE_ERROR;
+    }
+    fclose(input_file);
+  }
+  game_end_setup(game);
 
+  if (args->action == ACTION_ARG_VIEW) {
+#ifdef INTERACTIVE_MODE
+    print_game_state(game);
+#else
+    printf("The app must be compiled with the interactive mode for viewing the board files!\n");
+#endif
+  } else if (args->action == ACTION_ARG_PLACEMENT || args->action == ACTION_ARG_MOVEMENT) {
+    move_ok = false;
+    int my_player_index = -1;
+    for (int i = 0; i < game->players_count; i++) {
+      if (strcmp(game_get_player(game, i)->name, my_player_name) == 0) {
+        my_player_index = i;
+        break;
+      }
+    }
+    assert(my_player_index >= 0);
+    BotState* bot = bot_state_new(&args->bot, game, &rng);
+
+    if (args->action == ACTION_ARG_PLACEMENT) {
+      placement_begin(game);
+      game->current_player_index = my_player_index - 1;
+      if (placement_switch_player(game) == my_player_index) {
+        Coords target;
+        move_ok = bot_make_placement(bot, &target);
+        if (move_ok) {
+          place_penguin(game, target);
+        }
+      }
+      placement_end(game);
+    } else if (args->action == ACTION_ARG_MOVEMENT) {
+      movement_begin(game);
+      game->current_player_index = my_player_index - 1;
+      if (movement_switch_player(game) == my_player_index) {
+        Coords penguin, target;
+        move_ok = bot_make_move(bot, &penguin, &target);
+        if (move_ok) {
+          move_penguin(game, penguin, target);
+        }
+      }
+      movement_end(game);
+    }
+
+    bot_state_free(bot);
+  }
+
+  if (args->output_board_file != NULL) {
     if ((output_file = fopen(args->output_board_file, "w")) == NULL) {
       perror("Failed to open the output board file");
       return EXIT_INTERNAL_ERROR;
@@ -53,70 +112,7 @@ int run_autonomous_mode(const Arguments* args) {
     }
     fflush(output_file);
     fclose(output_file);
-
-    game_free(game);
-
-    return EXIT_OK;
   }
-
-  game_begin_setup(game);
-  if ((input_file = fopen(args->input_board_file, "r")) == NULL) {
-    perror("Failed to open the input board file");
-    return EXIT_INTERNAL_ERROR;
-  }
-  int penguins_arg = args->action == ACTION_ARG_PLACEMENT ? args->penguins : 0;
-  if (!load_game_state(game, input_file, penguins_arg, my_player_name)) {
-    fprintf(stderr, "Failed to parse the input file\n");
-    return EXIT_INPUT_FILE_ERROR;
-  }
-  fclose(input_file);
-  game_end_setup(game);
-
-  int my_player_index = -1;
-  for (int i = 0; i < game->players_count; i++) {
-    if (strcmp(game_get_player(game, i)->name, my_player_name) == 0) {
-      my_player_index = i;
-      break;
-    }
-  }
-  assert(my_player_index >= 0);
-
-  bool move_ok = false;
-  BotState* bot = bot_state_new(&args->bot, game, &rng);
-  if (args->action == ACTION_ARG_PLACEMENT) {
-    placement_begin(game);
-    game->current_player_index = my_player_index - 1;
-    if (placement_switch_player(game) == my_player_index) {
-      Coords target;
-      move_ok = bot_make_placement(bot, &target);
-      if (move_ok) {
-        place_penguin(game, target);
-      }
-    }
-    placement_end(game);
-  } else if (args->action == ACTION_ARG_MOVEMENT) {
-    movement_begin(game);
-    game->current_player_index = my_player_index - 1;
-    if (movement_switch_player(game) == my_player_index) {
-      Coords penguin, target;
-      move_ok = bot_make_move(bot, &penguin, &target);
-      if (move_ok) {
-        move_penguin(game, penguin, target);
-      }
-    }
-    movement_end(game);
-  }
-  bot_state_free(bot);
-
-  if ((output_file = fopen(args->output_board_file, "w")) == NULL) {
-    perror("Failed to open the output board file");
-    return EXIT_INTERNAL_ERROR;
-  }
-  if (!save_game_state(game, output_file)) {
-    return EXIT_INTERNAL_ERROR;
-  }
-  fflush(output_file);
-  fclose(output_file);
 
   game_free(game);
 
