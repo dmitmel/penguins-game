@@ -123,6 +123,8 @@ GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type) {
   entry->type = type;
   if (!self->log_disabled) {
     self->log_current += 1;
+    // If some entries were undone (so log_current < log_length) and the user
+    // then pushes a new entry, this line will discard all the undone entries.
     self->log_length = self->log_current;
   }
   return entry;
@@ -130,10 +132,15 @@ GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type) {
 
 const GameLogEntry* game_pop_log_entry(Game* self, GameLogEntryType expected_type) {
   assert(self->log_current > 0);
-  self->log_current -= 1;
-  const GameLogEntry* entry = &self->log_buffer[self->log_current];
+  const GameLogEntry* entry = &self->log_buffer[self->log_current - 1];
   assert(entry->type == expected_type);
-  return entry->type == expected_type ? entry : NULL;
+  // Unsure about this, but let's check the type even in the release mode.
+  // Interpreting an entry as the wrong type is nasty even by C standards.
+  if (entry->type != expected_type) {
+    return NULL;
+  }
+  self->log_current -= 1;
+  return entry;
 }
 
 const GameLogEntry* game_get_log_entry(const Game* self, size_t idx) {
@@ -241,6 +248,10 @@ void game_remove_player_penguin(Game* self, int idx, Coords coords) {
 }
 
 void game_advance_state(Game* self) {
+  // Notice that we don't return immediately after making a phase transition:
+  // this allows handling multiple consequent transitions in situations like if
+  // no player can make any moves after the placement phase ends, the game
+  // should just end.
   if (self->phase == GAME_PHASE_SETUP) {
     game_end_setup(self);
   }
@@ -249,28 +260,29 @@ void game_advance_state(Game* self) {
   }
   if (self->phase == GAME_PHASE_PLACEMENT) {
     int result = placement_switch_player(self);
-    if (result < 0) placement_end(self);
-  }
-  if (self->phase == GAME_PHASE_PLACEMENT_DONE) {
-    movement_begin(self);
+    if (result < 0) {
+      placement_end(self);
+      movement_begin(self);
+    }
   }
   if (self->phase == GAME_PHASE_MOVEMENT) {
     int result = movement_switch_player(self);
-    if (result < 0) movement_end(self);
-  }
-  if (self->phase == GAME_PHASE_MOVEMENT_DONE) {
-    game_end(self);
+    if (result < 0) {
+      movement_end(self);
+      game_end(self);
+    }
   }
 }
 
 void game_end(Game* self) {
-  assert(self->phase >= GAME_PHASE_SETUP_DONE);
+  assert(self->phase == GAME_PHASE_SETUP_DONE);
   game_set_current_player(self, -1);
   game_set_phase(self, GAME_PHASE_END);
 }
 
 void game_rewind_state_to_log_entry(Game* self, size_t target_entry) {
   bool prev_log_disabled = self->log_disabled;
+  // No new entries should be created if we are redoing stuff.
   self->log_disabled = true;
 
   // Undo

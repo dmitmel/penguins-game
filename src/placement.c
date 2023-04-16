@@ -5,14 +5,14 @@
 #include <assert.h>
 
 void placement_begin(Game* game) {
-  assert(game->phase >= GAME_PHASE_SETUP_DONE);
+  assert(game->phase == GAME_PHASE_SETUP_DONE);
   game_set_current_player(game, -1);
   game_set_phase(game, GAME_PHASE_PLACEMENT);
 }
 
 void placement_end(Game* game) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
-  game_set_phase(game, GAME_PHASE_PLACEMENT_DONE);
+  game_set_phase(game, GAME_PHASE_SETUP_DONE);
 }
 
 int placement_switch_player(Game* game) {

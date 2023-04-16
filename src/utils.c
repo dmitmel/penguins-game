@@ -45,10 +45,6 @@ const char* strip_prefix(const char* str, const char* prefix) {
   return strncmp(prefix, str, prefix_len) == 0 ? str + prefix_len : NULL;
 }
 
-// A wrapper around the strtol function. Unlike atoi it can reliably tell us
-// whether an error has occurred, whereas atoi simply returns zero, and there
-// is no way to distinguish between an error or the string legitimately
-// containing a zero. See <https://en.cppreference.com/w/c/string/byte/strtol>.
 bool parse_number(const char* str, long* result) {
   char* end;
   while (isspace(*str)) str++; // Skip the leading whitespace
@@ -63,8 +59,8 @@ bool parse_number(const char* str, long* result) {
   );
 }
 
-// Taken from <https://stackoverflow.com/a/29035370>.
 void* memdup(const void* src, size_t size) {
+  // Taken from <https://stackoverflow.com/a/29035370>.
   void* dest = malloc(size);
   if (dest != NULL) memcpy(dest, src, size);
   return dest;

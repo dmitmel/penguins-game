@@ -68,7 +68,8 @@ void print_board(const Game* game) {
       } else if (is_penguin_tile(tile)) {
         int player_idx = game_find_player_by_id(game, get_tile_player_id(tile));
         Player* player = game_get_player(game, player_idx);
-        printf(ANSI_CSI ANSI_SGR_BACK_COLOR "%s" ANSI_SGR, PLAYER_ANSI_COLORS[player->color]);
+        int color = player->color % PLAYER_COLORS_COUNT;
+        printf(ANSI_CSI ANSI_SGR_BACK_COLOR "%s" ANSI_SGR, PLAYER_ANSI_COLORS[color]);
         printf(ANSI_CSI ANSI_SGR_FORE_COLOR ANSI_SGR_BLACK ANSI_SGR);
         printf(ANSI_CSI ANSI_SGR_BOLD ANSI_SGR);
         printf("p%d " ANSI_RESET, player_idx + 1);
@@ -88,7 +89,7 @@ static void display_new_turn_message(Game* game) {
   Player* player = game_get_current_player(game);
   printf(
     "\nPlayer " ANSI_CSI ANSI_SGR_FORE_COLOR "%s" ANSI_SGR "%d" ANSI_RESET "'s turn.\n",
-    PLAYER_ANSI_COLORS[player->color],
+    PLAYER_ANSI_COLORS[player->color % PLAYER_COLORS_COUNT],
     game->current_player_index + 1
   );
   printf("\n");
@@ -104,7 +105,7 @@ void print_player_stats(const Game* game) {
     Player* player = game_get_player(game, i);
     printf(
       ANSI_CSI ANSI_SGR_FORE_COLOR "%s" ANSI_SGR "%d" ANSI_RESET "\t| %s\t| %d\n",
-      PLAYER_ANSI_COLORS[player->color],
+      PLAYER_ANSI_COLORS[player->color % PLAYER_COLORS_COUNT],
       i + 1,
       player->name,
       player->points
@@ -133,6 +134,8 @@ int run_interactive_mode(void) {
   Rng rng = init_stdlib_rng();
 
 #ifdef _WIN32
+  // Processing of ANSI sequences must be enabled on Windows. See
+  // <https://learn.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences#example-of-enabling-virtual-terminal-processing>.
   HANDLE out_handle = GetStdHandle(STD_OUTPUT_HANDLE);
   DWORD out_mode = 0;
   GetConsoleMode(out_handle, &out_mode);

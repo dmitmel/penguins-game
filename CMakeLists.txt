@@ -115,7 +115,7 @@ function(setup_penguins_target target)
   endif()
 endfunction()
 
-add_executable(embed_resource src/tools/embed_resource.cc)
+add_executable(embed_resource cmake/embed_resource.cc)
 setup_penguins_target(embed_resource)
 
 function(embed_resource res_path out_var_name)

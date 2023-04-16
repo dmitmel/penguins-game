@@ -31,7 +31,7 @@ To start playing you have to, obviously, click the "New Game" button. It will br
 
 ![new game dialog](docs/gui_new_game_dialog.png)
 
-Here you can set the parameters of the game (the labels should be more or less self-descriptive). Most of them are set to default values which are good enough, but you must enter the names of the players before beginning. The drop-downs near the player name boxes lets you choose whether this particular player is a normal human or a bot program will be playing instead, allowing you to play against a computer program (yes, you can change both players to be bots to pit them against each other). After entering the parameters press "OK" to start the game.
+Here you can set the parameters of the game (the labels should be more or less self-descriptive). Most of them are set to default values which are good enough, but you must enter the names of the players before beginning. The drop-downs near the player name boxes lets you choose whether this particular player is a normal human or a bot program will be playing instead, allowing either for two players sitting in front of the computer to play against each other, or for you to play against a computer program (yes, you can change both players to be bots to pit them against each other). After entering the parameters press "OK" to start the game.
 
 ![game screen](docs/gui_game_screen.png)
 
@@ -193,7 +193,7 @@ It should also be noted though that to get a static executable for the GUI (that
 
 ### Running the tests
 
-To just check that everything works you can simply run `make test` as explained above, however, the test runner, munit, also has its own [command-line interface](https://nemequ.github.io/munit/#running-tests) with options, for example, for filtering test cases. For tests that depend on random values and randomly fail on some of them, munit offers a way of running the test cases with a specified seed to reproduce the issues. Each time the tests are run, the PRNG seed is printed, which you can then reuse like this:
+To just check that everything works you can simply run `make test` to run the entire test suite as explained above, however, the test runner, munit, also has its own [command-line interface](https://nemequ.github.io/munit/#running-tests) with options, for example, for filtering which test cases to run. For tests that depend on random values and randomly fail on some of them, munit offers a way of running the test suite with a specified seed to reproduce the issue. Each time the test suite is run, the PRNG seed is printed, which you can then reuse like this:
 
 ```bash
 make build-tests && build/penguins-tests --seed 0xdeadbeef

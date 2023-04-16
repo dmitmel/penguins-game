@@ -1,5 +1,9 @@
 #pragma once
 
+/// @file
+/// @brief The bot algorithm
+/// @see autonomous.h
+
 #include "game.h"
 #include "movement.h"
 #include "utils.h"

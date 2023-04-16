@@ -14,6 +14,7 @@ enum PlayerType {
   PLAYER_TYPE_MAX,
 };
 
+/// @see TileAttribute
 enum GuiTileAttribute {
   TILE_BLOCKED = TILE_ATTR_MAX,
   TILE_WAS_BLOCKED,

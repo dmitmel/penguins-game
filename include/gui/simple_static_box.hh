@@ -6,6 +6,7 @@
 #include <wx/string.h>
 #include <wx/window.h>
 
+/// A wxStaticBox with just the border and no label.
 class SimpleStaticBox : public wxStaticBox {
 public:
   SimpleStaticBox() {}

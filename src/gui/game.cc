@@ -422,7 +422,9 @@ wxString GamePanel::describe_game_log_entry(size_t index) const {
   if (entry->type == GAME_LOG_ENTRY_PHASE_CHANGE) {
     auto entry_data = &entry->data.phase_change;
     if (entry_data->new_phase == GAME_PHASE_SETUP_DONE) {
-      return "Start of the game";
+      if (entry_data->old_phase == GAME_PHASE_SETUP) {
+        return "Start of the game";
+      }
     } else if (entry_data->new_phase == GAME_PHASE_PLACEMENT) {
       return "Placement phase";
     } else if (entry_data->new_phase == GAME_PHASE_MOVEMENT) {

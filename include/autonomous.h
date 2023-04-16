@@ -1,5 +1,9 @@
 #pragma once
 
+/// @file
+/// @brief The autonomous-mode machine interface
+/// @see bot.h
+
 #include "arguments.h"
 #include "game.h"
 #include <stdbool.h>

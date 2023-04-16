@@ -13,6 +13,7 @@
 
 class GamePanel;
 
+/// Responsible for drawing the board and painting the UI overlays.
 class CanvasPanel : public wxWindow {
 public:
   static const wxCoord TILE_SIZE = 40;

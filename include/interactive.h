@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file
+/// @brief The interactive-mode text user interface
+
 #include "game.h"
 #include "utils.h"
 

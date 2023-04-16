@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file
+/// @brief Movement phase functions
+
 #include "board.h"
 #include "game.h"
 #include "utils.h"
@@ -28,16 +31,28 @@ typedef struct PossibleSteps {
   int steps[DIRECTION_MAX];
 } PossibleSteps;
 
+/// @name Movement phase
+/// @{
+
+/// @relatesalso Game
 void movement_begin(Game* game);
+/// @relatesalso Game
 void movement_end(Game* game);
 
+/// @relatesalso Game
 int movement_switch_player(Game* game);
+/// @relatesalso Game
 bool any_valid_player_move_exists(const Game* game, int player_idx);
+/// @relatesalso Game
 MovementError validate_movement_start(const Game* game, Coords start);
+/// @relatesalso Game
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail);
+/// @relatesalso Game
 void move_penguin(Game* game, Coords start, Coords target);
+/// @relatesalso Game
 void undo_move_penguin(Game* game);
 
+/// @relatesalso Game
 inline int count_obstructed_directions(const Game* game, Coords penguin) {
   assert(is_tile_in_bounds(game, penguin));
   int result = 0;
@@ -51,6 +66,7 @@ inline int count_obstructed_directions(const Game* game, Coords penguin) {
   return result;
 }
 
+/// @relatesalso Game
 inline PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start) {
   assert(is_tile_in_bounds(game, start));
   PossibleSteps moves;
@@ -67,6 +83,8 @@ inline PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords s
   }
   return moves;
 }
+
+/// @}
 
 #ifdef __cplusplus
 }

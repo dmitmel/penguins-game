@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file
+/// @brief The command-line argument parser
+
 #include "bot.h"
 #include <stdbool.h>
 

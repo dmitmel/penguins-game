@@ -9,14 +9,14 @@ extern int count_obstructed_directions(const Game* game, Coords penguin);
 extern PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start);
 
 void movement_begin(Game* game) {
-  assert(game->phase >= GAME_PHASE_SETUP_DONE);
+  assert(game->phase == GAME_PHASE_SETUP_DONE);
   game_set_current_player(game, -1);
   game_set_phase(game, GAME_PHASE_MOVEMENT);
 }
 
 void movement_end(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
-  game_set_phase(game, GAME_PHASE_MOVEMENT_DONE);
+  game_set_phase(game, GAME_PHASE_SETUP_DONE);
 }
 
 int movement_switch_player(Game* game) {
