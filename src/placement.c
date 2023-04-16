@@ -3,6 +3,7 @@
 #include "game.h"
 #include "utils.h"
 #include <assert.h>
+#include <stddef.h>
 
 void placement_begin(Game* game) {
   assert(game->phase == GAME_PHASE_SETUP_DONE);
@@ -78,9 +79,12 @@ void place_penguin(Game* game, Coords target) {
   short tile = get_tile(game, target);
   assert(is_fish_tile(tile));
 
-  GameLogPlacement* entry = &game_push_log_entry(game, GAME_LOG_ENTRY_PLACEMENT)->data.placement;
-  entry->target = target;
-  entry->undo_tile = tile;
+  GameLogEntry* entry;
+  if ((entry = game_push_log_entry(game, GAME_LOG_ENTRY_PLACEMENT)) != NULL) {
+    GameLogPlacement* entry_data = &entry->data.placement;
+    entry_data->target = target;
+    entry_data->undo_tile = tile;
+  }
 
   game_add_player_penguin(game, game->current_player_index, target);
   set_tile(game, target, PENGUIN_TILE(player->id));

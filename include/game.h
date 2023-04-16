@@ -387,23 +387,10 @@ void game_set_log_capacity(Game* self, size_t capacity);
 /// top of the stack (reallocating the #Game::log_buffer if necessary) and
 /// returns a pointer to it.
 ///
+/// @note Returns @c NULL if #Game::log_disabled is set to @c true !
+///
 /// If some entries were undone and the user then pushes a new entry, discards
 /// all the undone entries.
-///
-/// @note (this is a bit of an implementation detail) When #Game::log_disabled
-/// is set to @c true, this function does create and return a pointer to an
-/// entry, but doesn't increment #Game::log_current and #Game::log_length. This
-/// was done to simplify the code somewhat, which in practice means two things:
-/// 1. When #game_rewind_state_to_log_entry is redoing the actions, the
-///    functions that are called to re-apply the entries (namely #place_penguin
-///    and #move_penguin) should create an entry that is exactly the same as
-///    the one being redone (not a big deal in practice, I don't think this is
-///    even reflected in the code, just a thing to keep in mind), so as to not
-///    break the log.
-/// 2. If the log has been disabled from the start (during setup), a stack with
-///    a single entry will be allocated anyway. That way functions creating new
-///    log entries can keep their logic, writing to the returned entry, which
-///    won't be used anyway though.
 GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type);
 
 /// @relatesalso Game

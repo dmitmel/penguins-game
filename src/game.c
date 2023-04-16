@@ -116,17 +116,18 @@ void game_set_log_capacity(Game* self, size_t capacity) {
 }
 
 GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type) {
+  if (self->log_disabled) {
+    return NULL;
+  }
   if (self->log_current >= self->log_capacity) {
     game_set_log_capacity(self, my_max(self->log_capacity * 2, 1));
   }
   GameLogEntry* entry = &self->log_buffer[self->log_current];
   entry->type = type;
-  if (!self->log_disabled) {
-    self->log_current += 1;
-    // If some entries were undone (so log_current < log_length) and the user
-    // then pushes a new entry, this line will discard all the undone entries.
-    self->log_length = self->log_current;
-  }
+  self->log_current += 1;
+  // If some entries were undone (so log_current < log_length) and the user
+  // then pushes a new entry, this line will discard all the undone entries.
+  self->log_length = self->log_current;
   return entry;
 }
 
@@ -150,19 +151,23 @@ const GameLogEntry* game_get_log_entry(const Game* self, size_t idx) {
 
 void game_set_phase(Game* self, GamePhase phase) {
   if (self->phase == phase) return;
-  GameLogPhaseChange* entry =
-    &game_push_log_entry(self, GAME_LOG_ENTRY_PHASE_CHANGE)->data.phase_change;
-  entry->old_phase = self->phase;
-  entry->new_phase = phase;
+  GameLogEntry* entry;
+  if ((entry = game_push_log_entry(self, GAME_LOG_ENTRY_PHASE_CHANGE)) != NULL) {
+    GameLogPhaseChange* entry_data = &entry->data.phase_change;
+    entry_data->old_phase = self->phase;
+    entry_data->new_phase = phase;
+  }
   self->phase = phase;
 }
 
 void game_set_current_player(Game* self, int idx) {
   if (self->current_player_index == idx) return;
-  GameLogPlayerChange* entry =
-    &game_push_log_entry(self, GAME_LOG_ENTRY_PLAYER_CHANGE)->data.player_change;
-  entry->old_player_index = self->current_player_index;
-  entry->new_player_index = idx;
+  GameLogEntry* entry;
+  if ((entry = game_push_log_entry(self, GAME_LOG_ENTRY_PLAYER_CHANGE)) != NULL) {
+    GameLogPlayerChange* entry_data = &entry->data.player_change;
+    entry_data->old_player_index = self->current_player_index;
+    entry_data->new_player_index = idx;
+  }
   self->current_player_index = idx;
 }
 
@@ -290,22 +295,22 @@ void game_rewind_state_to_log_entry(Game* self, size_t target_entry) {
     const GameLogEntry* entry = game_get_log_entry(self, self->log_current - 1);
     switch (entry->type) {
       case GAME_LOG_ENTRY_PHASE_CHANGE: {
-        const GameLogPhaseChange* data =
+        const GameLogPhaseChange* entry_data =
           &game_pop_log_entry(self, GAME_LOG_ENTRY_PHASE_CHANGE)->data.phase_change;
-        assert(self->phase == data->new_phase);
+        assert(self->phase == entry_data->new_phase);
         // Phase switching within the undo/redo system is currently performed
         // without calling the actual phase changing functions (movement_begin,
         // game_end etc) as a simplification. Currently they don't really
         // have much functionality besides checking preconditions and setting
         // the current player, so there isn't much point in calling them anyway.
-        self->phase = data->old_phase;
+        self->phase = entry_data->old_phase;
         break;
       }
       case GAME_LOG_ENTRY_PLAYER_CHANGE: {
-        const GameLogPlayerChange* data =
+        const GameLogPlayerChange* entry_data =
           &game_pop_log_entry(self, GAME_LOG_ENTRY_PLAYER_CHANGE)->data.player_change;
-        assert(self->current_player_index == data->new_player_index);
-        self->current_player_index = data->old_player_index;
+        assert(self->current_player_index == entry_data->new_player_index);
+        self->current_player_index = entry_data->old_player_index;
         break;
       }
       case GAME_LOG_ENTRY_PLACEMENT: undo_place_penguin(self); break;

@@ -108,10 +108,13 @@ void move_penguin(Game* game, Coords start, Coords target) {
   short target_tile = get_tile(game, target);
   assert(is_fish_tile(target_tile));
 
-  GameLogMovement* entry = &game_push_log_entry(game, GAME_LOG_ENTRY_MOVEMENT)->data.movement;
-  entry->penguin = start;
-  entry->target = target;
-  entry->undo_tile = target_tile;
+  GameLogEntry* entry;
+  if ((entry = game_push_log_entry(game, GAME_LOG_ENTRY_MOVEMENT)) != NULL) {
+    GameLogMovement* entry_data = &entry->data.movement;
+    entry_data->penguin = start;
+    entry_data->target = target;
+    entry_data->undo_tile = target_tile;
+  }
 
   *game_find_player_penguin(game, game->current_player_index, start) = target;
   set_tile(game, target, PENGUIN_TILE(player->id));
