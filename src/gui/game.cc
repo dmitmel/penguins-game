@@ -42,27 +42,39 @@ GameFrame::GameFrame(wxWindow* parent, wxWindowID id) : wxFrame(parent, id, "Pen
   this->SetIcons(wxGetApp().app_icon);
 
   auto menu_bar = new wxMenuBar();
-  wxMenuItem* item;
 
   auto menu_file = new wxMenu();
   menu_bar->Append(menu_file, "&File");
 
-  item = menu_file->Append(wxID_ANY, "&New game\tCtrl-N", "Start a new game");
-  this->Bind(wxEVT_MENU, &GameFrame::on_new_game, this, item->GetId());
+  this->menu_new_game = menu_file->Append(wxID_NEW, "&New game\tCtrl-N", "Start a new game");
+  auto on_new_game = [this](wxCommandEvent&) -> void { this->start_new_game(); };
+  this->Bind(wxEVT_MENU, on_new_game, this->menu_new_game->GetId());
 
-  item = menu_file->Append(wxID_ANY, "&Close game\tCtrl-W", "Close the current game");
-  this->Bind(wxEVT_MENU, &GameFrame::on_close_game, this, item->GetId());
+  this->menu_close_game =
+    menu_file->Append(wxID_CLOSE, "&Close game\tCtrl-W", "Close the current game");
+  auto on_close_game = [this](wxCommandEvent&) -> void { this->close_game(); };
+  this->Bind(wxEVT_MENU, on_close_game, this->menu_close_game->GetId());
 
   menu_file->AppendSeparator();
 
-  item = menu_file->Append(wxID_EXIT);
-  this->Bind(wxEVT_MENU, &GameFrame::on_exit, this, item->GetId());
+  this->menu_exit = menu_file->Append(wxID_EXIT);
+  auto on_exit = [this](wxCommandEvent&) -> void { this->Close(true); };
+  this->Bind(wxEVT_MENU, on_exit, this->menu_exit->GetId());
 
   auto menu_help = new wxMenu();
   menu_bar->Append(menu_help, "&Help");
 
-  item = menu_help->Append(wxID_ABOUT);
-  this->Bind(wxEVT_MENU, &GameFrame::on_about, this, item->GetId());
+  this->menu_about = menu_help->Append(wxID_ABOUT);
+  auto on_about = [this](wxCommandEvent&) -> void {
+    wxAboutDialogInfo info;
+    info.SetName("Penguins game");
+    info.SetVersion(PENGUINS_VERSION_STRING);
+#if !defined(__WXOSX__)
+    info.SetIcon(wxGetApp().app_icon.GetIconOfExactSize(64));
+#endif
+    wxAboutBox(info, this);
+  };
+  this->Bind(wxEVT_MENU, on_about, this->menu_about->GetId());
 
   this->SetMenuBar(menu_bar);
 
@@ -147,28 +159,6 @@ void GameFrame::close_game() {
   this->Centre();
 }
 
-void GameFrame::on_new_game(wxCommandEvent& WXUNUSED(event)) {
-  this->start_new_game();
-}
-
-void GameFrame::on_close_game(wxCommandEvent& WXUNUSED(event)) {
-  this->close_game();
-}
-
-void GameFrame::on_exit(wxCommandEvent& WXUNUSED(event)) {
-  this->Close(true);
-}
-
-void GameFrame::on_about(wxCommandEvent& WXUNUSED(event)) {
-  wxAboutDialogInfo info;
-  info.SetName("Penguins game");
-  info.SetVersion(PENGUINS_VERSION_STRING);
-#if !defined(__WXOSX__)
-  info.SetIcon(wxGetApp().app_icon.GetIconOfExactSize(64));
-#endif
-  wxAboutBox(info, this);
-}
-
 BaseGamePanel::BaseGamePanel(GameFrame* parent, wxWindowID id)
 : wxPanel(parent, id), frame(parent) {}
 
@@ -208,6 +198,8 @@ GameStartPanel::GameStartPanel(GameFrame* parent, wxWindowID id) : BaseGamePanel
   root_hbox->Add(content_vbox, wxSizerFlags(1).Centre().Border());
   root_vbox->Add(root_hbox, wxSizerFlags(1).Centre());
   this->SetSizer(root_vbox);
+
+  this->frame->menu_close_game->Enable(false);
 
   start_game_btn->SetFocus();
 }
@@ -308,6 +300,8 @@ GamePanel::GamePanel(GameFrame* parent, wxWindowID id, NewGameDialog* dialog)
   auto panel_vbox = new wxBoxSizer(wxVERTICAL);
   panel_vbox->Add(panel_grid, wxSizerFlags(1).Expand().Border());
   this->SetSizer(panel_vbox);
+
+  this->frame->menu_close_game->Enable(true);
 
   this->update_player_info_boxes();
   this->update_game_log();

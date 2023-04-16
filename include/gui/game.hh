@@ -11,6 +11,7 @@
 #include <wx/frame.h>
 #include <wx/gauge.h>
 #include <wx/listbox.h>
+#include <wx/menuitem.h>
 #include <wx/panel.h>
 #include <wx/scrolwin.h>
 #include <wx/sizer.h>
@@ -111,9 +112,8 @@ public:
   wxWindow* progress_container;
   wxGauge* progress_bar;
 
-protected:
-  void on_exit(wxCommandEvent& event);
-  void on_about(wxCommandEvent& event);
-  void on_new_game(wxCommandEvent& event);
-  void on_close_game(wxCommandEvent& event);
+  wxMenuItem* menu_new_game;
+  wxMenuItem* menu_close_game;
+  wxMenuItem* menu_exit;
+  wxMenuItem* menu_about;
 };
