@@ -32,6 +32,7 @@ option(AUTONOMOUS_MODE "Build the autonomous mode" ON)
 option(GRAPHICAL_MODE "Build the graphical interface" ON)
 option(BUILD_TESTS "Build tests" ON)
 option(GENERATE_DOCUMENTATION "Generate developer documentation" ON)
+option(GENERATE_WXWIDGETS_DOC_TAGS "" OFF)
 
 # These must be set before including FetchContent.
 option(FETCHCONTENT_QUIET "" OFF)
@@ -42,6 +43,20 @@ option(BUILD_WXWIDGETS_MINIMAL "Whether to produce a minimal or a full build of 
 option(BUILD_SHARED_LIBS "Whether to build shared or static libraries" OFF)
 
 include(FetchContent)
+FetchContent_Declare(munit
+  URL "https://github.com/nemequ/munit/archive/fbbdf1467eb0d04a6ee465def2e529e4c87f2118.tar.gz"
+  URL_HASH SHA1=bd1f917487c42bcee3f32c41f07bdafdc4765b13
+  PATCH_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/cmake/munit.cmake <SOURCE_DIR>/CMakeLists.txt
+)
+set(deps_wx_ver "3.2.2.1")
+FetchContent_Declare(wxWidgets
+  URL "https://github.com/wxWidgets/wxWidgets/releases/download/v${deps_wx_ver}/wxWidgets-${deps_wx_ver}.tar.bz2"
+  URL_HASH SHA1=d645cacbf2678cfc402ae163f2b0e0b05be5d239
+)
+FetchContent_Declare(doxygen-awesome-css
+  URL "https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.1.0.tar.gz"
+  URL_HASH SHA1=4986c8b81cdbdcc63d0788e2c8cdca4745ceb564
+)
 
 find_program(IWYU NAMES include-what-you-use iwyu)
 
@@ -153,14 +168,8 @@ endif()
 # link all the
 target_link_libraries(penguins PUBLIC penguins-lib)
 
-FetchContent_Declare(munit
-  URL "https://github.com/nemequ/munit/archive/fbbdf1467eb0d04a6ee465def2e529e4c87f2118.tar.gz"
-  URL_HASH SHA1=bd1f917487c42bcee3f32c41f07bdafdc4765b13
-  PATCH_COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/cmake/munit.cmake <SOURCE_DIR>/CMakeLists.txt
-)
-FetchContent_MakeAvailable(munit)
-
 if(BUILD_TESTS)
+  FetchContent_MakeAvailable(munit)
   add_executable(penguins-tests src/tests.c)
   setup_penguins_target(penguins-tests)
   add_custom_target(run-tests COMMAND penguins-tests USES_TERMINAL)
@@ -175,10 +184,6 @@ if(GRAPHICAL_MODE)
       set(GRAPHICAL_MODE OFF)
     endif()
   else()
-    FetchContent_Declare(wxWidgets
-      URL "https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.2.1/wxWidgets-3.2.2.1.tar.bz2"
-      URL_HASH SHA1=d645cacbf2678cfc402ae163f2b0e0b05be5d239
-    )
     if(BUILD_WXWIDGETS_MINIMAL)
       include(cmake/wxwidgets_config.cmake)
     endif()
@@ -292,10 +297,6 @@ endif()
 
 find_package(Doxygen)
 if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
-  FetchContent_Declare(doxygen-awesome-css
-    URL "https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.1.0.tar.gz"
-    URL_HASH SHA1=4986c8b81cdbdcc63d0788e2c8cdca4745ceb564
-  )
   FetchContent_MakeAvailable(doxygen-awesome-css)
 
   set(doxygen_inputs include src)
@@ -337,9 +338,32 @@ if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
   set(DOXYGEN_LAYOUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/docs/DoxygenLayout.xml)
   set(DOXYGEN_DOT_IMAGE_FORMAT svg)
 
+  set(doxygen_target_deps)
+  set(DOXYGEN_TAGFILES)
+  if(GENERATE_WXWIDGETS_DOC_TAGS AND BUILD_WXWIDGETS_FROM_SOURCE)
+    add_custom_command(
+      OUTPUT "wxWidgets.tag"
+      BYPRODUCTS "${wxWidgets_SOURCE_DIR}/docs/doxygen/out"
+      WORKING_DIRECTORY "${wxWidgets_SOURCE_DIR}"
+      COMMAND "${CMAKE_COMMAND}" -E env
+        "WXWIDGETS=${wxWidgets_SOURCE_DIR}"
+        "DOXYGEN=${DOXYGEN_EXECUTABLE}"
+        "WX_SKIP_DOXYGEN_VERSION_CHECK=1"
+        "GENERATE_TAGFILE=${CMAKE_CURRENT_BINARY_DIR}/wxWidgets.tag"
+        "${wxWidgets_SOURCE_DIR}/docs/doxygen/regen.sh" xml
+      VERBATIM
+    )
+    add_custom_target(generate_wxwidgets_doc_tags DEPENDS "wxWidgets.tag")
+    list(APPEND DOXYGEN_TAGFILES "${CMAKE_CURRENT_BINARY_DIR}/wxWidgets.tag=https://docs.wxwidgets.org/${deps_wx_ver}/")
+    list(APPEND doxygen_target_deps "generate_wxwidgets_doc_tags")
+  endif()
+
   doxygen_add_docs(doxygen ${doxygen_inputs}
     COMMENT "Generate API documentation for ${PROJECT_NAME}"
   )
+  if(doxygen_target_deps)
+    add_dependencies(doxygen ${doxygen_target_deps})
+  endif()
 endif()
 
 set(installed_targets penguins)
