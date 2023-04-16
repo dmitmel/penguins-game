@@ -309,6 +309,7 @@ if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
   # Generate pages with the code of source files with clickable links (by
   # default only the code of headers is included).
   set(DOXYGEN_SOURCE_BROWSER YES)
+  set(DOXYGEN_INTERNAL_DOCS YES)
   # Don't put either a list of includes or an includes graph at the beginning
   # of pages for individual files.
   set(DOXYGEN_SHOW_INCLUDE_FILES NO)
@@ -316,13 +317,16 @@ if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
   set(DOXYGEN_INCLUDED_BY_GRAPH NO)
   # Also don't generate graphs on the directory pages (why is this even done?).
   set(DOXYGEN_DIRECTORY_GRAPH NO)
+  # And don't generate some other graphs as well.
+  set(DOXYGEN_COLLABORATION_GRAPH NO)
   # Arrange members on the file and class pages in the order of declaration.
   set(DOXYGEN_SORT_MEMBER_DOCS NO)
   # Add links to other members which reference a given one.
   set(DOXYGEN_REFERENCED_BY_RELATION YES)
   set(DOXYGEN_REFERENCES_LINK_SOURCE NO)
   # Apply the doxygen-awesome theme (in the sidebar-only mode), see
-  # <https://github.com/jothepro/doxygen-awesome-css#sidebar-only-theme-2>.
+  # <https://github.com/jothepro/doxygen-awesome-css#sidebar-only-theme-2> and
+  # apply my own layout changes.
   set(DOXYGEN_GENERATE_TREEVIEW YES)
   set(DOXYGEN_DISABLE_INDEX NO)
   set(DOXYGEN_FULL_SIDEBAR NO)
@@ -330,6 +334,8 @@ if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
     ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome.css
     ${doxygen-awesome-css_SOURCE_DIR}/doxygen-awesome-sidebar-only.css)
   set(DOXYGEN_HTML_COLORSTYLE LIGHT)
+  set(DOXYGEN_LAYOUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/docs/DoxygenLayout.xml)
+  set(DOXYGEN_DOT_IMAGE_FORMAT svg)
 
   doxygen_add_docs(doxygen ${doxygen_inputs}
     COMMENT "Generate API documentation for ${PROJECT_NAME}"
