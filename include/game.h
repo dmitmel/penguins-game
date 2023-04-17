@@ -288,7 +288,7 @@ typedef struct Game {
   /// the array, the third one after the second one, and so on and so on. So,
   /// to determine the actual location of a tile in this sequential
   /// representation, we can use the formula <tt>index = y * width + x</tt>.
-  /// The length of the whole array, consequently, is <tt>width * height </tt>.
+  /// The length of the whole array, consequently, is <tt>width * height</tt>.
   /// This method is used primarily for simplicity - it is easier to manage
   /// memory of a single array than to allocate an array of arrays.
   ///
