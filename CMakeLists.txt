@@ -61,7 +61,7 @@ FetchContent_Declare(doxygen-awesome-css
 find_program(IWYU NAMES include-what-you-use iwyu)
 
 function(setup_penguins_target target)
-  target_include_directories(${target} PUBLIC include)
+  target_include_directories(${target} PUBLIC src)
   target_compile_definitions(${target} PUBLIC PENGUINS_VERSION_STRING="${PROJECT_VERSION}")
 
   set_target_properties(${target} PROPERTIES
@@ -150,21 +150,15 @@ setup_penguins_target(penguins-lib)
 add_executable(penguins
   src/arguments.c
   src/main.c
+  $<$<BOOL:${INTERACTIVE_MODE}>:src/interactive.c>
+  $<$<BOOL:${AUTONOMOUS_MODE}>:src/autonomous.c>
 )
 setup_penguins_target(penguins)
+target_compile_definitions(penguins PUBLIC
+  $<$<BOOL:${INTERACTIVE_MODE}>:INTERACTIVE_MODE>
+  $<$<BOOL:${AUTONOMOUS_MODE}>:AUTONOMOUS_MODE>
+)
 add_custom_target(run COMMAND penguins USES_TERMINAL)
-if(INTERACTIVE_MODE)
-  target_compile_definitions(penguins PUBLIC INTERACTIVE_MODE)
-  target_sources(penguins PRIVATE
-    src/interactive.c
-  )
-endif()
-if(AUTONOMOUS_MODE)
-  target_compile_definitions(penguins PUBLIC AUTONOMOUS_MODE)
-  target_sources(penguins PRIVATE
-    src/autonomous.c
-  )
-endif()
 # link all the
 target_link_libraries(penguins PUBLIC penguins-lib)
 
@@ -299,7 +293,7 @@ find_package(Doxygen)
 if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
   FetchContent_MakeAvailable(doxygen-awesome-css)
 
-  set(doxygen_inputs include src)
+  set(doxygen_inputs src)
   # Options for better integration with C.
   set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
   set(DOXYGEN_TYPEDEF_HIDES_STRUCT YES)
