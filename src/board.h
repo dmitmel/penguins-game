@@ -53,17 +53,9 @@ enum TileAttribute {
   TILE_ATTR_MAX,
 };
 
-/// @relatesalso Game
-/// @brief Sets #Game::board_width and #Game::board_height and allocates
-/// #Game::board_grid and #Game::tile_attributes. Can only be called within
-/// #GAME_PHASE_SETUP. The @c width and @c height values must be positive.
 void setup_board(Game* game, int width, int height);
 
-/// @brief Generates the board by setting every tile purely randomly. The
-/// resulting board will look sort of like a maze.
 void generate_board_random(Game* game, Rng* rng);
-
-/// @brief Generates the board which looks sort of like a big icy island.
 void generate_board_island(Game* game, Rng* rng);
 
 /// @name Functions for accessing the board tiles and attributes

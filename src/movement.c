@@ -5,20 +5,20 @@
 #include <assert.h>
 #include <stddef.h> // IWYU pragma: keep
 
-extern int count_obstructed_directions(const Game* game, Coords penguin);
-extern PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start);
-
+/// @relatesalso Game
 void movement_begin(Game* game) {
   assert(game->phase == GAME_PHASE_SETUP_DONE);
   game_set_current_player(game, -1);
   game_set_phase(game, GAME_PHASE_MOVEMENT);
 }
 
+/// @relatesalso Game
 void movement_end(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   game_set_phase(game, GAME_PHASE_SETUP_DONE);
 }
 
+/// @relatesalso Game
 int movement_switch_player(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   int index = game->current_player_index;
@@ -34,6 +34,7 @@ int movement_switch_player(Game* game) {
   return -1;
 }
 
+/// @relatesalso Game
 bool any_valid_player_move_exists(const Game* game, int player_idx) {
   Player* player = game_get_player(game, player_idx);
   for (int i = 0; i < player->penguins_count; i++) {
@@ -44,6 +45,7 @@ bool any_valid_player_move_exists(const Game* game, int player_idx) {
   return false;
 }
 
+/// @relatesalso Game
 MovementError validate_movement_start(const Game* game, Coords start) {
   if (!is_tile_in_bounds(game, start)) {
     return MOVEMENT_NOT_A_PENGUIN;
@@ -61,6 +63,7 @@ MovementError validate_movement_start(const Game* game, Coords start) {
   }
 }
 
+/// @relatesalso Game
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail) {
   MovementError result = validate_movement_start(game, start);
   if (result != MOVEMENT_VALID) {
@@ -101,6 +104,7 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
   return MOVEMENT_VALID;
 }
 
+/// @relatesalso Game
 void move_penguin(Game* game, Coords start, Coords target) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   assert(validate_movement(game, start, target, NULL) == MOVEMENT_VALID);
@@ -123,6 +127,7 @@ void move_penguin(Game* game, Coords start, Coords target) {
   player->moves_count += 1;
 }
 
+/// @relatesalso Game
 void undo_move_penguin(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   const GameLogMovement* entry = &game_pop_log_entry(game, GAME_LOG_ENTRY_MOVEMENT)->data.movement;
@@ -134,3 +139,6 @@ void undo_move_penguin(Game* game) {
   player->points -= get_tile_fish(entry->undo_tile);
   player->moves_count -= 1;
 }
+
+extern int count_obstructed_directions(const Game* game, Coords penguin);
+extern PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords start);

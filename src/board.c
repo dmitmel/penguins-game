@@ -5,13 +5,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-extern bool is_tile_in_bounds(const Game* game, Coords coords);
-extern bool get_tile_attr(const Game* game, Coords coords, short attr);
-extern void set_tile_attr(Game* game, Coords coords, short attr, bool value);
-extern void set_all_tiles_attr(Game* game, short attr, bool value);
-extern short get_tile(const Game* game, Coords coords);
-extern void set_tile(Game* game, Coords coords, short value);
-
+/// @relatesalso Game
+/// @brief Sets #Game::board_width and #Game::board_height and allocates
+/// #Game::board_grid and #Game::tile_attributes. Can only be called within
+/// #GAME_PHASE_SETUP. The @c width and @c height values must be positive.
 void setup_board(Game* game, int width, int height) {
   assert(game->phase == GAME_PHASE_SETUP);
   assert(width > 0 && height > 0);
@@ -24,6 +21,8 @@ void setup_board(Game* game, int width, int height) {
   set_all_tiles_attr(game, TILE_DIRTY, true);
 }
 
+/// @brief Generates the board by setting every tile purely randomly. The
+/// resulting board will look sort of like a maze.
 void generate_board_random(Game* game, Rng* rng) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
@@ -34,6 +33,7 @@ void generate_board_random(Game* game, Rng* rng) {
   }
 }
 
+/// @brief Generates the board which looks sort of like a big icy island.
 void generate_board_island(Game* game, Rng* rng) {
   int w = game->board_width, h = game->board_height;
   for (int y = 0; y < h; y++) {
@@ -60,3 +60,10 @@ void generate_board_island(Game* game, Rng* rng) {
     }
   }
 }
+
+extern bool is_tile_in_bounds(const Game* game, Coords coords);
+extern bool get_tile_attr(const Game* game, Coords coords, short attr);
+extern void set_tile_attr(Game* game, Coords coords, short attr, bool value);
+extern void set_all_tiles_attr(Game* game, short attr, bool value);
+extern short get_tile(const Game* game, Coords coords);
+extern void set_tile(Game* game, Coords coords, short value);

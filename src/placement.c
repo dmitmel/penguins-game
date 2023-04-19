@@ -5,17 +5,20 @@
 #include <assert.h>
 #include <stddef.h>
 
+/// @relatesalso Game
 void placement_begin(Game* game) {
   assert(game->phase == GAME_PHASE_SETUP_DONE);
   game_set_current_player(game, -1);
   game_set_phase(game, GAME_PHASE_PLACEMENT);
 }
 
+/// @relatesalso Game
 void placement_end(Game* game) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   game_set_phase(game, GAME_PHASE_SETUP_DONE);
 }
 
+/// @relatesalso Game
 int placement_switch_player(Game* game) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   if (!any_valid_placement_exists(game)) {
@@ -34,6 +37,7 @@ int placement_switch_player(Game* game) {
   return PLACEMENT_ALL_PENGUINS_PLACED;
 }
 
+/// @relatesalso Game
 bool any_valid_placement_exists(const Game* game) {
   for (int y = 0; y < game->board_height; y++) {
     for (int x = 0; x < game->board_width; x++) {
@@ -46,11 +50,13 @@ bool any_valid_placement_exists(const Game* game) {
   return false;
 }
 
+/// @relatesalso Game
 bool validate_placement_simple(const Game* game, Coords target) {
   short tile = get_tile(game, target);
   return get_tile_fish(tile) == 1;
 }
 
+/// @relatesalso Game
 PlacementError validate_placement(const Game* game, Coords target) {
   if (!is_tile_in_bounds(game, target)) {
     return PLACEMENT_OUT_OF_BOUNDS;
@@ -72,6 +78,7 @@ PlacementError validate_placement(const Game* game, Coords target) {
   return PLACEMENT_VALID;
 }
 
+/// @relatesalso Game
 void place_penguin(Game* game, Coords target) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   assert(validate_placement(game, target) == PLACEMENT_VALID);
@@ -92,6 +99,7 @@ void place_penguin(Game* game, Coords target) {
   player->moves_count += 1;
 }
 
+/// @relatesalso Game
 void undo_place_penguin(Game* game) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   const GameLogPlacement* entry =

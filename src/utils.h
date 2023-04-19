@@ -37,11 +37,8 @@ typedef enum Neighbor {
   NEIGHBOR_MAX,
 } Neighbor;
 
-/// A table that maps #Direction variants to relative #Coords.
 extern const Coords DIRECTION_TO_COORDS[DIRECTION_MAX];
-/// A table that maps #Neighbor variants to relative #Coords.
 extern const Coords NEIGHBOR_TO_COORDS[NEIGHBOR_MAX];
-/// A table that maps #Direction variants to corresponding #Neighbor variants.
 extern const Neighbor DIRECTION_TO_NEIGHBOR[DIRECTION_MAX];
 
 /// @relatedalso Coords
@@ -112,25 +109,10 @@ inline bool coords_same(Coords a, Coords b) {
 #define test_bit(num, bit) (((num) & (bit)) != 0)
 /// @}
 
-/// @brief Returns a substring with the prefix removed if the given string
-/// starts with the prefix, otherwise returns @c NULL.
 const char* strip_prefix(const char* str, const char* prefix);
 
-/// @brief Converts a string into a number, returns @c false if the string was
-/// invalid.
-///
-/// A wrapper around the @c strtol function, which, unlike @c atoi, can
-/// reliably tell us whether an error has occurred, whereas @c atoi simply
-/// returns zero, so there is no way to distinguish between an error or the
-/// string legitimately containing a zero.
-///
-/// @param[in] str
-/// @param[out] result
-///
-/// @see <https://en.cppreference.com/w/c/string/byte/strtol>
 bool parse_number(const char* str, long* result);
 
-/// A shorthand for @c malloc + @c memcpy (analogous to @c strdup).
 void* memdup(const void* src, size_t size);
 
 /// @brief A wrapper around random number generators.
@@ -150,11 +132,6 @@ typedef struct Rng {
   int (*random_range)(struct Rng* self, int min, int max);
 } Rng;
 
-/// @brief Returns an RNG implementation based on the @c rand function from @c
-/// \<stdlib.h\> (and seeds it with @c srand).
-///
-/// @warning It is probably not thread-safe though... Then again, it's not like
-/// we are using threads in the C program.
 Rng init_stdlib_rng(void);
 
 /// A constant for #fnv32_hash.

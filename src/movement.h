@@ -34,22 +34,14 @@ typedef struct PossibleSteps {
 /// @name Movement phase
 /// @{
 
-/// @relatesalso Game
 void movement_begin(Game* game);
-/// @relatesalso Game
 void movement_end(Game* game);
 
-/// @relatesalso Game
 int movement_switch_player(Game* game);
-/// @relatesalso Game
 bool any_valid_player_move_exists(const Game* game, int player_idx);
-/// @relatesalso Game
 MovementError validate_movement_start(const Game* game, Coords start);
-/// @relatesalso Game
 MovementError validate_movement(const Game* game, Coords start, Coords target, Coords* fail);
-/// @relatesalso Game
 void move_penguin(Game* game, Coords start, Coords target);
-/// @relatesalso Game
 void undo_move_penguin(Game* game);
 
 /// @relatesalso Game

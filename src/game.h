@@ -356,131 +356,30 @@ typedef struct Game {
   /// @}
 } Game;
 
-/// @relatesalso Game
-/// @brief Constructs a #Game. Allocates memory for storing the struct itself,
-/// setting all fields to default values, and returns a pointer to it.
 Game* game_new(void);
-
-/// @relatesalso Game
-/// @brief Creates a (deep) copy of another #Game.
 Game* game_clone(const Game* other);
-
-/// @relatesalso Game
-/// @brief Destroys a #Game, freeing the memory allocated for the struct itself
-/// and all associated internal lists.
 void game_free(Game* self);
 
-/// @relatesalso Game
-/// @brief Computes a hash of the game state part of the #Game, i.e. the fields
-/// that change while playing the game, excluding settings, log, etc. Was used
-/// for debugging, currently unused.
 uint32_t game_compute_state_hash(const Game* self);
-
-/// @relatesalso Game
-/// @brief Sets #Game::log_capacity and allocates that many elements in
-/// #Game::log_buffer. If the new capacity is less than #Game::log_length the
-/// #Game::log_buffer will be truncated.
 void game_set_log_capacity(Game* self, size_t capacity);
-
-/// @relatesalso Game
-/// @brief Creates a #GameLogEntry, sets its #GameLogEntry::type, pushes it on
-/// top of the stack (reallocating the #Game::log_buffer if necessary) and
-/// returns a pointer to it.
-///
-/// @note Returns @c NULL if #Game::log_disabled is set to @c true !
-///
-/// If some entries were undone and the user then pushes a new entry, discards
-/// all the undone entries.
 GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type);
-
-/// @relatesalso Game
-/// @brief Pops the last entry off the top of the stack if its type matches the
-/// @c expected_type (this is used as a precaution) and returns a pointer to it.
 const GameLogEntry* game_pop_log_entry(Game* self, GameLogEntryType expected_type);
-
-/// @relatesalso Game
-/// @brief Returns a pointer to the entry at the given index. Note that the
-/// returned pointer is const because the log entries are read-only once they
-/// have been pushed.
 const GameLogEntry* game_get_log_entry(const Game* self, size_t idx);
 
-/// @relatesalso Game
-/// @brief Sets the current #Game::phase and creates a #GameLogPhaseChange log
-/// entry.
 void game_set_phase(Game* self, GamePhase phase);
-
-/// @relatesalso Game
-/// @brief Sets #Game::current_player_index and creates a #GameLogPlayerChange
-/// log entry.
 void game_set_current_player(Game* self, int idx);
 
-/// @relatesalso Game
-/// @brief Switches to the #GAME_PHASE_SETUP phase, can only be called in
-/// #GAME_PHASE_NONE. Should be called right away after constructing a #Game.
 void game_begin_setup(Game* self);
-
-/// @relatesalso Game
-/// @brief Verifies that all fields have been initialized and configured and
-/// switches the phase from #GAME_PHASE_SETUP to #GAME_PHASE_SETUP_DONE.
-///
-/// The #Game is considered completely initialized when:
-///
-/// 1. The board has been created with #setup_board
-/// 2. The players list has been created with #game_set_players_count
-/// 3. The penguins lists have been created with #game_set_penguins_per_player
-/// 4. The names of all players have been assigned with #game_set_player_name
 void game_end_setup(Game* self);
-
-/// @relatesalso Game
-/// @brief Sets #Game::penguins_per_player (the value mustn't be negative) and
-/// allocates #Player::penguins lists of all players. Available only in the
-/// #GAME_PHASE_SETUP phase.
 void game_set_penguins_per_player(Game* self, int value);
-
-/// @relatesalso Game
-/// @brief Sets #Game::players_count (the value mustn't be negative) and
-/// allocates the #Game::players list. Available only in the #GAME_PHASE_SETUP
-/// phase.
 void game_set_players_count(Game* self, int count);
-
-/// @relatesalso Game
-/// @brief Sets the #Player::name of a player at the given index. Only
-/// available in the #GAME_PHASE_SETUP phase.
-/// @details A copy of the name string will be created. A @c NULL pointer can
-/// be passed.
 void game_set_player_name(Game* self, int idx, const char* name);
 
-/// @relatesalso Game
-/// @details Fails when #Player::penguins_count is already at the maximum value
-/// (#Game::penguins_per_player).
 void game_add_player_penguin(Game* self, int idx, Coords coords);
-
-/// @relatesalso Game
-/// @details Fails if the player doesn't have a penguin at the given
-/// coordinates.
 void game_remove_player_penguin(Game* self, int idx, Coords coords);
 
-/// @relatesalso Game
-/// @brief The all-in-one phase switcher that progresses of the game.
-///
-/// Essentially handles the basic progression logic (and the edge cases): first
-/// switches the game to the placement phase, if in placement phase switches
-/// between players, then (once all penguins have been placed) moves on to the
-/// movement phase, afterwards again switches between player turns, and finally
-/// ends the game when no player can make a move. Honestly, just take a look at
-/// the implementation to see what it's about.
-///
-/// Was added to simplify the logic of phase switching in the GUI.
 void game_advance_state(Game* self);
-
-/// @relatesalso Game
-/// @brief Switches to the #GAME_PHASE_END phase.
 void game_end(Game* self);
-
-/// @relatesalso Game
-/// @brief Successively undoes or redoes log entries in order to reset the game
-/// state to the entry at the given index. Sets #Game::log_current to the
-/// selected entry afterwards.
 void game_rewind_state_to_log_entry(Game* self, size_t target_entry);
 
 /// @relatesalso Game

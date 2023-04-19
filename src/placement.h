@@ -28,23 +28,15 @@ typedef enum PlacementSwitchError {
 /// @name Placement phase
 /// @{
 
-/// @relatesalso Game
 void placement_begin(Game* game);
-/// @relatesalso Game
 void placement_end(Game* game);
 
-/// @relatesalso Game
 int placement_switch_player(Game* game);
-/// @relatesalso Game
 bool any_valid_placement_exists(const Game* game);
 
-/// @relatesalso Game
 bool validate_placement_simple(const Game* game, Coords target);
-/// @relatesalso Game
 PlacementError validate_placement(const Game* game, Coords target);
-/// @relatesalso Game
 void place_penguin(Game* game, Coords target);
-/// @relatesalso Game
 void undo_place_penguin(Game* game);
 
 /// @}
