@@ -259,7 +259,8 @@ bool load_game_state(Game* game, FILE* file, int penguins_arg, const char* my_pl
 
   int penguins_per_player = my_max(penguins_arg, 1);
   for (int i = 0; i < players_count; i++) {
-    penguins_per_player = my_max(penguins_per_player, player_penguins_by_id[player_ids[i]]);
+    penguins_per_player =
+      my_max(penguins_per_player, player_penguins_by_id[player_ids[i] - MIN_PLAYER_ID]);
   }
   game_set_penguins_per_player(game, penguins_per_player);
 
