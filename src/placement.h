@@ -20,13 +20,11 @@ typedef enum PlacementError {
   PLACEMENT_MULTIPLE_FISH,
 } PlacementError;
 
+/// Return values of #placement_switch_player, must all be negative.
 typedef enum PlacementSwitchError {
   PLACEMENT_ALL_PENGUINS_PLACED = -1,
   PLACEMENT_NO_MORE_FREE_TILES = -2,
 } PlacementSwitchError;
-
-/// @name Placement phase
-/// @{
 
 void placement_begin(Game* game);
 void placement_end(Game* game);
@@ -38,8 +36,6 @@ bool validate_placement_simple(const Game* game, Coords target);
 PlacementError validate_placement(const Game* game, Coords target);
 void place_penguin(Game* game, Coords target);
 void undo_place_penguin(Game* game);
-
-/// @}
 
 #ifdef __cplusplus
 }

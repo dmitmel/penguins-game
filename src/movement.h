@@ -27,12 +27,14 @@ typedef enum MovementError {
   MOVEMENT_PENGUIN_BLOCKED,
 } MovementError;
 
+/// @brief Exists purely to wrap an array of the numbers of steps in every
+/// possible #Direction.
+///
+/// Apparently in C you can't return an array from a function, but actually you
+/// can if it is wrapped in a struct!
 typedef struct PossibleSteps {
   int steps[DIRECTION_MAX];
 } PossibleSteps;
-
-/// @name Movement phase
-/// @{
 
 void movement_begin(Game* game);
 void movement_end(Game* game);
@@ -75,8 +77,6 @@ inline PossibleSteps calculate_penguin_possible_moves(const Game* game, Coords s
   }
   return moves;
 }
-
-/// @}
 
 #ifdef __cplusplus
 }

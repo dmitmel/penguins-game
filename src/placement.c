@@ -6,6 +6,8 @@
 #include <stddef.h>
 
 /// @relatesalso Game
+/// @brief Enters the #GAME_PHASE_PLACEMENT phase, can only be called in
+/// #GAME_PHASE_SETUP_DONE.
 void placement_begin(Game* game) {
   assert(game->phase == GAME_PHASE_SETUP_DONE);
   game_set_current_player(game, -1);
@@ -13,12 +15,20 @@ void placement_begin(Game* game) {
 }
 
 /// @relatesalso Game
+/// @brief Exits the #GAME_PHASE_PLACEMENT phase and switches to
+/// #GAME_PHASE_SETUP_DONE.
 void placement_end(Game* game) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   game_set_phase(game, GAME_PHASE_SETUP_DONE);
 }
 
 /// @relatesalso Game
+/// @brief Performs the player switching logic for the placement phase.
+///
+/// Finds the next player who can make a placement, switches
+/// #Game::current_player_index to that player and returns their index. If
+/// there are no more valid placements, returns a #PlacementError value, which
+/// are all negative numbers.
 int placement_switch_player(Game* game) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   if (!any_valid_placement_exists(game)) {
@@ -79,6 +89,7 @@ PlacementError validate_placement(const Game* game, Coords target) {
 }
 
 /// @relatesalso Game
+/// @brief Creates a #GameLogPlacement entry. The requested placement must be valid.
 void place_penguin(Game* game, Coords target) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   assert(validate_placement(game, target) == PLACEMENT_VALID);
@@ -100,6 +111,7 @@ void place_penguin(Game* game, Coords target) {
 }
 
 /// @relatesalso Game
+/// @brief Removes a #GameLogPlacement entry from the log and undoes it.
 void undo_place_penguin(Game* game) {
   assert(game->phase == GAME_PHASE_PLACEMENT);
   const GameLogPlacement* entry =

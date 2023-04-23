@@ -63,6 +63,7 @@ typedef struct BotMove {
   Coords penguin, target;
 } BotMove;
 
+/// @brief Used internally by #flood_fill.
 typedef struct FillSpan {
   int x1, x2, y, dy;
 } FillSpan;

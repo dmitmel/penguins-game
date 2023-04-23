@@ -6,6 +6,8 @@
 #include <stddef.h> // IWYU pragma: keep
 
 /// @relatesalso Game
+/// @brief Enters the #GAME_PHASE_MOVEMENT phase, can only be called in
+/// #GAME_PHASE_SETUP_DONE.
 void movement_begin(Game* game) {
   assert(game->phase == GAME_PHASE_SETUP_DONE);
   game_set_current_player(game, -1);
@@ -13,12 +15,19 @@ void movement_begin(Game* game) {
 }
 
 /// @relatesalso Game
+/// @brief Exits the #GAME_PHASE_MOVEMENT phase and switches to
+/// #GAME_PHASE_SETUP_DONE.
 void movement_end(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   game_set_phase(game, GAME_PHASE_SETUP_DONE);
 }
 
 /// @relatesalso Game
+/// @brief Performs the player switching logic for the movement phase.
+///
+/// Finds the next player who can make a move, sets #Game::current_player_index
+/// to that player and returns their index. If no players can make any moves
+/// returns a negative number.
 int movement_switch_player(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   int index = game->current_player_index;
@@ -105,6 +114,7 @@ MovementError validate_movement(const Game* game, Coords start, Coords target, C
 }
 
 /// @relatesalso Game
+/// @brief Creates a #GameLogMovement entry. The requested move must be valid.
 void move_penguin(Game* game, Coords start, Coords target) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   assert(validate_movement(game, start, target, NULL) == MOVEMENT_VALID);
@@ -128,6 +138,7 @@ void move_penguin(Game* game, Coords start, Coords target) {
 }
 
 /// @relatesalso Game
+/// @brief Removes a #GameLogMovement entry from the log and undoes it.
 void undo_move_penguin(Game* game) {
   assert(game->phase == GAME_PHASE_MOVEMENT);
   const GameLogMovement* entry = &game_pop_log_entry(game, GAME_LOG_ENTRY_MOVEMENT)->data.movement;
