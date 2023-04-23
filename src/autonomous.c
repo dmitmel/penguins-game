@@ -80,7 +80,7 @@ int run_autonomous_mode(const Arguments* args) {
       game->current_player_index = my_player_index - 1;
       if (placement_switch_player(game) == my_player_index) {
         Coords target;
-        move_ok = bot_make_placement(bot, &target);
+        move_ok = bot_compute_placement(bot, &target);
         if (move_ok) {
           place_penguin(game, target);
         }
@@ -91,7 +91,7 @@ int run_autonomous_mode(const Arguments* args) {
       game->current_player_index = my_player_index - 1;
       if (movement_switch_player(game) == my_player_index) {
         Coords penguin, target;
-        move_ok = bot_make_move(bot, &penguin, &target);
+        move_ok = bot_compute_move(bot, &penguin, &target);
         if (move_ok) {
           move_penguin(game, penguin, target);
         }

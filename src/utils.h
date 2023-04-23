@@ -124,8 +124,8 @@ void* memdup(const void* src, size_t size);
 /// 2. The GUI has #BetterRng which wraps the standard C++ functions from @c \<random\>.
 /// 3. The test suite calls @c munit_rand_int_range (see <https://nemequ.github.io/munit/#prng>).
 ///
-/// The struct itself holds pointers to the actual functions of implementations
-/// and works kind of like an interface in OOP terminology.
+/// The struct itself provides pointers to the actual functions of randomness
+/// implementations, so it works kind of like an interface in OOP terminology.
 typedef struct Rng {
   /// @brief Generates and returns a value in the range <tt>[min; max)</tt>
   /// (i.e. from @c min inclusive to @c max exclusive).

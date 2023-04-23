@@ -144,8 +144,8 @@ GameLogEntry* game_push_log_entry(Game* self, GameLogEntryType type) {
   GameLogEntry* entry = &self->log_buffer[self->log_current];
   entry->type = type;
   self->log_current += 1;
-  // If some entries were undone (so log_current < log_length) and the user
-  // then pushes a new entry, this line will discard all the undone entries.
+  // If some entries were undone previously (so log_current < log_length), this
+  // line will discard all of them.
   self->log_length = self->log_current;
   return entry;
 }

@@ -11,7 +11,7 @@ TilesetHelper::TilesetHelper() : scaling(CanvasPanel::TILE_SIZE / TilesetHelper:
 
 void TilesetHelper::load() {
   wxMemoryInputStream stream(resources_tileset_png, resources_tileset_png_size);
-  this->image = wxImage(stream, wxBITMAP_TYPE_PNG);
+  this->image.LoadFile(stream, wxBITMAP_TYPE_PNG);
   wxASSERT(this->image.IsOk());
   wxSize image_size = this->image.GetSize();
   this->image.Rescale(image_size.x * scaling, image_size.y * scaling, wxIMAGE_QUALITY_NEAREST);

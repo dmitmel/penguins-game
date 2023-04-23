@@ -1,4 +1,5 @@
 #include "gui/bot_thread.hh"
+#include "bot.h"
 #include "gui/controllers.hh"
 #include "movement.h"
 #include "placement.h"
@@ -47,7 +48,7 @@ void BotThread::OnExit() {
 wxThread::ExitCode BotPlacementThread::Entry() {
   this->SetName("bot-placement");
   Coords target;
-  bool ok = bot_make_placement(this->bot_state.get(), &target);
+  bool ok = bot_compute_placement(this->bot_state.get(), &target);
   bool cancelled = this->bot_state->cancelled;
   auto controller = this->controller;
   auto shared = this->shared;
@@ -62,7 +63,7 @@ wxThread::ExitCode BotPlacementThread::Entry() {
 wxThread::ExitCode BotMovementThread::Entry() {
   this->SetName("bot-movement");
   Coords penguin, target;
-  bool ok = bot_make_move(this->bot_state.get(), &penguin, &target);
+  bool ok = bot_compute_move(this->bot_state.get(), &penguin, &target);
   bool cancelled = this->bot_state->cancelled;
   auto controller = this->controller;
   auto shared = this->shared;

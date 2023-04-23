@@ -144,11 +144,11 @@ typedef struct GameLogMovement {
 /// @endcode
 ///
 /// The data structs of particular entry kinds should contain the delta
-/// (difference) between the previous and the next game state - this is enough
+/// (difference) between the previous and the next game state -- this is enough
 /// information to both undo and redo the performed action. Also note that the
 /// total union (and consequently this struct) will be as large as the longest
 /// struct it can contain, the shorter structs will be padded to the longest
-/// length - this padding is wasted memory (currently the largest entry is
+/// length -- this padding is wasted memory (currently the largest entry is
 /// #GameLogMovement, though most of entries will be of this kind anyway, so we
 /// aren't wasting much).
 ///
@@ -200,12 +200,12 @@ typedef struct GameLogEntry {
 /// I don't adhere to the traditional OOP style dogmatically though: all fields
 /// of the struct are exposed instead of it being fully opaque and having a
 /// getter and a setter for every field, and some of the "methods" technically
-/// reside in other files (notably board.h, placement.h, movement.h). Although
+/// reside in other files (notably board.c, placement.c, movement.c). Although
 /// getters and setters are used where it makes sense: setting some fields is
 /// not as trivial as just writing a single value, and getters can ensure the
 /// correctness of, for example, access into arrays (i.e. check that the index
 /// is in the bounds of the array), e.g. #game_get_player. In short, if a
-/// getter or a setter for a given field or array exists - you should use it,
+/// getter or a setter for a given field or array exists -- you should use it,
 /// otherwise accessing the field directly is perfectly fine.
 ///
 /// So in general, the most basic usage of this struct is:
@@ -289,7 +289,7 @@ typedef struct Game {
   /// to determine the actual location of a tile in this sequential
   /// representation, we can use the formula <tt>index = y * width + x</tt>.
   /// The length of the whole array, consequently, is <tt>width * height</tt>.
-  /// This method is used primarily for simplicity - it is easier to manage
+  /// This method is used primarily for simplicity -- it is easier to manage
   /// memory of a single array than to allocate an array of arrays.
   ///
   /// @see <https://en.wikipedia.org/wiki/Row-_and_column-major_order>
@@ -309,7 +309,7 @@ typedef struct Game {
   /// #setup_board for initializing, #get_tile_attr and #set_tile_attr for
   /// accessing.
   ///
-  /// These auxiliary attributes are simply a bitfield - a number where every
+  /// These auxiliary attributes are simply a bitfield -- a number where every
   /// bit is a flag which is either on or off, sort of like a struct with bool
   /// fields, but compactly represented in memory. This representation was
   /// chosen because of how simple it was to implement while being sufficient
