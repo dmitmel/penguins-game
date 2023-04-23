@@ -11,8 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BEST_MOVES_COUNT 5
-
 void init_bot_parameters(BotParameters* self) {
   self->placement_strategy = BOT_PLACEMENT_SMART;
   self->placement_scan_area = 6;
@@ -88,33 +86,21 @@ static inline int distance(Coords start, Coords end) {
   return abs(end.x - start.x) + abs(end.y - start.y);
 }
 
-static int pick_best_scores(int scores_length, int* scores, int best_length, int* best_indexes) {
-  best_length = my_min(best_length, scores_length);
-  int prev_best_score = INT_MAX;
-  int j = 0;
-  while (j < best_length) {
-    int best_score = INT_MIN;
-    int best_index = -1;
-    for (int i = 0; i < scores_length; i++) {
-      int score = scores[i];
-      if (score >= best_score && score < prev_best_score) {
-        best_score = score;
-        best_index = i;
-      }
+static int pick_best_score(int scores_length, int* scores) {
+  int best_index = -1;
+  int best_score = INT_MIN;
+  for (int i = 0; i < scores_length; i++) {
+    int score = scores[i];
+    if (score >= best_score) {
+      best_score = score;
+      best_index = i;
     }
-    if (best_score <= 0 && j > 0) {
-      // If the other scores are too bad - don't include them
-      break;
-    }
-    best_indexes[j++] = best_index;
-    prev_best_score = best_score;
   }
-  return j;
+  return best_index;
 }
 
 bool bot_make_placement(BotState* self, Coords* out_target) {
   Game* game = self->game;
-  Rng* rng = self->rng;
 
   bot_alloc_buf(self->tile_coords, self->tile_coords_cap, game->board_width * game->board_height);
   int tiles_count = 0;
@@ -132,6 +118,7 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
 
   BotPlacementStrategy strategy = self->params->placement_strategy;
   if (strategy == BOT_PLACEMENT_FIRST_POSSIBLE || strategy == BOT_PLACEMENT_RANDOM) {
+    Rng* rng = self->rng;
     int picked_tile_idx =
       strategy == BOT_PLACEMENT_RANDOM ? rng->random_range(rng, 0, tiles_count - 1) : 0;
     *out_target = self->tile_coords[picked_tile_idx];
@@ -144,22 +131,9 @@ bool bot_make_placement(BotState* self, Coords* out_target) {
     if (self->cancelled) return false;
   }
 
-  if (strategy == BOT_PLACEMENT_MOST_FISH) {
-    int best_tile_idx = 0;
-    int available_tiles = pick_best_scores(tiles_count, self->tile_scores, 1, &best_tile_idx);
-    UNUSED(available_tiles);
-    assert(available_tiles == 1);
-    *out_target = self->tile_coords[best_tile_idx];
-    return true;
-  }
-
-  int best_indexes[BEST_MOVES_COUNT];
-  int available_tiles =
-    pick_best_scores(tiles_count, self->tile_scores, BEST_MOVES_COUNT, best_indexes);
-  assert(available_tiles > 0);
-  Coords picked_tile =
-    self->tile_coords[best_indexes[rng->random_range(rng, 0, available_tiles - 1)]];
-  *out_target = picked_tile;
+  int best_tile_idx = pick_best_score(tiles_count, self->tile_scores);
+  assert(best_tile_idx >= 0);
+  *out_target = self->tile_coords[best_tile_idx];
   return true;
 }
 
@@ -238,11 +212,9 @@ bool bot_make_move(BotState* self, Coords* out_penguin, Coords* out_target) {
   int* move_scores = bot_rate_moves_list(self, moves_count, moves_list);
   if (self->cancelled) return false;
 
-  int best_indexes[BEST_MOVES_COUNT];
-  int available_moves = pick_best_scores(moves_count, move_scores, BEST_MOVES_COUNT, best_indexes);
-  UNUSED(available_moves);
-  assert(available_moves > 0);
-  BotMove picked_move = moves_list[best_indexes[0]];
+  int best_index = pick_best_score(moves_count, move_scores);
+  assert(best_index >= 0);
+  BotMove picked_move = moves_list[best_index];
   *out_penguin = picked_move.penguin, *out_target = picked_move.target;
   return true;
 }
@@ -438,8 +410,8 @@ int bot_rate_move(BotState* self, BotMove move) {
     BotMove* moves_list = bot_generate_all_moves_list(sub, 1, &target, &moves_count);
     int* move_scores = bot_rate_moves_list(sub, moves_count, moves_list);
     if (!self->cancelled) {
-      int best_index = 0;
-      if (pick_best_scores(moves_count, move_scores, 1, &best_index) == 1) {
+      int best_index = pick_best_score(moves_count, move_scores);
+      if (best_index >= 0) {
         score += move_scores[best_index] * 3 / 4;
       }
     }
