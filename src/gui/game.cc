@@ -10,6 +10,7 @@
 #include "gui/main.hh"
 #include "gui/new_game_dialog.hh"
 #include "gui/player_info_box.hh"
+#include "penguins-version.h"
 #include "utils.h"
 #include <memory>
 #include <wx/aboutdlg.h>

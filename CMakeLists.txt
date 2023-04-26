@@ -13,10 +13,7 @@ if(POLICY CMP0092)
   cmake_policy(SET CMP0092 NEW)
 endif()
 
-project(penguins
-  LANGUAGES C CXX
-  VERSION 0.0.1
-)
+project(penguins VERSION 0.0.1 LANGUAGES C CXX)
 
 if(POLICY CMP0135)
   # Necessary for using ExternalProject and FetchContent.
@@ -62,7 +59,6 @@ find_program(IWYU NAMES include-what-you-use iwyu)
 
 function(setup_penguins_target target)
   target_include_directories(${target} PUBLIC src)
-  target_compile_definitions(${target} PUBLIC PENGUINS_VERSION_STRING="${PROJECT_VERSION}")
 
   set_target_properties(${target} PROPERTIES
     C_STANDARD 99
@@ -136,7 +132,9 @@ function(embed_resource res_path out_var_name)
   )
 endfunction()
 
+configure_file(src/penguins-version.h.in penguins-version.h @ONLY)
 add_library(penguins-lib STATIC
+  penguins-version.h
   src/board.c
   src/bot.c
   src/game.c

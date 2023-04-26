@@ -1,0 +1,9 @@
+#pragma once
+
+// CMake substitutes the actual version numbers into this file during compilation.
+
+#define PENGUINS_VERSION_STRING "@PROJECT_VERSION@"
+#define PENGUINS_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define PENGUINS_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define PENGUINS_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define PENGUINS_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
