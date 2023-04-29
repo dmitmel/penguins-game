@@ -200,3 +200,90 @@ To just check that everything works you can simply run `make test` to run the en
 ```bash
 make build-tests && build/penguins-tests --seed 0xdeadbeef
 ```
+
+## The code
+
+All in all, it is a bit messy at times, but the number of insane hacks and (ab)use of advanced language features has been kept to a minimum so as to make it simple and easy to follow (hopefully even for beginner C programmers).
+
+### General guidelines
+
+- The code is formatted using [clang-format](https://clang.llvm.org/docs/ClangFormat.html) which handles the superficial stuff like placing the parentheses and braces, indentation, alignment and so on and so on. The notable decisions are:
+  - The indentation is 2 spaces
+  - Lines shouldn't be longer than 100 characters and comment lines shouldn't be longer than 80 characters (these two aren't hard rules)
+  - The asterisk in pointer declarations (and the ampersand in reference declarations) should be put adjacent to the type, not the variable name
+  - Use `//` for normal comments and `///` for documentation
+- The naming convention for things is:
+  - Functions, methods, macros, fields and variables - `snake_case`
+  - Constants and enum variants - `UPPER_SNAKE_CASE`
+  - Structs, classes, enums and typedefs - `CamelCase`
+- `#include` directives should reflect the stuff that a code file actually needs, i.e. there should be no useless `#include`s (when a file includes stuff that it doesn't actually use) and all the necessary declarations should be `#include`d directly (instead of relying on a transitive include from some other file which might be removed at any time).
+  - This is ensured with [include-what-you-use](https://github.com/include-what-you-use/include-what-you-use#readme) (aka IWYU), though only if this tool is installed. IWYU also has a set of its own special directives (`// IWYU pragma: `) to tell it when it is wrong (e.g. when an `#include` is actually required), the full list of which can be seen [here](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md).
+- [Doxygen](https://www.doxygen.nl) comments are used for documenting the code.
+  - The generated documentation pages can be found here: <https://dmitmel.github.io/penguins-game>.
+  - Generally speaking, the code should be written in a readable way in the first place, and then non-obvious behavior or techniques should be documented (for example, a field `name` of a struct `User` doesn't need a comment stating "The name of the user.", unless of course there is something more to add).
+  - Put the documentation near the actual definition: the comments for functions should be put next to their code in the source files (or for an inline function in the header file since that's where its code is), for structs and their fields - next to the declarations in the header files. As the documentation may often point out implementation details or simply explain what the implementation actually does, it should be located alongside the implementation itself, so that you don't forget to update the former when changing the latter.
+- I generally program in a [defensive style](https://en.wikipedia.org/wiki/Defensive_programming) - this means (among other things) putting little assumptions on the input data and being explicit about what you assume, sprinkling the code with lots of `assert`ions, handling and reporting potential errors and so on and so on. This approach helps with debugging since the program will tend to explode immediately instead of collecting subtle bugs, and generally helps with understanding the code and the expectations placed upon it.
+
+### Project file structure
+
+- `CMakeLists.txt` - the [build script for CMake](https://cmake.org/cmake/help/latest/index.html)
+- `cmake/` - supplementary scripts and configs for CMake and the compilation process in general
+- `build/` - the output directory for compiler artifacts and byproducts (the produced executables are put here)
+- `src/` - source and header files
+  - `gui/` - specifically the source code of the GUI
+- `resources/` - various non-code files used by the app, such as the assets for the GUI
+- `docs/` - asset files for use in the documentation
+
+### Header files
+
+The C headers should be written in this form:
+
+```c
+#pragma once
+
+#include "something.h"
+#include "else.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// declarations go here
+
+#ifdef __cplusplus
+}
+#endif
+```
+
+The `#pragma once` at the start ensures that when a header is included multiple times (say, A includes B and C, and C includes B - B is included two times in total), it will actually be copy-pasted into the compiled source file only once. The `#ifdef __cplusplus` guards provide compatibility with C++ - if the header is included from a C++ source file, they signal to the C++ compiler that the functions in question have been implemented in C. This is required because C and C++ often have different ideas on what machine code to generate for equivalent at first glance code.
+
+Conversely, when writing C++ headers, only the `#pragma once` statement at the top is necessary.
+
+Additionally, if a source file defines functions that only it itself then uses in its own internals, those functions shouldn't be declared in the corresponding header and should instead be marked with `static` in the source, which in C terms roughly means that the function is private to that file.
+
+### Inline functions
+
+One (a little bit) advanced feature of C that has been used throughout the project as an optimization are inline function definitions. Short, straightforward and frequently used functions can be marked as `inline`, which will allow the compiler to literally substitute the machine code of the function in place of the instructions to call it at the invocation site. When applied wisely, this unlocks more compiler optimizations because the compiler can also see the flow of control and data within the inlined function and integrate it better with the machine code of the caller, improving the performance of the program (sometimes the function may even be so simple that invoking it takes more time than executing the code inside).
+
+The `inline` keyword was originally introduced in C++ and made its way back into C with compiler-specific implementations and was later standardized in C99, which differed slightly from those and from the usage in C++. The C99 inlining model is what I use in this project, which in practice works as follows:
+
+```c
+// First you declare and implement the function within the header file, so that
+// every usage site has access to the full definition of the function:
+inline int add(int a, int b) {
+  return a + b;
+}
+
+// Strictly speaking that's enough, however, since the compiler might not
+// always decide to integrate the code of the function into a caller (as it
+// might consider the cost of doing so too high or simply because in the debug
+// configuration the function inlining optimization is disabled) and since
+// there are cases when it may be simply impossible, we need to have an actual
+// definition of the function within the compiled binary. For that you have to
+// put a copy of the declaration with the `extern` keyword in EXACTLY ONE
+// source file (this will cause the function to be instantiated once for real
+// in the binary), like this:
+extern int add(int a, int b);
+```
+
+More in-depth information can be obtained from the documentation of [MSVC](https://learn.microsoft.com/en-us/cpp/cpp/inline-functions-cpp?view=msvc-170) and [GCC](https://gcc.gnu.org/onlinedocs/gcc/Inline.html).

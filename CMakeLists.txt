@@ -1,3 +1,5 @@
+# By far the hackiest part of the project.
+
 cmake_minimum_required(VERSION 3.11)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -144,7 +146,6 @@ add_library(penguins-lib STATIC
 )
 setup_penguins_target(penguins-lib)
 
-# add executables (implementations of the files defined in the header files)
 add_executable(penguins
   src/arguments.c
   src/main.c
@@ -157,7 +158,6 @@ target_compile_definitions(penguins PUBLIC
   $<$<BOOL:${AUTONOMOUS_MODE}>:AUTONOMOUS_MODE>
 )
 add_custom_target(run COMMAND penguins USES_TERMINAL)
-# link all the
 target_link_libraries(penguins PUBLIC penguins-lib)
 
 if(BUILD_TESTS)
@@ -165,7 +165,6 @@ if(BUILD_TESTS)
   add_executable(penguins-tests src/tests.c)
   setup_penguins_target(penguins-tests)
   add_custom_target(run-tests COMMAND penguins-tests USES_TERMINAL)
-  # add all of the libraries defined in penguins-lib
   target_link_libraries(penguins-tests PUBLIC munit penguins-lib)
 endif()
 
@@ -291,7 +290,7 @@ find_package(Doxygen)
 if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
   FetchContent_MakeAvailable(doxygen-awesome-css)
 
-  set(doxygen_inputs src)
+  set(doxygen_inputs src docs/main_page.h)
   # Options for better integration with C.
   set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
   set(DOXYGEN_TYPEDEF_HIDES_STRUCT YES)

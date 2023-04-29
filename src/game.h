@@ -61,7 +61,7 @@ typedef enum GamePhase {
   GAME_PHASE_END,        ///< Set by #game_end
 } GamePhase;
 
-/// @brief Holds the player data.
+/// @brief Holds the data of the players of the #Game.
 ///
 /// You shouldn't create instances of this struct yourself, they are allocated
 /// by #game_set_players_count.
