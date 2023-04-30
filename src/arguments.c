@@ -19,8 +19,8 @@ void init_arguments(Arguments* self) {
 
 void print_usage(const char* prog_name) {
   fprintf(stderr, "Usage:\n");
-  fprintf(stderr, "%s help", prog_name);
-  fprintf(stderr, "%s version", prog_name);
+  fprintf(stderr, "%s help\n", prog_name);
+  fprintf(stderr, "%s version\n", prog_name);
 #ifdef AUTONOMOUS_MODE
   fprintf(stderr, "%s phase=placement penguins=N inputboard.txt outpuboard.txt\n", prog_name);
   fprintf(stderr, "%s phase=movement board.txt board.txt\n", prog_name);
