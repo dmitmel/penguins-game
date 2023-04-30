@@ -300,10 +300,10 @@ bool save_game_state(const Game* game, FILE* file) {
         fprintf(file, " ");
       }
       if (0 <= tile && tile <= 9) {
-        short fish = tile;
+        short fish = get_tile_fish(tile);
         fprintf(file, "%c0", '0' + fish);
       } else if (-9 <= tile && tile <= -1) {
-        short player_id = -tile;
+        short player_id = get_tile_player_id(tile);
         fprintf(file, "0%c", '0' + player_id);
       }
     }
