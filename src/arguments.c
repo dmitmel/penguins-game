@@ -19,6 +19,8 @@ void init_arguments(Arguments* self) {
 
 void print_usage(const char* prog_name) {
   fprintf(stderr, "Usage:\n");
+  fprintf(stderr, "%s help", prog_name);
+  fprintf(stderr, "%s version", prog_name);
 #ifdef AUTONOMOUS_MODE
   fprintf(stderr, "%s phase=placement penguins=N inputboard.txt outpuboard.txt\n", prog_name);
   fprintf(stderr, "%s phase=movement board.txt board.txt\n", prog_name);
@@ -61,6 +63,8 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
       }
     } else if (strcmp(arg, "version") == 0) {
       result->action = ACTION_ARG_PRINT_VERSION;
+    } else if (strcmp(arg, "help") == 0) {
+      result->action = ACTION_ARG_PRINT_HELP;
     } else if (strcmp(arg, "name") == 0) {
       result->action = ACTION_ARG_PRINT_NAME;
     } else if (strcmp(arg, "interactive") == 0) {

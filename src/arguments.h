@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 typedef enum ActionArg {
+  ACTION_ARG_PRINT_HELP,
   ACTION_ARG_PRINT_VERSION,
   ACTION_ARG_INTERACTIVE,
   ACTION_ARG_PRINT_NAME,

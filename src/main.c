@@ -21,7 +21,9 @@ int main(int argc, char* argv[]) {
     return EXIT_INTERNAL_ERROR;
   }
 
-  if (args.action == ACTION_ARG_PRINT_VERSION) {
+  if (args.action == ACTION_ARG_PRINT_HELP) {
+    print_usage(prog_name);
+  } else if (args.action == ACTION_ARG_PRINT_VERSION) {
     fprintf(stderr, "%s v%s\n", prog_name, PENGUINS_VERSION_STRING);
   } else if (args.action == ACTION_ARG_INTERACTIVE) {
 #ifdef INTERACTIVE_MODE
@@ -38,4 +40,6 @@ int main(int argc, char* argv[]) {
     return EXIT_INTERNAL_ERROR;
 #endif
   }
+
+  return EXIT_OK;
 }

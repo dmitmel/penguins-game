@@ -77,9 +77,9 @@ The project is divided into three main components: a standalone app for the grap
 
 Another notable component is the bot for automatically playing the game. The algorithm of the bot itself, which considers what move to make given a state of the game, is implemented in the common logic library, and therefore is usable by the user interfaces to let the player compete against the computer. However, in the course task the bot served a different purpose: basically, there was a program which would pit the bot algorithms written by students against each other in a competition. This program would invoke the bot programs in turns, giving them a file with the game state in a simple machine-readable format (simple enough to be parsed with `scanf`). The bot was then supposed parse the command-line arguments because some data like the game phase wasn't stored in the state file, then load the state by reading the input file, evaluate and make a move, and finally write to the output file the new game state in the same format - this machine interface is the so-called the autonomous mode.
 
-Unfortunately the competition program itself isn't available since it is closed source and was created by the university, but really it doesn't do much more than just invoke our programs in a loop and render the board to the screen, so it _could_ be more or less trivially reimplemented, but honestly I didn't want to bother. Although it can be substantially improved: for example, it lacks an anti-cheating system. For all it cares, the bot programs can move opponent's penguins, or place them in the ocean, or even regenerate the board entirely if they didn't like it - the only check that is performed is whether the number of penguins on the board is correct.
+Unfortunately the competition program itself isn't available since it is closed source and was created by the university, but really it doesn't do much more than just invoke our programs in a loop and render the board to the screen, so it _could_ be more or less trivially reimplemented, but honestly I didn't want to bother. Although it can be substantially improved: for example, it lacks an anti-cheating system. For all it cares, the bot program can give itself any number of points, move opponent's penguins, or place them in the ocean, or even regenerate the board entirely if it didn't like it - the only check that is performed is whether the number of penguins on the board is correct.
 
-## Building and running the code
+## Building and running
 
 The project is built using [CMake](https://cmake.org) which has integrations with pretty much every IDE nowadays, so you can just clone the repository, import the project into your favorite IDE, and run any of the targets `penguins`, `penguins-gui` or `penguins-tests`, also typically IDEs allow changing the build options and editing the CMake cache. For UNIX systems (i.e. Linux and macOS) a Makefile wrapper is provided for convenience, using it is very straightforward:
 
@@ -320,3 +320,41 @@ extern int add(int a, int b);
 ```
 
 More in-depth information can be obtained from the documentation of [MSVC](https://learn.microsoft.com/en-us/cpp/cpp/inline-functions-cpp?view=msvc-170) and [GCC](https://gcc.gnu.org/onlinedocs/gcc/Inline.html).
+
+## Using the autonomous mode interface
+
+(This is a bit of an obscure part of the project since it's intended for use with the competition manager program given by our university, but I documented it nonetheless to not let the information sink into oblivion.)
+
+The terminal interface program accepts command-line parameters and may be invoked in the following two ways:
+
+1. `./penguins phase=placement penguins=N input_board.txt output_board.txt`
+
+   The program will read the game state from `input_board.txt`, place a penguin on the board if possible, write the new game state to `output_board.txt` and exit. The `penguins=N` parameter specifies the number of penguins available to every player, and the program can't place any more penguins than that.
+
+2. `./penguins phase=movement input_board.txt output_board.txt`
+
+   The program will load the game state from `input_board.txt`, evaluate and make the best move with one of its own penguins, save the updated state to `output_board.txt` and exit. If no moves are possible, will simply do nothing and write the given state to the output file as-is.
+   The `input_board.txt` and `output_board.txt` can of course be the same file, in which case it will be updated in-place (this applies to `phase=placement` as well).
+
+3. There are of course other commands and parameters that the program supports, some of which can be seen by running `./penguins help`, though most are undocumented, so your best bet is reading through [`src/arguments.c`](src/arguments.c).
+
+The program will terminate with one of the following exit codes:
+
+- **0** - a move was performed without any problems, the new game state is in the output file
+- **1** - the program couldn't make any moves (either all penguins have been placed in the placement phase, or all penguins are blocked in the movement phase)
+- **2** - invalid input file, an error message will be printed identifying the problem
+- **3** - an internal program error has occurred, an additional error message will be printed
+
+The format of the game state files is pretty simple:
+
+- **line 1**: two numbers separated by a whitespace, **h** and **w**, for dimensions of the board (note that the height goes first!)
+- **lines 2 to h+1**: **w** two-digit numbers separated by a space character representing the board tiles, can be any of the next combinations:
+  - `00` - a water tile
+  - `N0` - an ice floe with fish, where `N` is a digit from 1 to 3
+  - `0N` - an ice floe with a penguin of the player with ID `N`, where `N` is a digit from 1 to 9
+- **lines h+2 and following**: 3 space-separated fields with the player information:
+  1. the player name - a string of at most 255 bytes, not containing spaces (parsed with the `%s` specifier in `scanf`)
+  2. the player ID - a number from 1 to 9
+  3. the player score - the number of fish collected so far
+
+Names are used for identifying the players. If the program doesn't find a row with its own name in the players table, it will append a row for it with an unused ID. As the player IDs must be single-digit positive numbers, the file format supports up to 9 players. In case of playing against a program that uses the same name as ours, the name of our program can be changed by passing the parameter `name=SOMETHING` when invoking it.
