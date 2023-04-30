@@ -8,16 +8,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: ON }
-          - { os: ubuntu-latest, build_type: Release, build_wxwidgets: OFF, use_sanitizers: ON }
-          - { os: windows-latest, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: OFF }
-          - { os: windows-latest, build_type: Release, build_wxwidgets: OFF, use_sanitizers: OFF }
-          - { os: macos-latest, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: ON }
-          - { os: macos-latest, build_type: Release, build_wxwidgets: OFF, use_sanitizers: ON }
+          - { os: ubuntu-20.04, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: ON }
+          - { os: ubuntu-20.04, build_type: Release, build_wxwidgets: OFF, use_sanitizers: ON }
+          - { os: windows-2019, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: OFF }
+          - { os: windows-2019, build_type: Release, build_wxwidgets: OFF, use_sanitizers: OFF }
+          - { os: macos-11, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: ON }
+          - { os: macos-11, build_type: Release, build_wxwidgets: OFF, use_sanitizers: ON }
           # static minimal builds
-          - { os: ubuntu-latest, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
-          - { os: windows-latest, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
-          - { os: macos-latest, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
+          - { os: ubuntu-20.04, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
+          - { os: windows-2019, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
+          - { os: macos-11, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -26,14 +26,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - if: matrix.os == 'ubuntu-latest'
+      - if: runner.os == 'Linux'
         run: |
           sudo apt update
           sudo apt install libgtk-3-dev
       - if: runner.os == 'Linux' && matrix.build_wxwidgets == 'OFF'
         run: |
           sudo apt-key adv --fetch-keys 'https://repos.codelite.org/CodeLite.asc'
-          sudo apt-add-repository 'deb https://repos.codelite.org/wx3.2.2.1/ubuntu/ jammy universe'
+          sudo apt-add-repository "deb https://repos.codelite.org/wx3.2.2.1/ubuntu/ $(lsb_release -cs) universe"
           sudo apt install libwxgtk3.2unofficial-dev libnotify-dev
       - if: runner.os == 'Windows' && matrix.build_wxwidgets == 'OFF'
         run: |
