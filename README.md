@@ -122,14 +122,46 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ```
 
-If you are using Visual Studio, there exist two ways of opening the project in it. You can either import it as a CMake project (`File > Open > CMake...` or just open the folder with the project, the `CMakeLists.txt` file will be automatically detected) or generate Visual Studio solution files with CMake and open those:
+### Instructions for Visual Studio
+
+If you are using Visual Studio, there exist two ways of loading the project in it. You can either import it as a CMake project within the IDE, or you can generate the Visual Studio solution files with CMake and open those:
 
 ```bash
 cmake -B build -G "Visual Studio 17 2022"
 # Or any other VS version, check cmake --help for the list of available generators.
 ```
 
-Apparently, doing it with the second method doesn't make VS generate as much temporary files and thus reduces the disk usage, however, it the integration with CMake becomes much less shallow (e.g. you have to remember to regenerate the project manually each time after editing the build script), so it is unclear which method we can recommend.
+Apparently, doing it with the second method doesn't make VS generate as many temporary files and thus reduces the disk usage, however, the integration with CMake becomes much more shallow (e.g. you can't edit the configuration options inside VS), so it is unclear which method we recommend.
+
+Anyway, as for the "official" method of working with CMake projects, you first need to find the option `File > Open > CMake...` in the menu bar:
+
+![visual studio file menu](docs/vs_open_cmake.png)
+
+Click it and select the `CMakeLists.txt` file at the root of the project in the file picker. Alternatively, you can use `File > Open > Folder...` or the `Open a local folder` button on the start screen to open the folder with the project - the `CMakeLists.txt` file will be automatically detected. Once the project is opened, Visual Studio will begin configuring CMake, generating the build files and indexing the source code in the background.
+
+Visual Studio has a concept of build configurations - basically, different settings per CPU architecture (32-bit or 64-bit, ARM or x86), build profile (debug or release), compiler (MSVC or Clang) and so on and so on. Choosing a different configuration will pass different options to CMake and the compiler. Configurations and other CMake settings can be edited either by opening the configurations drop-down in the toolbar (you can also switch the configurations here later) and selecting `Manage Configurations...`:
+
+![visual studio configurations drop-down](docs/vs_manage_configurations.png)
+
+Or by selecting `Project > CMake Settings for penguins` in the menu bar, or by opening the `CMakeSettings.json` file in the root project directory, where those settings are saved to. All of the following methods will bring up the following screen:
+
+![visual studio cmake settings](docs/vs_cmake_settings.png)
+
+Here you can change the various settings and, of course, manage the build configurations. To add one, click the green plus icon above the list on the left. A dialog with the list of various available configurations will appear, but most of the time you'll be interested in having only `x64-Debug` (which is created by default) and `x64-Release`.
+
+By scrolling to the bottom of the settings page, you'll find a table where you can set and change the values of the CMake configuration (and cached) variables. After editing the variables and other settings you must save the `CMakeSettings.json` to apply the changes and regenerate the project files (the modified variables will be highlighted with the bold font).
+
+![visual studio cmake variables](docs/vs_cmake_variables.png)
+
+When building the project, the compiled executables will appear in the `out/build/<CONFIGURATION_NAME>/` directory. To select which one to run or debug, open the startup item drop-down in the toolbar:
+
+![visual studio launch drop-down](docs/vs_launch.png)
+
+More information on using CMake from Visual Studio can be found on MSDN:
+
+- <https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio?view=msvc-170>
+- <https://learn.microsoft.com/en-us/cpp/build/customize-cmake-settings?view=msvc-170>
+- <https://learn.microsoft.com/en-us/cpp/build/get-started-linux-cmake?view=msvc-170>
 
 ### Compilation of the GUI and wxWidgets
 
@@ -223,6 +255,7 @@ All in all, it is a bit messy at times, but the number of insane hacks and (ab)u
   - Generally speaking, the code should be written in a readable way in the first place, and then non-obvious behavior or techniques should be documented (for example, a field `name` of a struct `User` doesn't need a comment stating "The name of the user.", unless of course there is something more to add).
   - Put the documentation near the actual definition: the comments for functions should be put next to their code in the source files (or for an inline function in the header file since that's where its code is), for structs and their fields - next to the declarations in the header files. As the documentation may often point out implementation details or simply explain what the implementation actually does, it should be located alongside the implementation itself, so that you don't forget to update the former when changing the latter.
 - I generally program in a [defensive style](https://en.wikipedia.org/wiki/Defensive_programming) - this means (among other things) putting little assumptions on the input data and being explicit about what you assume, sprinkling the code with lots of `assert`ions, handling and reporting potential errors and so on and so on. This approach helps with debugging since the program will tend to explode immediately instead of collecting subtle bugs, and generally helps with understanding the code and the expectations placed upon it.
+- While developing I have also used various sanitizers: [ASAN](https://clang.llvm.org/docs/AddressSanitizer.html), [LSAN](https://clang.llvm.org/docs/LeakSanitizer.html) and [UBSAN](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html) - these are plugins for the compiler (supported by GCC, Clang and [MSVC](https://learn.microsoft.com/en-us/cpp/sanitizers/asan?view=msvc-170)) which catch common memory-management bugs such as using memory after it has been freed, accessing an element of an array at an out-of-bounds index, dereferencing a NULL pointer, or even memory leaks, by stuffing the compiled machine code with extra checks behind the scenes. They can be turned on in this project by enabling the `USE_SANITIZERS` CMake option. While doing so introduces a noticeable slowdown, the sanitizers GREATLY help with debugging.
 
 ### Project file structure
 
