@@ -59,6 +59,8 @@ bool parse_arguments(Arguments* result, int argc, char* argv[]) {
         fprintf(stderr, "Invalid value for the 'penguins' option: '%s'\n", arg_value);
         ok = false;
       }
+    } else if (strcmp(arg, "version") == 0) {
+      result->action = ACTION_ARG_PRINT_VERSION;
     } else if (strcmp(arg, "name") == 0) {
       result->action = ACTION_ARG_PRINT_NAME;
     } else if (strcmp(arg, "interactive") == 0) {

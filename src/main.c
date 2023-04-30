@@ -1,6 +1,7 @@
 #include "arguments.h"
 #include "autonomous.h"
 #include "interactive.h"
+#include "penguins-version.h"
 #include <stdio.h> // IWYU pragma: keep
 
 int main(int argc, char* argv[]) {
@@ -14,12 +15,15 @@ int main(int argc, char* argv[]) {
   }
 
   Arguments args;
+  char* prog_name = argc > 0 ? argv[0] : "penguins";
   if (!parse_arguments(&args, argc, argv)) {
-    print_usage(argc > 0 ? argv[0] : "");
+    print_usage(prog_name);
     return EXIT_INTERNAL_ERROR;
   }
 
-  if (args.action == ACTION_ARG_INTERACTIVE) {
+  if (args.action == ACTION_ARG_PRINT_VERSION) {
+    fprintf(stderr, "%s v%s\n", prog_name, PENGUINS_VERSION_STRING);
+  } else if (args.action == ACTION_ARG_INTERACTIVE) {
 #ifdef INTERACTIVE_MODE
     return run_interactive_mode();
 #else
