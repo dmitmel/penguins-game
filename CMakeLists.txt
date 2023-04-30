@@ -334,7 +334,7 @@ if(Doxygen_FOUND AND GENERATE_DOCUMENTATION)
 
   set(doxygen_target_deps)
   set(DOXYGEN_TAGFILES)
-  if(GENERATE_WXWIDGETS_DOC_TAGS AND BUILD_WXWIDGETS_FROM_SOURCE)
+  if(GENERATE_WXWIDGETS_DOC_TAGS AND wxWidgets_SOURCE_DIR)
     add_custom_command(
       OUTPUT "wxWidgets.tag"
       BYPRODUCTS "${wxWidgets_SOURCE_DIR}/docs/doxygen/out"

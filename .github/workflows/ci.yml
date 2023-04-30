@@ -7,19 +7,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        build_type: [Debug, Release]
-        build_wxwidgets: [OFF]
         include:
-          - os: ubuntu-latest
-            build_type: Release
-            build_wxwidgets: ON
-          - os: windows-latest
-            build_type: Release
-            build_wxwidgets: ON
-          - os: macos-latest
-            build_type: Release
-            build_wxwidgets: ON
+          - { os: ubuntu-latest, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: ON }
+          - { os: ubuntu-latest, build_type: Release, build_wxwidgets: OFF, use_sanitizers: ON }
+          - { os: windows-latest, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: OFF }
+          - { os: windows-latest, build_type: Release, build_wxwidgets: OFF, use_sanitizers: OFF }
+          - { os: macos-latest, build_type: Debug, build_wxwidgets: OFF, use_sanitizers: ON }
+          - { os: macos-latest, build_type: Release, build_wxwidgets: OFF, use_sanitizers: ON }
+          # static minimal builds
+          - { os: ubuntu-latest, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
+          - { os: windows-latest, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
+          - { os: macos-latest, build_type: Release, build_wxwidgets: ON, use_sanitizers: OFF }
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -63,13 +61,9 @@ jobs:
             ${{github.workflow}}-${{runner.os}}-${{matrix.build_type}}-cmake-${{hashFiles('CMakeLists.txt', 'src/**/CMakeLists.txt', 'cmake/**/*')}}
           restore-keys: |
             ${{github.workflow}}-${{runner.os}}-${{matrix.build_type}}-cmake-
-      - id: build_cfg
-        run: |
-          use_sanitizers="ON"; if [[ "${RUNNER_OS}" == "Windows" ]]; then use_sanitizers="OFF"; fi
-          echo "use_sanitizers=${use_sanitizers}" >> "${GITHUB_OUTPUT}"
       - run: |
           cmake -B build -DCMAKE_BUILD_TYPE='${{matrix.build_type}}' -DBUILD_WXWIDGETS_FROM_SOURCE='${{matrix.build_wxwidgets}}' \
-            -DUSE_SANITIZERS='${{steps.build_cfg.outputs.use_sanitizers}}' -DGENERATE_DOCUMENTATION=OFF
+            -DUSE_SANITIZERS='${{matrix.use_sanitizers}}' -DGENERATE_DOCUMENTATION=OFF
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}'
       - run: cmake --build build -j"$(nproc)" --config '${{matrix.build_type}}' --target run-tests
       - id: cpack
