@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['name_22704',['name',['https://docs.wxwidgets.org/3.2.2.1/structwx_html_help_data_item.html#a805159d52c68f4ba78b8a09361a82f55',1,'wxHtmlHelpDataItem::name()'],['../structPlayer.html#a4af4a10433f33834b59d0c3793358a40',1,'Player::name()'],['https://docs.wxwidgets.org/3.2.2.1/classwx_aui_pane_info.html#a5d1c0a19e5637b3dec0e37a43c02de9c',1,'wxAuiPaneInfo::name()']]],
+  ['name_5fabbr_22705',['Name_Abbr',['https://docs.wxwidgets.org/3.2.2.1/classwx_date_time.html#a49326e6533b05df469ac7c5ff2af78b7afde586e7e109fd5725b2e7c69f604b69',1,'wxDateTime']]],
+  ['name_5ffull_22706',['Name_Full',['https://docs.wxwidgets.org/3.2.2.1/classwx_date_time.html#a49326e6533b05df469ac7c5ff2af78b7a55a9b6bb37099a66708970996b4e2e89',1,'wxDateTime']]],
+  ['name_5finput_22707',['name_input',['../structNewGameDialog_1_1PlayerRowWidgets.html#a2c4b3ab2b0779ba2ec6866b36b597bdc',1,'NewGameDialog::PlayerRowWidgets']]],
+  ['name_5ftext_22708',['name_text',['../classPlayerInfoBox.html#ad5e2916cb8a09c5865e64a53e86bacb9',1,'PlayerInfoBox']]],
+  ['neighbor_5fto_5fcoords_22709',['NEIGHBOR_TO_COORDS',['../utils_8h.html#a7df7d56f7c4c24fb4e65e522135bf941',1,'NEIGHBOR_TO_COORDS():&#160;utils.c'],['../utils_8c.html#a7df7d56f7c4c24fb4e65e522135bf941',1,'NEIGHBOR_TO_COORDS():&#160;utils.c']]],
+  ['new_5fphase_22710',['new_phase',['../structGameLogPhaseChange.html#af967143238314387f2e75e22fc8e0949',1,'GameLogPhaseChange']]],
+  ['new_5fplayer_5findex_22711',['new_player_index',['../structGameLogPlayerChange.html#a16c81599486e50db0ad80af6600ed3dd',1,'GameLogPlayerChange']]],
+  ['new_5fplayer_5frow_22712',['new_player_row',['../classNewGameDialog.html#ac25df8e8c5a7a63732ca74f678d21290',1,'NewGameDialog']]],
+  ['no_5fimage_22713',['NO_IMAGE',['https://docs.wxwidgets.org/3.2.2.1/classwx_book_ctrl_base.html#af7a46f2380d736c878aa72bb9e085a69a76a5551525c61310e58ed494b5d4d730',1,'wxBookCtrlBase::NO_IMAGE()'],['https://docs.wxwidgets.org/3.2.2.1/classwx_tree_list_ctrl.html#a68f097e2bed86c69817fc6841a8e6ebb',1,'wxTreeListCtrl::NO_IMAGE()'],['https://docs.wxwidgets.org/3.2.2.1/classwx_with_images.html#a17e6e220c76e75966f609417e551ccb9a9c691a3188f0e2d96e1aa83fa5182406',1,'wxWithImages::NO_IMAGE()']]],
+  ['none_22714',['NONE',['https://docs.wxwidgets.org/3.2.2.1/classwx_f_t_p.html#aaeeaee850fd01f6063ba62fab8e89d51af7c2b61793da91fd400ce93ceb177fb3',1,'wxFTP']]],
+  ['nov_22715',['Nov',['https://docs.wxwidgets.org/3.2.2.1/classwx_date_time.html#a156e17eb15e3c16a7da36cd810ff9117a013eb4a34e3323d234babe378d011706',1,'wxDateTime']]],
+  ['npos_22716',['npos',['https://docs.wxwidgets.org/3.2.2.1/classwx_string.html#a7f7b5ab972b4be6703f9c779654af247',1,'wxString']]],
+  ['num_5fcustom_22717',['NUM_CUSTOM',['https://docs.wxwidgets.org/3.2.2.1/classwx_colour_data.html#a811d4d4cc1d50db97da817644c582509a4b98189c46faa51f4b954639a87bf507',1,'wxColourData']]],
+  ['nzdt_22718',['NZDT',['https://docs.wxwidgets.org/3.2.2.1/classwx_date_time.html#a4db12283a6c06cea4c92528fbb7f88bba50981f4a9aa23c5765bbf82a31353d9c',1,'wxDateTime']]],
+  ['nzst_22719',['NZST',['https://docs.wxwidgets.org/3.2.2.1/classwx_date_time.html#a4db12283a6c06cea4c92528fbb7f88bbab65d681d65687315d5e8f5160e2d375d',1,'wxDateTime']]]
+];

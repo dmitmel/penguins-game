@@ -1,0 +1,14 @@
+<map id="GameController" name="GameController">
+<area shape="rect" id="node1" title=" " alt="" coords="317,93,443,120"/>
+<area shape="rect" id="node5" href="$classBotTurnController.html" title=" " alt="" coords="517,17,652,44"/>
+<area shape="rect" id="node8" href="$classGameEndedController.html" title=" " alt="" coords="502,68,667,95"/>
+<area shape="rect" id="node9" href="$classLogEntryViewerController.html" title=" " alt="" coords="491,119,679,145"/>
+<area shape="rect" id="node10" href="$classPlayerTurnController.html" title=" " alt="" coords="507,169,662,196"/>
+<area shape="rect" id="node2" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_evt_handler.html" title=" " alt="" coords="156,93,269,120"/>
+<area shape="rect" id="node3" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_object.html" title=" " alt="" coords="15,68,98,95"/>
+<area shape="rect" id="node4" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_trackable.html" title=" " alt="" coords="5,119,108,145"/>
+<area shape="rect" id="node6" href="$classBotMovementController.html" title=" " alt="" coords="736,5,915,32"/>
+<area shape="rect" id="node7" href="$classBotPlacementController.html" title=" " alt="" coords="737,56,914,83"/>
+<area shape="rect" id="node11" href="$classPlayerMovementController.html" title=" " alt="" coords="727,132,924,159"/>
+<area shape="rect" id="node12" href="$classPlayerPlacementController.html" title=" " alt="" coords="727,183,923,209"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="Rng" name="Rng">
+<area shape="rect" id="node1" title="A wrapper around random number generators." alt="" coords="25,5,72,32"/>
+<area shape="rect" id="node2" href="$structBetterRng.html" title="An implementation of Rng for C++ using the standard functions from &lt;random&gt;." alt="" coords="5,80,92,107"/>
+</map>

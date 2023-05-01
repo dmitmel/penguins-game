@@ -1,0 +1,37 @@
+var classCanvasPanel =
+[
+    [ "ArrowHeadType", "classCanvasPanel.html#a8efc342445460e1068e39ad2f8df7a48", [
+      [ "ARROW_HEAD_NORMAL", "classCanvasPanel.html#a8efc342445460e1068e39ad2f8df7a48a8c1e7791226a108dbca93784fbd731f6", null ],
+      [ "ARROW_HEAD_CROSS", "classCanvasPanel.html#a8efc342445460e1068e39ad2f8df7a48af85a99e20dc47ff2adf82b96bc1bcdf7", null ]
+    ] ],
+    [ "TILE_SIZE", "classCanvasPanel.html#a583348f9947a5c0bf260724e3b55337c", null ],
+    [ "mouse_within_window", "classCanvasPanel.html#acd217b00bdc9486c52a636402ddfee63", null ],
+    [ "mouse_is_down", "classCanvasPanel.html#a339ee6a46c51ebd2cdad1f11dd55e317", null ],
+    [ "mouse_is_down_real", "classCanvasPanel.html#aaa86aab2ee48160877b694a09859b7b2", null ],
+    [ "mouse_pos", "classCanvasPanel.html#a1f44245a8e11199541569e16ace9c006", null ],
+    [ "prev_mouse_pos", "classCanvasPanel.html#afdd88029d77055bdb8e2c8aa1c880eff", null ],
+    [ "mouse_drag_pos", "classCanvasPanel.html#aff06c230b3d86b96d4fca88a9b613404", null ],
+    [ "board_bitmap", "classCanvasPanel.html#a7514d506056df09e023ea5860b009880", null ],
+    [ "board_dc", "classCanvasPanel.html#a223aa6d057c0d31b0f94d9949ca9a366", null ],
+    [ "tiles_bitmap", "classCanvasPanel.html#ac03dc63ad8257a5dd4556be08d3bf517", null ],
+    [ "tiles_dc", "classCanvasPanel.html#ae55764385bb005449ac637e82e0cb97a", null ],
+    [ "panel", "classCanvasPanel.html#a1f4b14f85babc5dc5894baec94c48f98", null ],
+    [ "game", "classCanvasPanel.html#a266a2badba34b091d2e19df45abef26a", null ],
+    [ "CanvasPanel", "classCanvasPanel.html#a9b62afdeb901b49413fc22d86f1d415c", null ],
+    [ "AcceptsFocus", "classCanvasPanel.html#a36042756e5a3325268ce52d6daaa291d", null ],
+    [ "get_canvas_size", "classCanvasPanel.html#adfc5d1abe7b03cb187e567095d281ef3", null ],
+    [ "tile_coords_at_point", "classCanvasPanel.html#a5f36a46029f218bf37f3a5c581646fa6", null ],
+    [ "get_tile_rect", "classCanvasPanel.html#a0a023722b3e56f5880f83652c6b58aba", null ],
+    [ "get_tile_centre", "classCanvasPanel.html#abcfbf61885bbec4fad10b584b0c28d01", null ],
+    [ "get_selected_penguin_coords", "classCanvasPanel.html#abe0677f58861f21dc64b9c6bb3de14ef", null ],
+    [ "paint_selected_tile_outline", "classCanvasPanel.html#a1fad7455878d6c3612dba36c7fb0deff", null ],
+    [ "paint_move_arrow", "classCanvasPanel.html#a4169e871508e4d7690559213e3ec4967", null ],
+    [ "paint_move_arrow", "classCanvasPanel.html#a635975c783ee501f215642bc069670db", null ],
+    [ "paint_arrow_head", "classCanvasPanel.html#a4076f080ef7ef420ab7784cf143cdd91", null ],
+    [ "on_paint", "classCanvasPanel.html#a2c5c791805de04d23bf4255cfc4cb7f6", null ],
+    [ "draw_bitmap", "classCanvasPanel.html#ac0fc8778f5402977bb37876dc03fa8fb", null ],
+    [ "paint_tiles", "classCanvasPanel.html#a2f8447c77223e7afdc66cf05e8bf3f57", null ],
+    [ "paint_board", "classCanvasPanel.html#ac2469f1df363c3b634909128a36433d2", null ],
+    [ "on_any_mouse_event", "classCanvasPanel.html#a4fac5c9ff4ae7cab8d42f0ab1e816e7c", null ],
+    [ "wxDECLARE_EVENT_TABLE", "classCanvasPanel.html#aaf52983f4b3d33cc8d32f176e9cd9bb5", null ]
+];

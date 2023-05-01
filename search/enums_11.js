@@ -1,0 +1,20 @@
+var searchData=
+[
+  ['weekday_23271',['WeekDay',['https://docs.wxwidgets.org/3.2.2.1/classwx_date_time.html#a9ce844e5c79b28711f52ae2d9a571457',1,'wxDateTime']]],
+  ['weekflags_23272',['WeekFlags',['https://docs.wxwidgets.org/3.2.2.1/classwx_date_time.html#a8ab175ce5385f833894d9b89987a90d4',1,'wxDateTime']]],
+  ['wow64viewmode_23273',['WOW64ViewMode',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a89e5048d817178768bd50e7b53663b25',1,'wxRegKey']]],
+  ['wxattrkind_23274',['wxAttrKind',['https://docs.wxwidgets.org/3.2.2.1/classwx_grid_cell_attr.html#acc28e22664b1e4d390448c556993c440',1,'wxGridCellAttr']]],
+  ['wxauipanedockartsetting_23275',['wxAuiPaneDockArtSetting',['https://docs.wxwidgets.org/3.2.2.1/group__group__class__aui.html#gab09190c5a3f9cd3628819fbe93a9caa0',1,]]],
+  ['wxauitoolbarartsetting_23276',['wxAuiToolBarArtSetting',['https://docs.wxwidgets.org/3.2.2.1/group__group__class__aui.html#ga69dac305bd485aa477362ee8749a6bf5',1,]]],
+  ['wxauitoolbarstyle_23277',['wxAuiToolBarStyle',['https://docs.wxwidgets.org/3.2.2.1/group__group__class__aui.html#ga1e38ff38eb63d48a326369543f3c40bb',1,]]],
+  ['wxauitoolbartooltextorientation_23278',['wxAuiToolBarToolTextOrientation',['https://docs.wxwidgets.org/3.2.2.1/group__group__class__aui.html#gaacef34e9982d39c56ea988a2e7ba611b',1,]]],
+  ['wxbase64decodemode_23279',['wxBase64DecodeMode',['https://docs.wxwidgets.org/3.2.2.1/group__group__funcmacro__misc.html#ga65c7d67ac9578376267a006c85b5e724',1,]]],
+  ['wxfilekind_23280',['wxFileKind',['https://docs.wxwidgets.org/3.2.2.1/group__group__funcmacro__file.html#ga68af15575db590aaa874d40a1073809d',1,]]],
+  ['wxgridselectionmodes_23281',['wxGridSelectionModes',['https://docs.wxwidgets.org/3.2.2.1/classwx_grid.html#a567e86cd28859368c01321d5f67e08d6',1,'wxGrid']]],
+  ['wxmessagequeueerror_23282',['wxMessageQueueError',['https://docs.wxwidgets.org/3.2.2.1/group__group__class__threading.html#ga7a72ccb77613365cdc8b1a82bdf3f5f9',1,]]],
+  ['wxnavigationkeyeventflags_23283',['wxNavigationKeyEventFlags',['https://docs.wxwidgets.org/3.2.2.1/classwx_navigation_key_event.html#afba5af727118cf1e63998282c307ba21',1,'wxNavigationKeyEvent']]],
+  ['wxnumvalidatorstyle_23284',['wxNumValidatorStyle',['https://docs.wxwidgets.org/3.2.2.1/group__group__class__validator.html#ga2bfb287a2b59965b28905c72225f1782',1,]]],
+  ['wxposixpermissions_23285',['wxPosixPermissions',['https://docs.wxwidgets.org/3.2.2.1/group__group__funcmacro__file.html#ga64460401fb35c137c9df28f3c019694d',1,]]],
+  ['wxrichtextstyletype_23286',['wxRichTextStyleType',['https://docs.wxwidgets.org/3.2.2.1/classwx_rich_text_style_list_box.html#aa738e5ba519bc217f2b842472fff3fd3',1,'wxRichTextStyleListBox']]],
+  ['wxseekmode_23287',['wxSeekMode',['https://docs.wxwidgets.org/3.2.2.1/group__group__funcmacro__file.html#gae3981f8632f0391e5c852bf62eb982b0',1,]]]
+];

@@ -1,0 +1,4 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$structRng.html" title="A wrapper around random number generators." alt="" coords="5,5,52,32"/>
+<area shape="rect" id="node2" href="$structBetterRng.html" title="An implementation of Rng for C++ using the standard functions from &lt;random&gt;." alt="" coords="100,5,187,32"/>
+</map>

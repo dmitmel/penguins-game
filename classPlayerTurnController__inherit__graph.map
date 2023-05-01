@@ -1,0 +1,9 @@
+<map id="PlayerTurnController" name="PlayerTurnController">
+<area shape="rect" id="node1" title=" " alt="" coords="137,229,292,256"/>
+<area shape="rect" id="node6" href="$classPlayerMovementController.html" title=" " alt="" coords="5,304,203,331"/>
+<area shape="rect" id="node7" href="$classPlayerPlacementController.html" title=" " alt="" coords="227,304,423,331"/>
+<area shape="rect" id="node2" href="$classGameController.html" title=" " alt="" coords="152,155,277,181"/>
+<area shape="rect" id="node3" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_evt_handler.html" title=" " alt="" coords="158,80,271,107"/>
+<area shape="rect" id="node4" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_object.html" title=" " alt="" coords="115,5,197,32"/>
+<area shape="rect" id="node5" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_trackable.html" title=" " alt="" coords="222,5,325,32"/>
+</map>

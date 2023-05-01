@@ -1,0 +1,10 @@
+<map id="BaseGamePanel" name="BaseGamePanel">
+<area shape="rect" id="node1" title=" " alt="" coords="57,304,185,331"/>
+<area shape="rect" id="node7" href="$classGamePanel.html" title=" " alt="" coords="5,379,101,405"/>
+<area shape="rect" id="node8" href="$classGameStartPanel.html" title=" " alt="" coords="126,379,253,405"/>
+<area shape="rect" id="node2" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_panel.html" title=" " alt="" coords="83,229,159,256"/>
+<area shape="rect" id="node3" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_window.html" title=" " alt="" coords="75,155,168,181"/>
+<area shape="rect" id="node4" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_evt_handler.html" title=" " alt="" coords="65,80,178,107"/>
+<area shape="rect" id="node5" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_object.html" title=" " alt="" coords="21,5,104,32"/>
+<area shape="rect" id="node6" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_trackable.html" title=" " alt="" coords="129,5,231,32"/>
+</map>

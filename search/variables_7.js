@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['h_22304',['h',['https://docs.wxwidgets.org/3.2.2.1/structwx_video_mode.html#a65c37754dc82e1ccc418229002de16ed',1,'wxVideoMode']]],
+  ['header_5flabel_22305',['header_label',['../classGameEndDialog.html#aa57eac19df3c18358c9fbb4d9bfd19ba',1,'GameEndDialog']]],
+  ['height_22306',['height',['https://docs.wxwidgets.org/3.2.2.1/structwx_font_metrics.html#ae532a51591deb9056213cca8044b1b87',1,'wxFontMetrics::height()'],['https://docs.wxwidgets.org/3.2.2.1/classwx_layout_constraints.html#a969ee521721627428a743b2cf9ae22d2',1,'wxLayoutConstraints::height()'],['https://docs.wxwidgets.org/3.2.2.1/classwx_rect.html#a1d165d7b9572e7229c2f2e1b25898f7d',1,'wxRect::height()']]],
+  ['height_5finput_22307',['height_input',['../classNewGameDialog.html#add9af053434aba1c1bd23be60b6389a5',1,'NewGameDialog']]],
+  ['height_5fwas_5fchanged_22308',['height_was_changed',['../classNewGameDialog.html#a8cdc6d41cb8b635446cd1505ae48c2b9',1,'NewGameDialog']]],
+  ['highlight_22309',['highlight',['https://docs.wxwidgets.org/3.2.2.1/classwx_ribbon_page_tab_info.html#a2f560cea03aa33ac68129442729954af',1,'wxRibbonPageTabInfo']]],
+  ['hkcc_22310',['HKCC',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a1dcc4de4d1cc4370399e8813cb6abd5ba1742b9de7b1e5c3265f27256f99ca525',1,'wxRegKey']]],
+  ['hkcr_22311',['HKCR',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a1dcc4de4d1cc4370399e8813cb6abd5bacfa4deaac8001a569ccab4457ddf8a85',1,'wxRegKey']]],
+  ['hkcu_22312',['HKCU',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a1dcc4de4d1cc4370399e8813cb6abd5bad23779422ec95850dfcdc4e38de9de6a',1,'wxRegKey']]],
+  ['hkdd_22313',['HKDD',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a1dcc4de4d1cc4370399e8813cb6abd5bab3ed4c9e7c3ed7446a7eaf013a14081f',1,'wxRegKey']]],
+  ['hklm_22314',['HKLM',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a1dcc4de4d1cc4370399e8813cb6abd5ba992c16a969ad045c3fd146853d31ffe0',1,'wxRegKey']]],
+  ['hkmax_22315',['HKMAX',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a1dcc4de4d1cc4370399e8813cb6abd5ba15897558d95fa9b9beab75ea88612cbe',1,'wxRegKey']]],
+  ['hkpd_22316',['HKPD',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a1dcc4de4d1cc4370399e8813cb6abd5baca3b3b4b6e2b20de9d9e576f34ae315d',1,'wxRegKey']]],
+  ['hkusr_22317',['HKUSR',['https://docs.wxwidgets.org/3.2.2.1/classwx_reg_key.html#a1dcc4de4d1cc4370399e8813cb6abd5ba8861998c3c30be02578320b1b885df76',1,'wxRegKey']]],
+  ['hour_22318',['hour',['https://docs.wxwidgets.org/3.2.2.1/structwx_date_time_1_1_tm.html#a50111e0cd83293e8d12c82503d2f2453',1,'wxDateTime::Tm']]],
+  ['hovered_22319',['hovered',['https://docs.wxwidgets.org/3.2.2.1/classwx_ribbon_page_tab_info.html#ad1c56cf7e1c816cb77d0312ac78a9cb8',1,'wxRibbonPageTabInfo']]],
+  ['hst_22320',['HST',['https://docs.wxwidgets.org/3.2.2.1/classwx_date_time.html#a4db12283a6c06cea4c92528fbb7f88bba19b49f77ce14e8456f6ba311d5323c51',1,'wxDateTime']]],
+  ['htmlcursor_5fdefault_22321',['HTMLCursor_Default',['https://docs.wxwidgets.org/3.2.2.1/classwx_html_window_interface.html#abee7411cdffad251a5ac7b831aacef70a2e6f776e0650c0b81c3ef41b8ef76a0d',1,'wxHtmlWindowInterface']]],
+  ['htmlcursor_5flink_22322',['HTMLCursor_Link',['https://docs.wxwidgets.org/3.2.2.1/classwx_html_window_interface.html#abee7411cdffad251a5ac7b831aacef70a8b6d0e568bbc790f288bf1be1fb0fef3',1,'wxHtmlWindowInterface']]],
+  ['htmlcursor_5ftext_22323',['HTMLCursor_Text',['https://docs.wxwidgets.org/3.2.2.1/classwx_html_window_interface.html#abee7411cdffad251a5ac7b831aacef70a67c98e64061369f85bae5cfa01708cc5',1,'wxHtmlWindowInterface']]],
+  ['hue_22324',['hue',['https://docs.wxwidgets.org/3.2.2.1/classwx_image_1_1_h_s_v_value.html#a3c50682e1ed071b2ab500f78a13a05ff',1,'wxImage::HSVValue']]]
+];

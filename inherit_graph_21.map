@@ -1,0 +1,36 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_event_filter.html" title=" " alt="" coords="157,44,268,71"/>
+<area shape="rect" id="node2" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_app_console.html" title=" " alt="" coords="321,44,439,71"/>
+<area shape="rect" id="node3" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_app.html" title=" " alt="" coords="551,5,618,32"/>
+<area shape="rect" id="node4" href="$classPenguinsApp.html" title=" " alt="" coords="772,5,879,32"/>
+<area shape="rect" id="node5" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_object.html" title=" " alt="" coords="15,107,98,133"/>
+<area shape="rect" id="node6" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_evt_handler.html" title=" " alt="" coords="156,132,269,159"/>
+<area shape="rect" id="node7" href="$classGameController.html" title=" " alt="" coords="317,132,443,159"/>
+<area shape="rect" id="node16" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_window.html" title=" " alt="" coords="333,335,427,361"/>
+<area shape="rect" id="node8" href="$classBotTurnController.html" title=" " alt="" coords="517,56,652,83"/>
+<area shape="rect" id="node11" href="$classGameEndedController.html" title=" " alt="" coords="502,107,667,133"/>
+<area shape="rect" id="node12" href="$classLogEntryViewerController.html" title=" " alt="" coords="491,157,679,184"/>
+<area shape="rect" id="node13" href="$classPlayerTurnController.html" title=" " alt="" coords="507,208,662,235"/>
+<area shape="rect" id="node9" href="$classBotMovementController.html" title=" " alt="" coords="736,56,915,83"/>
+<area shape="rect" id="node10" href="$classBotPlacementController.html" title=" " alt="" coords="737,107,914,133"/>
+<area shape="rect" id="node14" href="$classPlayerMovementController.html" title=" " alt="" coords="727,183,924,209"/>
+<area shape="rect" id="node15" href="$classPlayerPlacementController.html" title=" " alt="" coords="727,233,923,260"/>
+<area shape="rect" id="node17" href="$classCanvasPanel.html" title="Responsible for drawing the board and painting the UI overlays." alt="" coords="532,259,637,285"/>
+<area shape="rect" id="node18" href="$classPlayerPenguinWindow.html" title=" " alt="" coords="501,309,668,336"/>
+<area shape="rect" id="node19" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_control.html" title=" " alt="" coords="541,360,629,387"/>
+<area shape="rect" id="node23" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_non_owned_window.html" title=" " alt="" coords="503,411,667,437"/>
+<area shape="rect" id="node30" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_panel.html" title=" " alt="" coords="547,473,623,500"/>
+<area shape="rect" id="node20" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_static_box.html" title=" " alt="" coords="774,333,877,360"/>
+<area shape="rect" id="node21" href="$classSimpleStaticBox.html" title="A wxStaticBox with just the border and no label." alt="" coords="972,308,1101,335"/>
+<area shape="rect" id="node22" href="$classPlayerInfoBox.html" title=" " alt="" coords="1159,296,1272,323"/>
+<area shape="rect" id="node24" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_top_level_window.html" title=" " alt="" coords="750,411,901,437"/>
+<area shape="rect" id="node25" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_dialog.html" title=" " alt="" coords="995,372,1078,399"/>
+<area shape="rect" id="node28" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_frame.html" title=" " alt="" coords="995,423,1078,449"/>
+<area shape="rect" id="node26" href="$classGameEndDialog.html" title=" " alt="" coords="1152,347,1279,373"/>
+<area shape="rect" id="node27" href="$classNewGameDialog.html" title=" " alt="" coords="1149,397,1281,424"/>
+<area shape="rect" id="node29" href="$classGameFrame.html" title=" " alt="" coords="1164,448,1267,475"/>
+<area shape="rect" id="node31" href="$classBaseGamePanel.html" title=" " alt="" coords="761,473,889,500"/>
+<area shape="rect" id="node32" href="$classGamePanel.html" title=" " alt="" coords="989,473,1085,500"/>
+<area shape="rect" id="node33" href="$classGameStartPanel.html" title=" " alt="" coords="973,524,1100,551"/>
+<area shape="rect" id="node34" href="/home/runner/work/penguins-game/penguins-game/build/wxWidgets.tag$classwx_trackable.html" title=" " alt="" coords="5,157,108,184"/>
+</map>
