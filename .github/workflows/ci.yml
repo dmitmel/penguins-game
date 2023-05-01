@@ -75,5 +75,5 @@ jobs:
       - uses: actions/upload-artifact@v3
         if: matrix.build_wxwidgets == 'ON'
         with:
-          name: ${{steps.cpack.outputs.package_file_name}}
+          name: ${{steps.cpack.outputs.package_file_name}}-ci-build
           path: build/${{steps.cpack.outputs.package_file_name}}.*

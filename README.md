@@ -2,6 +2,8 @@
 
 A clone of the board game **"Hey, that's my fish!"** written in C and C++ for a university programming course.
 
+### **&gt;&gt;&gt; [Link to the downloads page](https://github.com/dmitmel/penguins-game/releases/latest) &lt;&lt;&lt;**
+
 ![screenshot](docs/demo_screenshot.png)
 
 ## Rules

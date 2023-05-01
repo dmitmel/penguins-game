@@ -15,7 +15,7 @@ if(POLICY CMP0092)
   cmake_policy(SET CMP0092 NEW)
 endif()
 
-project(penguins VERSION 0.0.1 LANGUAGES C CXX)
+project(penguins VERSION 1.0.0 LANGUAGES C CXX)
 
 if(POLICY CMP0135)
   # Necessary for using ExternalProject and FetchContent.
